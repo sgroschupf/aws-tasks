@@ -183,8 +183,8 @@
 				<source path="${basedir}/src/main/resources" output="${build.dir.main-classes-eclipse}" />
 				<source path="${basedir}/src/test/java" output="${build.dir.test-classes-eclipse}" />
 				<source path="${basedir}/src/test/resources" output="${build.dir.test-classes-eclipse}" />
-				<source path="${basedir}/src/it/java" output="${build.dir.it-classes-eclipse}" />
-				<source path="${basedir}/src/it/resources" output="${build.dir.it-classes-eclipse}" />
+				<!--<source path="${basedir}/src/it/java" output="${build.dir.it-classes-eclipse}" />
+				<source path="${basedir}/src/it/resources" output="${build.dir.it-classes-eclipse}" />-->
 
 				<!-- extras -->
 				<!-- we do not yet have extra modules, but it is just a question of time :) -->
