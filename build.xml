@@ -1,0 +1,215 @@
+<project name="aws-tasks" default="test">
+
+	<property name="root.dir" value="${basedir}" />
+	<property file="${root.dir}/src/build/ant/build.properties" />
+
+	
+	
+	<!-- ================================================================== -->
+	<!-- Classpath 				                                           -->
+	<!-- ================================================================== -->
+	<path id="compile.classpath">
+		<fileset dir="${lib.dir}/compile">
+			<include name="**/*.jar" />
+		</fileset>
+		<fileset dir="${lib.dir}/provided">
+			<include name="jetty/servlet-api*.jar" />
+		</fileset>
+	</path>
+	<path id="test.classpath">
+		<fileset dir="${lib.dir}/test">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
+	<path id="provided.classpath">
+		<fileset dir="${lib.dir}/provided">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
+	<path id="build.classpath">
+		<fileset dir="${lib.dir}/build">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
+	
+	
+
+	<!-- ================================================================== -->
+	<!-- General cleaning sources                                           -->
+	<!-- ================================================================== -->
+
+	<target name="clean" description="--> clean the project">
+		<echo>cleaning ${ant.project.name}</echo>
+		<delete includeemptydirs="true" failonerror="false">
+			<fileset dir="${build.dir}" excludes="classes-*-eclipse/" />
+		</delete>
+	</target>
+
+
+
+	<!-- ================================================================== -->
+	<!-- Build sources                                                      -->
+	<!-- ================================================================== -->
+
+	<target name="compile" description="--> compile main classes">
+		<mkdir dir="${build.dir.main-classes}" />
+		<javac encoding="${build.encoding}" srcdir="${main.src.dir}" includes="**/*.java" destdir="${build.dir.main-classes}" debug="${javac.debug}" optimize="${javac.optimize}" target="${javac.version}" source="${javac.version}" deprecation="${javac.deprecation}">
+			<compilerarg line="${javac.args} ${javac.args.warnings}" />
+			<classpath refid="compile.classpath" />
+		</javac>
+	</target>
+
+	
+
+	<!-- ================================================================== -->
+	<!-- Unit Tests                                                         -->
+	<!-- ================================================================== -->
+
+	<target name="compile-test" depends="compile">
+		<echo>*** Building Unit Tests Sources ***</echo>
+		<mkdir dir="${build.dir.test-classes}" />
+		<path id="test.path">
+			<pathelement location="${build.dir.main-classes}" />
+		</path>
+
+		<javac encoding="${build.encoding}" srcdir="${test.src.dir}" includes="**/*.java" destdir="${build.dir.test-classes}" debug="${javac.debug}" optimize="${javac.optimize}" target="${javac.version}" source="${javac.version}" deprecation="${javac.deprecation}">
+			<compilerarg line="${javac.args} ${javac.args.warnings}" />
+			<classpath refid="test.classpath" />
+			<classpath refid="test.path" />
+		</javac>
+	</target>
+
+	<target name="test" depends="compile-test" description="--> run unit tests">
+		<delete dir="${build.dir.test-reports}" />
+		<mkdir dir="${build.dir.test-reports}" />
+
+		<junit showoutput="false" printsummary="yes" haltonfailure="no" fork="yes" maxmemory="256m" dir="${basedir}" errorProperty="tests.failed" failureProperty="tests.failed">
+			<sysproperty key="net.sourceforge.cobertura.datafile" file="${reports.dir}/aws-tasks.ser" />
+			<classpath>
+				<pathelement location="${instrumented.dir}" />
+				<pathelement location="${build.dir.main-classes}" />
+				<pathelement location="${build.dir.test-classes}" />
+				<pathelement location="${test.res.dir}" />
+				<path refid="test.classpath" />
+			</classpath>
+			<formatter type="plain" />
+			<batchtest fork="yes" todir="${build.dir.test-reports}" unless="testcase">
+				<fileset dir="${test.src.dir}">
+					<include name="**/*Test.java" unless="testcase" />
+					<exclude name="**/Abstract*.java" unless="testcase" />
+					<include name="${testcase}" if="testcase" />
+				</fileset>
+			</batchtest>
+			<batchtest fork="yes" todir="${build.dir.test-reports}" if="testcase">
+				<fileset dir="${test.src.dir}" includes="**/${testcase}.java" />
+			</batchtest>
+		</junit>
+		<fail if="tests.failed">Tests failed!</fail>
+	</target>
+
+	
+
+	<!-- ================================================================== -->
+	<!-- Build jar of sources                                               -->
+	<!-- ================================================================== -->
+
+	<target name="jar" depends="compile">
+
+		<tstamp>
+			<format property="timestamp" pattern="MMM dd yyyy, HH:mm:ss" />
+		</tstamp>
+
+		<!-- git version -->
+		<exec outputproperty="build.current.revision" executable="git">
+          <arg line=" log -1 --pretty=format:%H" />
+		</exec>
+		<echo>Git Revision: ${build.current.revision}</echo>
+
+		<jar jarfile="${build.dir}/${jar.name}" basedir="${build.dir.main-classes}">
+			<manifest>
+				<section name="aws-tasks">
+					<attribute name="Implementation-Vendor" value="???" />
+					<attribute name="Implementation-Title" value="${ant.project.name}" />
+					<attribute name="Implementation-Version" value="${version}" />
+					<attribute name="Compile-Time" value="${timestamp}" />
+					<attribute name="Compiled-By" value="${user.name}" />
+					<attribute name="Git-Revision" value="${build.current.revision}" />
+				</section>
+			</manifest>
+		</jar>
+	</target>
+
+
+	
+	<!-- ================================================================== -->
+	<!-- Java Doc                                                           -->
+	<!-- ================================================================== -->
+
+	<target name="doc" depends="compile" description="--> create javadoc">
+		<mkdir dir="${build.javadoc}" />
+		<javadoc packagenames="${javadoc.package}" destdir="${build.javadoc}" author="true" version="true" use="true" windowtitle="${name} ${version} API" doctitle="${name} ${version} API" bottom="Copyright &amp;copy; ${javadoc.year} ???">
+			<packageset dir="${main.src.dir}" />
+			<link href="${javadoc.link.java}" />
+			<classpath>
+				<path refid="compile.classpath" />
+			</classpath>
+			<group title="${javadoc.title}" packages="${javadoc.package}*" />
+		</javadoc>
+	</target>
+
+
+
+	<!-- ================================================================== -->
+	<!-- Generating eclipse file                                            -->
+	<!-- ================================================================== -->
+
+
+	<target name="eclipse" depends="clean-eclipse" description="--> create the Eclipse project files">
+
+		<taskdef name="eclipse" classname="prantl.ant.eclipse.EclipseTask" classpathref="build.classpath" />
+		<mkdir dir="${build.dir.main-classes-eclipse}" />
+		<mkdir dir="${build.dir.test-classes-eclipse}" />
+		<mkdir dir="${build.dir.it-classes-eclipse}" />
+		<eclipse>
+			<settings>
+				<jdtcore compilercompliance="6.0" />
+				<resources encoding="UTF-8" />
+			</settings>
+			<project name="${ant.project.name}" />
+			<classpath>
+				<container path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6" />
+
+				<source path="${basedir}/src/main/java" output="${build.dir.main-classes-eclipse}" />
+				<source path="${basedir}/src/main/resources" output="${build.dir.main-classes-eclipse}" />
+				<source path="${basedir}/src/test/java" output="${build.dir.test-classes-eclipse}" />
+				<source path="${basedir}/src/test/resources" output="${build.dir.test-classes-eclipse}" />
+				<source path="${basedir}/src/it/java" output="${build.dir.it-classes-eclipse}" />
+				<source path="${basedir}/src/it/resources" output="${build.dir.it-classes-eclipse}" />
+
+				<!-- extras -->
+				<!-- we do not yet have extra modules, but it is just a question of time :) -->
+
+				<output path="${build.dir.main-classes-eclipse}" />
+				<library pathref="test.classpath" exported="false" />
+				<library pathref="compile.classpath" />
+			</classpath>
+		</eclipse>
+		<concat destfile="${root.dir}/.settings/org.eclipse.jdt.core.prefs" append="true">
+			<filelist dir="${root.dir}/src/build/eclipse/" files="eclipse-formatter" />
+		</concat>
+		<copy file="${root.dir}/src/build/eclipse/org.eclipse.jdt.ui.prefs" todir="${root.dir}/.settings" />
+		<replace file="${root.dir}/.settings/org.eclipse.jdt.core.prefs" token="org.eclipse.jdt.core.compiler.compliance=6.0" value="org.eclipse.jdt.core.compiler.compliance=1.6" />
+	</target>
+
+	<target name="clean-eclipse" description="--> clean the Eclipse project files">
+		<delete file=".classpath" />
+		<delete file=".eclipse" />
+		<delete file=".project" />
+		<delete dir=".settings" />
+	</target>
+
+	<target name="clean-all">
+		<antcall target="clean" />
+	</target>
+
+</project>
