@@ -28,12 +28,21 @@ public class InstanceGroupImpl implements InstanceGroup {
 
     @Override
     public ReservationDescription startup() throws EC2Exception {
+        return startup(null, 0);
+    }
+
+    @Override
+    public ReservationDescription startup(TimeUnit timeUnit, long time) throws EC2Exception {
         if (_reservationDescription != null) {
             throw new IllegalStateException("instance group already started");
         }
         LOG.info(String.format("starting %d to %d instances...", _launchConfiguration.getMinCount(), _launchConfiguration.getMaxCount()));
         _reservationDescription = _ec2.runInstances(_launchConfiguration);
-        LOG.info(String.format("started %d instances: %s", _reservationDescription.getInstances().size(), getInstanceIds(_reservationDescription)));
+        LOG.info(String.format("triggered start of %d instances: %s", _reservationDescription.getInstances().size(), getInstanceIds(_reservationDescription)));
+        if (timeUnit != null) {
+            waitUntilServerUp(timeUnit, time);
+            LOG.info(String.format("started %d instances: %s", _reservationDescription.getInstances().size(), getInstanceIds(_reservationDescription)));
+        }
         return _reservationDescription;
     }
 
@@ -52,31 +61,25 @@ public class InstanceGroupImpl implements InstanceGroup {
         return instanceIds;
     }
 
-    /**
-     * 
-     * @param instanceIds
-     * @param timeUnit
-     * @param waitTime
-     * @return true if all instances are in state running
-     * @throws EC2Exception
-     */
-    public ReservationDescription waitUntilServerUp(TimeUnit timeUnit, int waitTime) throws EC2Exception {
+    private ReservationDescription waitUntilServerUp(TimeUnit timeUnit, long waitTime) throws EC2Exception {
         long end = System.currentTimeMillis() + timeUnit.toMillis(waitTime);
         boolean notAllUp;
         do {
             notAllUp = false;
-            _reservationDescription = _ec2.describeInstances(getInstanceIds(_reservationDescription)).get(0);
+            try {
+                long sleepTime = Math.max(1000, timeUnit.toMillis(waitTime) / 5);
+                LOG.info(String.format("waiting on instances to run. Sleeping %d ms... zzz", sleepTime));
+                Thread.sleep(sleepTime);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+
+            updateReservationDescription();
             List<Instance> startingInstances = _reservationDescription.getInstances();
             for (Instance instance : startingInstances) {
-                System.out.println(instance.getState());
                 if (!"running".equals(instance.getState())) {
                     notAllUp = true;
                 }
-            }
-            try {
-                Thread.sleep(Math.max(1000, timeUnit.toMillis(waitTime) / 5));
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
             }
         } while (notAllUp && System.currentTimeMillis() < end);
         if (notAllUp) {
@@ -84,4 +87,15 @@ public class InstanceGroupImpl implements InstanceGroup {
         }
         return _reservationDescription;
     }
+
+    @Override
+    public ReservationDescription getCurrentReservationDescription() throws EC2Exception {
+        updateReservationDescription();
+        return _reservationDescription;
+    }
+
+    private synchronized void updateReservationDescription() throws EC2Exception {
+        _reservationDescription = _ec2.describeInstances(getInstanceIds(_reservationDescription)).get(0);
+    }
+
 }

@@ -15,7 +15,7 @@ import com.xerox.amazonws.ec2.ReservationDescription.Instance;
 public class InstanceGroupImplIntegTest extends AbstractIntegrationTest {
 
     @Test
-    public void testStartStop() throws Exception {
+    public void testStartWithoutWait() throws Exception {
         String imageId = "ami-5059be39";
         Jec2 ec2 = new Jec2(_accessKeyId, _accessKeySecret);
 
@@ -29,17 +29,37 @@ public class InstanceGroupImplIntegTest extends AbstractIntegrationTest {
 
         // startup
         ReservationDescription reservationDescription = instanceGroup.startup();
-        instanceGroup.waitUntilServerUp(TimeUnit.SECONDS, 100);
         assertEquals(instanceCount, reservationDescription.getInstances().size());
-
-        List<Instance> instances = reservationDescription.getInstances();
-        for (Instance instance : instances) {
-            // pending
-            System.out.println(instance.getState());
-        }
-        // ec2.describeInstances(null)
+        checkInstanceMode(reservationDescription, "pending");
 
         // shutdown
         instanceGroup.shutdown();
+        checkInstanceMode(instanceGroup.getCurrentReservationDescription(), "shutting-down");
+    }
+
+    @Test
+    public void testStartWithWaitOnRunning() throws Exception {
+        String imageId = "ami-5059be39";
+        Jec2 ec2 = new Jec2(_accessKeyId, _accessKeySecret);
+
+        int instanceCount = 1;
+        LaunchConfiguration launchConfiguration = new LaunchConfiguration(imageId, instanceCount, instanceCount);
+        InstanceGroup instanceGroup = new InstanceGroupImpl(ec2, launchConfiguration);
+
+        // startup
+        ReservationDescription reservationDescription = instanceGroup.startup(TimeUnit.MINUTES, 1);
+        assertEquals(instanceCount, reservationDescription.getInstances().size());
+        checkInstanceMode(reservationDescription, "running");
+
+        // shutdown
+        instanceGroup.shutdown();
+        checkInstanceMode(instanceGroup.getCurrentReservationDescription(), "shutting-down");
+    }
+
+    private void checkInstanceMode(ReservationDescription reservationDescription, String mode) {
+        List<Instance> instances = reservationDescription.getInstances();
+        for (Instance instance : instances) {
+            assertEquals(mode, instance.getState());
+        }
     }
 }
