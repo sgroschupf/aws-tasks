@@ -16,20 +16,12 @@ public class InstanceGroupImplIntegTest extends AbstractIntegrationTest {
 
     @Test
     public void testStartWithoutWait() throws Exception {
-        String imageId = "ami-5059be39";
         Jec2 ec2 = new Jec2(_accessKeyId, _accessKeySecret);
-
-        int instanceCount = 1;
-        LaunchConfiguration launchConfiguration = new LaunchConfiguration(imageId, instanceCount, instanceCount);
-        // launchConfiguration.setInstanceType(InstanceType.DEFAULT);// default is small
-        // launchConfiguration.setUserData(null);// see
-        // http://docs.amazonwebservices.com/AWSEC2/2008-02-01/DeveloperGuide/
-        // launchConfiguration.setAvailabilityZone("");
-        InstanceGroup instanceGroup = new InstanceGroupImpl(ec2, launchConfiguration);
+        InstanceGroup instanceGroup = createInstanceGroup(ec2, 1);
 
         // startup
         ReservationDescription reservationDescription = instanceGroup.startup();
-        assertEquals(instanceCount, reservationDescription.getInstances().size());
+        assertEquals(1, reservationDescription.getInstances().size());
         checkInstanceMode(reservationDescription, "pending");
 
         // shutdown
@@ -39,21 +31,28 @@ public class InstanceGroupImplIntegTest extends AbstractIntegrationTest {
 
     @Test
     public void testStartWithWaitOnRunning() throws Exception {
-        String imageId = "ami-5059be39";
         Jec2 ec2 = new Jec2(_accessKeyId, _accessKeySecret);
-
-        int instanceCount = 1;
-        LaunchConfiguration launchConfiguration = new LaunchConfiguration(imageId, instanceCount, instanceCount);
-        InstanceGroup instanceGroup = new InstanceGroupImpl(ec2, launchConfiguration);
+        InstanceGroup instanceGroup = createInstanceGroup(ec2, 1);
 
         // startup
         ReservationDescription reservationDescription = instanceGroup.startup(TimeUnit.MINUTES, 1);
-        assertEquals(instanceCount, reservationDescription.getInstances().size());
+        assertEquals(1, reservationDescription.getInstances().size());
         checkInstanceMode(reservationDescription, "running");
 
         // shutdown
         instanceGroup.shutdown();
         checkInstanceMode(instanceGroup.getCurrentReservationDescription(), "shutting-down");
+    }
+
+    private InstanceGroup createInstanceGroup(Jec2 ec2, int instanceCount) {
+        String imageId = "ami-5059be39";
+        LaunchConfiguration launchConfiguration = new LaunchConfiguration(imageId, instanceCount, instanceCount);
+        launchConfiguration.setKeyName(_privateKeyName);
+        // launchConfiguration.setInstanceType(InstanceType.DEFAULT);// default is small
+        // launchConfiguration.setUserData(null);// see
+        // http://docs.amazonwebservices.com/AWSEC2/2008-02-01/DeveloperGuide/
+        // launchConfiguration.setAvailabilityZone("");
+        return new InstanceGroupImpl(ec2, launchConfiguration);
     }
 
     private void checkInstanceMode(ReservationDescription reservationDescription, String mode) {

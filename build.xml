@@ -78,12 +78,20 @@
 			<classpath refid="compile.classpath" />
 			<classpath refid="test.path" />
 		</javac>
+		<javac encoding="${build.encoding}" srcdir="${it.src.dir}" includes="**/*.java" destdir="${build.dir.test-classes}" debug="${javac.debug}" optimize="${javac.optimize}" target="${javac.version}" source="${javac.version}" deprecation="${javac.deprecation}">
+			<compilerarg line="${javac.args} ${javac.args.warnings}" />
+			<classpath refid="test.classpath" />
+			<classpath refid="compile.classpath" />
+			<classpath refid="test.path" />
+		</javac>
 	</target>
 	
 	<target name="test" depends="unit, it" description="--> run unit &amp; integration tests" />
 
 	<target name="unit" description="--> run unit tests">
-		<antcall target="runTests" />
+		<antcall target="runTests" >
+			<param name="test.batch.dir" value="${test.src.dir}" />
+		</antcall>
 	</target>
 	
 	<target name="it">
@@ -95,7 +103,8 @@
             <param name="build.dir.test-reports" value="${build.dir.it-reports}" />
             <param name="build.dir.test-classes" value="${build.dir.it-classes}" />
             <param name="test.res.dir" value="${it.res.dir}" />
-            <param name="test.src.dir" value="${it.src.dir}" />
+        	<!--<param name="test.src.dir" value="${it.src.dir}" />-->
+        	<param name="test.batch.dir" value="${it.src.dir}" />
         </antcall>
     </target>
 	
@@ -116,14 +125,14 @@
 			</classpath>
 			<formatter type="plain" />
 			<batchtest fork="yes" todir="${build.dir.test-reports}" unless="testcase">
-				<fileset dir="${test.src.dir}">
+				<fileset dir="${test.batch.dir}">
 					<include name="**/*Test.java" unless="testcase" />
 					<exclude name="**/Abstract*.java" unless="testcase" />
 					<include name="${testcase}" if="testcase" />
 				</fileset>
 			</batchtest>
 			<batchtest fork="yes" todir="${build.dir.test-reports}" if="testcase">
-				<fileset dir="${test.src.dir}" includes="**/${testcase}.java" />
+				<fileset dir="${test.batch.dir}" includes="**/${testcase}.java" />
 			</batchtest>
 		</junit>
 		<fail if="tests.failed">Tests failed!</fail>

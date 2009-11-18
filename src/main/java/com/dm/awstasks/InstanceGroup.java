@@ -1,7 +1,9 @@
 package com.dm.awstasks;
 
+import java.io.File;
 import java.util.concurrent.TimeUnit;
 
+import com.dm.awstasks.ssh.ScpUploader;
 import com.xerox.amazonws.ec2.EC2Exception;
 import com.xerox.amazonws.ec2.ReservationDescription;
 
@@ -37,6 +39,8 @@ public interface InstanceGroup {
     ReservationDescription startup(TimeUnit timeUnit, long time) throws EC2Exception;
 
     ReservationDescription getCurrentReservationDescription() throws EC2Exception;
+
+    ScpUploader createScpUploader(File privateKey, String username) throws EC2Exception;
 
     void shutdown() throws EC2Exception;
 

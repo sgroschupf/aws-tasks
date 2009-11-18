@@ -1,11 +1,14 @@
 package com.dm.awstasks;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
+import com.dm.awstasks.ssh.ScpUploader;
+import com.dm.awstasks.ssh.ScpUploaderImpl;
 import com.xerox.amazonws.ec2.EC2Exception;
 import com.xerox.amazonws.ec2.Jec2;
 import com.xerox.amazonws.ec2.LaunchConfiguration;
@@ -26,6 +29,12 @@ public class InstanceGroupImpl implements InstanceGroup {
         _launchConfiguration = launchConfiguration;
     }
 
+    public InstanceGroupImpl(Jec2 ec2, ReservationDescription reservationDescription) {
+        _ec2 = ec2;
+        _launchConfiguration = null;
+        _reservationDescription = reservationDescription;
+    }
+
     @Override
     public ReservationDescription startup() throws EC2Exception {
         return startup(null, 0);
@@ -33,6 +42,8 @@ public class InstanceGroupImpl implements InstanceGroup {
 
     @Override
     public ReservationDescription startup(TimeUnit timeUnit, long time) throws EC2Exception {
+        // TODO jz: return boolean and don't throw ex, the reservationDescription can be retrieved
+        // via getCurrentR...()
         if (_reservationDescription != null) {
             throw new IllegalStateException("instance group already started");
         }
@@ -41,7 +52,7 @@ public class InstanceGroupImpl implements InstanceGroup {
         LOG.info(String.format("triggered start of %d instances: %s", _reservationDescription.getInstances().size(), getInstanceIds(_reservationDescription)));
         if (timeUnit != null) {
             waitUntilServerUp(timeUnit, time);
-            LOG.info(String.format("started %d instances: %s", _reservationDescription.getInstances().size(), getInstanceIds(_reservationDescription)));
+            LOG.info(String.format("started %d instances: %s / %s", _reservationDescription.getInstances().size(), getInstanceIds(_reservationDescription), getInstanceDns(_reservationDescription)));
         }
         return _reservationDescription;
     }
@@ -61,13 +72,22 @@ public class InstanceGroupImpl implements InstanceGroup {
         return instanceIds;
     }
 
+    public static List<String> getInstanceDns(ReservationDescription reservationDescription) {
+        List<Instance> instances = reservationDescription.getInstances();
+        List<String> instanceIds = new ArrayList<String>(instances.size());
+        for (Instance instance : instances) {
+            instanceIds.add(instance.getDnsName());
+        }
+        return instanceIds;
+    }
+
     private ReservationDescription waitUntilServerUp(TimeUnit timeUnit, long waitTime) throws EC2Exception {
         long end = System.currentTimeMillis() + timeUnit.toMillis(waitTime);
         boolean notAllUp;
         do {
             notAllUp = false;
             try {
-                long sleepTime = Math.max(1000, timeUnit.toMillis(waitTime) / 5);
+                long sleepTime = 10000;
                 LOG.info(String.format("waiting on instances to run. Sleeping %d ms... zzz", sleepTime));
                 Thread.sleep(sleepTime);
             } catch (InterruptedException e) {
@@ -96,6 +116,12 @@ public class InstanceGroupImpl implements InstanceGroup {
 
     private synchronized void updateReservationDescription() throws EC2Exception {
         _reservationDescription = _ec2.describeInstances(getInstanceIds(_reservationDescription)).get(0);
+    }
+
+    public ScpUploader createScpUploader(File privateKey, String username) throws EC2Exception {
+        updateReservationDescription();
+        // TODO jz: check if all instances are running ?
+        return new ScpUploaderImpl(privateKey, getInstanceDns(_reservationDescription), username);
     }
 
 }
