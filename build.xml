@@ -13,7 +13,7 @@
 			<include name="**/*.jar" />
 		</fileset>
 		<fileset dir="${lib.dir}/provided">
-			<include name="jetty/servlet-api*.jar" />
+			<include name="**/*.jar" />
 		</fileset>
 	</path>
 	<path id="test.classpath">
@@ -75,11 +75,27 @@
 		<javac encoding="${build.encoding}" srcdir="${test.src.dir}" includes="**/*.java" destdir="${build.dir.test-classes}" debug="${javac.debug}" optimize="${javac.optimize}" target="${javac.version}" source="${javac.version}" deprecation="${javac.deprecation}">
 			<compilerarg line="${javac.args} ${javac.args.warnings}" />
 			<classpath refid="test.classpath" />
+			<classpath refid="compile.classpath" />
 			<classpath refid="test.path" />
 		</javac>
 	</target>
+	
+	<target name="test" depends="unit, it" description="--> run unit &amp; integration tests" />
 
-	<target name="test" depends="compile-test" description="--> run unit tests">
+	<target name="unit" description="--> run unit tests">
+		<antcall target="runTests" />
+	</target>
+	
+	<target name="it">
+        <antcall target="runTests">
+            <param name="build.dir.test-reports" value="${build.dir.it-reports}" />
+            <param name="build.dir.test-classes" value="${build.dir.it-classes}" />
+            <param name="test.res.dir" value="${it.res.dir}" />
+            <param name="test.src.dir" value="${it.src.dir}" />
+        </antcall>
+    </target>
+	
+	<target name="runTests" depends="compile-test" description="--> run unit &amp; integration tests">
 		<delete dir="${build.dir.test-reports}" />
 		<mkdir dir="${build.dir.test-reports}" />
 
@@ -90,7 +106,9 @@
 				<pathelement location="${build.dir.main-classes}" />
 				<pathelement location="${build.dir.test-classes}" />
 				<pathelement location="${test.res.dir}" />
+				<pathelement location="${main.res.dir}" />
 				<path refid="test.classpath" />
+				<path refid="compile.classpath" />
 			</classpath>
 			<formatter type="plain" />
 			<batchtest fork="yes" todir="${build.dir.test-reports}" unless="testcase">
@@ -106,9 +124,7 @@
 		</junit>
 		<fail if="tests.failed">Tests failed!</fail>
 	</target>
-
 	
-
 	<!-- ================================================================== -->
 	<!-- Build jar of sources                                               -->
 	<!-- ================================================================== -->
@@ -183,11 +199,8 @@
 				<source path="${basedir}/src/main/resources" output="${build.dir.main-classes-eclipse}" />
 				<source path="${basedir}/src/test/java" output="${build.dir.test-classes-eclipse}" />
 				<source path="${basedir}/src/test/resources" output="${build.dir.test-classes-eclipse}" />
-				<!--<source path="${basedir}/src/it/java" output="${build.dir.it-classes-eclipse}" />
-				<source path="${basedir}/src/it/resources" output="${build.dir.it-classes-eclipse}" />-->
-
-				<!-- extras -->
-				<!-- we do not yet have extra modules, but it is just a question of time :) -->
+				<source path="${basedir}/src/it/java" output="${build.dir.it-classes-eclipse}" />
+				<source path="${basedir}/src/it/resources" output="${build.dir.it-classes-eclipse}" />
 
 				<output path="${build.dir.main-classes-eclipse}" />
 				<library pathref="test.classpath" exported="false" />
