@@ -16,10 +16,6 @@ public class InstanceGroupImplIntegTest extends AbstractIntegrationTest {
 
     @Test
     public void testStartStop() throws Exception {
-        if (!isEc2Configured()) {
-            LOG.info("skipping test");
-            return;
-        }
         String imageId = "ami-5059be39";
         Jec2 ec2 = new Jec2(_accessKeyId, _accessKeySecret);
 

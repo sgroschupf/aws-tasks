@@ -1,10 +1,13 @@
 package com.dm.awstasks;
 
+import static org.junit.Assert.*;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
+import org.junit.Before;
 import org.junit.BeforeClass;
 
 public abstract class AbstractIntegrationTest {
@@ -21,18 +24,27 @@ public abstract class AbstractIntegrationTest {
     @BeforeClass
     public static void readEc2Properties() throws IOException {
         InputStream inputStream = AbstractIntegrationTest.class.getResourceAsStream(EC2_PROPERTIES_FILE);
-        Properties properties = new Properties();
-        properties.load(inputStream);
-        _accessKeyId = properties.getProperty(ACCESS_KEY_ID);
-        _accessKeySecret = properties.getProperty(ACCESS_KEY_SECRET);
+        if (inputStream != null) {
+            Properties properties = new Properties();
+            properties.load(inputStream);
+            _accessKeyId = properties.getProperty(ACCESS_KEY_ID);
+            _accessKeySecret = properties.getProperty(ACCESS_KEY_SECRET);
+        }
         if (isEc2Configured()) {
             LOG.info("read ec2 properties from file - running integration tests");
         } else {
-            LOG.info("could not read ec2 properties from file - skipping integration tests");
+            LOG.info("could not read ec2 properties from file - failing integration tests");
         }
     }
 
-    protected static boolean isEc2Configured() {
+    @Before
+    public void checkConfiguration() {
+        if (!isEc2Configured()) {
+            fail("can't run integration test without a properly configured src/it/resources/ec2.properties");
+        }
+    }
+
+    private static boolean isEc2Configured() {
         return !nullOrEmpty(_accessKeyId) && !nullOrEmpty(_accessKeySecret);
     }
 

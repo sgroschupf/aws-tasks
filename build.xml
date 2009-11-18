@@ -87,6 +87,10 @@
 	</target>
 	
 	<target name="it">
+		<property name="ec2.properties" value="${it.res.dir}/ec2.properties"/>
+		<available file="${ec2.properties}" property="ec2.configured" value="true"/>
+		<fail unless="ec2.configured" message="please create and edit ${ec2.properties} to run integration tests (see ${ec2.properties}.template)"/>
+
         <antcall target="runTests">
             <param name="build.dir.test-reports" value="${build.dir.it-reports}" />
             <param name="build.dir.test-classes" value="${build.dir.it-classes}" />
