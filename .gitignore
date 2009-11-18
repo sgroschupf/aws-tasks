@@ -1,0 +1,6 @@
+/build/
+.settings
+.project
+.classpath
+bin/
+ec2.properties
