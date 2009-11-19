@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.concurrent.TimeUnit;
 
 import com.dm.awstasks.ssh.ScpUploader;
+import com.dm.awstasks.ssh.SshExecutor;
 import com.xerox.amazonws.ec2.EC2Exception;
 import com.xerox.amazonws.ec2.ReservationDescription;
 
@@ -43,6 +44,10 @@ public interface InstanceGroup {
     ScpUploader createScpUploader(File privateKey, String username) throws EC2Exception;
 
     ScpUploader createScpUploader(File privateKey, String username, int[] instanceIndex) throws EC2Exception;
+
+    SshExecutor createSshExecutor(File privateKey, String username) throws EC2Exception;
+
+    SshExecutor createSshExecutor(File privateKey, String username, int[] instanceIndex) throws EC2Exception;
 
     void shutdown() throws EC2Exception;
 

@@ -9,6 +9,8 @@ import org.apache.log4j.Logger;
 
 import com.dm.awstasks.ssh.ScpUploader;
 import com.dm.awstasks.ssh.ScpUploaderImpl;
+import com.dm.awstasks.ssh.SshExecutor;
+import com.dm.awstasks.ssh.SshExecutorImpl;
 import com.xerox.amazonws.ec2.EC2Exception;
 import com.xerox.amazonws.ec2.Jec2;
 import com.xerox.amazonws.ec2.LaunchConfiguration;
@@ -88,7 +90,7 @@ public class InstanceGroupImpl implements InstanceGroup {
             notAllUp = false;
             try {
                 long sleepTime = 10000;
-                LOG.info(String.format("waiting on instances to run. Sleeping %d ms. zzz...", sleepTime));
+                LOG.info(String.format("wait on instances to enter 'running' mode. Sleeping %d ms. zzz...", sleepTime));
                 Thread.sleep(sleepTime);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -133,6 +135,24 @@ public class InstanceGroupImpl implements InstanceGroup {
             }
         }
         return new ScpUploaderImpl(privateKey, instanceDns, username);
+    }
+
+    @Override
+    public SshExecutor createSshExecutor(File privateKey, String username) throws EC2Exception {
+        return createSshExecutor(privateKey, username, null);
+    }
+
+    @Override
+    public SshExecutor createSshExecutor(File privateKey, String username, int[] instanceIndex) throws EC2Exception {
+        updateReservationDescription();
+        checkInstanceMode(_reservationDescription.getInstances(), "running");
+        List<String> instanceDns = getInstanceDns(_reservationDescription);
+        if (instanceIndex != null) {
+            for (int i = 0; i < instanceIndex.length; i++) {
+                instanceDns.remove(instanceIndex[i]);
+            }
+        }
+        return new SshExecutorImpl(privateKey, instanceDns, username);
     }
 
     private void checkInstanceMode(List<Instance> instances, String desiredMode) {

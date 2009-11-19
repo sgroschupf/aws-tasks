@@ -3,22 +3,12 @@ package com.dm.awstasks.ssh;
 import java.io.File;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.optional.ssh.Scp;
 
-public class ScpUploaderImpl implements ScpUploader {
-
-    private static final Logger LOG = Logger.getLogger(ScpUploaderImpl.class);
-
-    private final File _privateKey;
-    private final String _username;
-    private final List<String> _hostnames;
+public class ScpUploaderImpl extends AbstractSshTool implements ScpUploader {
 
     public ScpUploaderImpl(File privateKey, List<String> hostnames, String username) {
-        _privateKey = privateKey;
-        _hostnames = hostnames;
-        _username = username;
+        super(privateKey, hostnames, username);
     }
 
     public void uploadFile(File localFile, String targetPath) {
@@ -47,14 +37,7 @@ public class ScpUploaderImpl implements ScpUploader {
 
     private Scp createScp(String host) {
         Scp scp = new Scp();
-        Project project = new Project();
-        scp.setProject(project);
-        scp.setUsername(_username);
-        scp.setKeyfile(_privateKey.getAbsolutePath());
-        scp.setTrust(true);
-        scp.setHost(host);
-        scp.setVerbose(true);
-        scp.setFailonerror(true);
+        configureSshBase(scp, host);
         return scp;
     }
 
