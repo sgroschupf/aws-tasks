@@ -7,13 +7,27 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Rule;
+import org.junit.rules.MethodRule;
+import org.junit.runners.model.FrameworkMethod;
+import org.junit.runners.model.Statement;
 
 public class AbstractTest {
 
+    @Rule
+    public PrintTestNameRule _printPrintTestNameRule = new PrintTestNameRule();
+    private static String TEST_CLASS_NAME;
     private Map<String, File> _testName2rootFolder = new HashMap<String, File>();
+
+    @AfterClass
+    public static void printOutTestClassName() {
+        System.out.println("~~~~~~~~~~~~~~~ FIN " + TEST_CLASS_NAME + " ~~~~~~~~~~~~~~~");
+    }
 
     @After
     public final void cleanUpTempFolders() throws Exception {
+        TEST_CLASS_NAME = getClass().getName();
         Collection<File> files = _testName2rootFolder.values();
         for (File file : files) {
             deleteDirectory(file);
@@ -58,6 +72,13 @@ public class AbstractTest {
 
         if (!directory.delete()) {
             throw new IOException("directory could not be fully deleted");
+        }
+    }
+
+    static class PrintTestNameRule implements MethodRule {
+        public Statement apply(Statement base, FrameworkMethod method, Object target) {
+            System.out.println("~~~~~~~~~~~~~~~ " + target.getClass().getName() + "#" + method.getName() + "() ~~~~~~~~~~~~~~~");
+            return base;
         }
     }
 

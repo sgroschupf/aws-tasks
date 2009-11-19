@@ -7,4 +7,5 @@ public interface ScpUploader {
     void uploadFile(File localFile, String targetPath);
 
     void downloadFile(String remoteFile, File localPath);
+
 }

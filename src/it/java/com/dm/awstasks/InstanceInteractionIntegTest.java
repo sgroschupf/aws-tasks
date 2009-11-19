@@ -3,7 +3,8 @@ package com.dm.awstasks;
 import static org.junit.Assert.*;
 
 import java.io.File;
-import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.AfterClass;
@@ -20,16 +21,25 @@ public class InstanceInteractionIntegTest extends AbstractIntegrationTest {
 
     private static InstanceGroupImpl _instanceGroup;
     private static Jec2 _ec2;
-    private static String RUNNING_INSTANCE_ID = "";// fill to avoid startup time
+    private static boolean CLUSTER_ALREADY_RUNNING = false;// to avoid startup time
 
     @BeforeClass
     public static void startupInstanceGroup() throws EC2Exception {
         String imageId = "ami-5059be39";
         _ec2 = new Jec2(_accessKeyId, _accessKeySecret);
-
-        if (isRunningInstanceIdSet()) {
+        if (CLUSTER_ALREADY_RUNNING) {
             LOG.info("using existing instance group");
-            ReservationDescription reservationDescription = _ec2.describeInstances(Arrays.asList(RUNNING_INSTANCE_ID)).get(0);
+            List<ReservationDescription> reservationDescriptions = _ec2.describeInstances(Collections.EMPTY_LIST);
+            ReservationDescription reservationDescription = null;
+            for (ReservationDescription rD : reservationDescriptions) {
+                if (rD.getInstances().get(0).getState().equals("running")) {
+                    reservationDescription = rD;
+                    break;
+                }
+            }
+            if (reservationDescription == null) {
+                fail("no reservation description with running instances found - set CLUSTER_ALREADY_RUNNING to false");
+            }
             _instanceGroup = new InstanceGroupImpl(_ec2, reservationDescription);
         } else {
             LaunchConfiguration launchConfiguration = new LaunchConfiguration(imageId, 2, 2);
@@ -37,16 +47,11 @@ public class InstanceInteractionIntegTest extends AbstractIntegrationTest {
             _instanceGroup = new InstanceGroupImpl(_ec2, launchConfiguration);
             _instanceGroup.startup(TimeUnit.MINUTES, 5);
         }
-
-    }
-
-    private static boolean isRunningInstanceIdSet() {
-        return !RUNNING_INSTANCE_ID.equals("");
     }
 
     @AfterClass
     public static void shutdownInstanceGroup() throws EC2Exception {
-        if (isRunningInstanceIdSet()) {
+        if (CLUSTER_ALREADY_RUNNING) {
             LOG.info("don't shutdown instance group");
         } else {
             _instanceGroup.shutdown();
@@ -54,7 +59,7 @@ public class InstanceInteractionIntegTest extends AbstractIntegrationTest {
     }
 
     @Test
-    public void testScpUpload() throws Exception {
+    public void testScpUploadToAllInstances() throws Exception {
         File privateKeyFile = new File(_privateKeyFile);
         ScpUploader scpUploader = _instanceGroup.createScpUploader(privateKeyFile, "ubuntu");
         File localFile = new File("README.markdown");
@@ -66,6 +71,29 @@ public class InstanceInteractionIntegTest extends AbstractIntegrationTest {
         scpUploader.downloadFile(remoteDir + localFile.getName(), localDestinationFolder);
         assertEquals(1, localDestinationFolder.list().length);
         assertEquals(localFile.length(), new File(localDestinationFolder, localFile.getName()).length());
+    }
+
+    @Test
+    public void testScpUploadToSpecificInstances() throws Exception {
+        File privateKeyFile = new File(_privateKeyFile);
+        ScpUploader scpUploader1 = _instanceGroup.createScpUploader(privateKeyFile, "ubuntu", new int[] { 0 });
+        File localFile = new File("build.xml");
+        String remoteDir = "~/";
+        scpUploader1.uploadFile(localFile, remoteDir);
+
+        File localDestinationFolder = createTmpFile("localDestinationFolder");
+        localDestinationFolder.mkdirs();
+        scpUploader1.downloadFile(remoteDir + localFile.getName(), localDestinationFolder);
+        assertEquals(1, localDestinationFolder.list().length);
+        assertEquals(localFile.length(), new File(localDestinationFolder, localFile.getName()).length());
+
+        ScpUploader scpUploader2 = _instanceGroup.createScpUploader(privateKeyFile, "ubuntu", new int[] { 1 });
+        try {
+            scpUploader2.downloadFile(remoteDir + localFile.getName(), localDestinationFolder);
+            fail("should throw exception");
+        } catch (Exception e) {
+            // expected
+        }
     }
 
 }

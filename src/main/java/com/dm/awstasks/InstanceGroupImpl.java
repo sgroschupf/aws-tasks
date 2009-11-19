@@ -88,7 +88,7 @@ public class InstanceGroupImpl implements InstanceGroup {
             notAllUp = false;
             try {
                 long sleepTime = 10000;
-                LOG.info(String.format("waiting on instances to run. Sleeping %d ms... zzz", sleepTime));
+                LOG.info(String.format("waiting on instances to run. Sleeping %d ms. zzz...", sleepTime));
                 Thread.sleep(sleepTime);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -119,9 +119,28 @@ public class InstanceGroupImpl implements InstanceGroup {
     }
 
     public ScpUploader createScpUploader(File privateKey, String username) throws EC2Exception {
+        return createScpUploader(privateKey, username, null);
+    }
+
+    @Override
+    public ScpUploader createScpUploader(File privateKey, String username, int[] instanceIndex) throws EC2Exception {
         updateReservationDescription();
-        // TODO jz: check if all instances are running ?
-        return new ScpUploaderImpl(privateKey, getInstanceDns(_reservationDescription), username);
+        checkInstanceMode(_reservationDescription.getInstances(), "running");
+        List<String> instanceDns = getInstanceDns(_reservationDescription);
+        if (instanceIndex != null) {
+            for (int i = 0; i < instanceIndex.length; i++) {
+                instanceDns.remove(instanceIndex[i]);
+            }
+        }
+        return new ScpUploaderImpl(privateKey, instanceDns, username);
+    }
+
+    private void checkInstanceMode(List<Instance> instances, String desiredMode) {
+        for (Instance instance : instances) {
+            if (!instance.getState().equals(desiredMode)) {
+                throw new IllegalStateException("instance " + instance.getInstanceId() + " is not in mode '" + desiredMode + "' but in mode '" + instance.getState() + "'");
+            }
+        }
     }
 
 }

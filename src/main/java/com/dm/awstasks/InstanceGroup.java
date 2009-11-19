@@ -42,6 +42,8 @@ public interface InstanceGroup {
 
     ScpUploader createScpUploader(File privateKey, String username) throws EC2Exception;
 
+    ScpUploader createScpUploader(File privateKey, String username, int[] instanceIndex) throws EC2Exception;
+
     void shutdown() throws EC2Exception;
 
 }

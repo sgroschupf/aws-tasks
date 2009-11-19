@@ -61,4 +61,5 @@ public class ScpUploaderImpl implements ScpUploader {
     private String constructRemotePath(String host, String filePath) {
         return _username + ":" + "@" + host + ":" + filePath;
     }
+
 }
