@@ -11,6 +11,7 @@ import com.dm.awstasks.ssh.ScpUploader;
 import com.dm.awstasks.ssh.ScpUploaderImpl;
 import com.dm.awstasks.ssh.SshExecutor;
 import com.dm.awstasks.ssh.SshExecutorImpl;
+import com.dm.awstasks.util.Ec2Util;
 import com.xerox.amazonws.ec2.EC2Exception;
 import com.xerox.amazonws.ec2.Jec2;
 import com.xerox.amazonws.ec2.LaunchConfiguration;
@@ -23,58 +24,64 @@ public class InstanceGroupImpl implements InstanceGroup {
     private static Logger LOG = Logger.getLogger(InstanceGroupImpl.class);
 
     private final Jec2 _ec2;
-    private final LaunchConfiguration _launchConfiguration;
     private ReservationDescription _reservationDescription;
 
-    public InstanceGroupImpl(Jec2 ec2, LaunchConfiguration launchConfiguration) {
+    public InstanceGroupImpl(Jec2 ec2) {
         _ec2 = ec2;
-        _launchConfiguration = launchConfiguration;
     }
 
-    public InstanceGroupImpl(Jec2 ec2, ReservationDescription reservationDescription) {
-        _ec2 = ec2;
-        _launchConfiguration = null;
+    @Override
+    public void connectTo(String groupName) throws EC2Exception {
+        checkAssociation(false);
+        LOG.info(String.format("connecting to group '%s'", groupName));
+        _reservationDescription = Ec2Util.findByGroup(_ec2, groupName, "running");
+    }
+
+    @Override
+    public void connectTo(ReservationDescription reservationDescription) throws EC2Exception {
+        checkAssociation(false);
+        LOG.info(String.format("connecting to reservation '%s'", reservationDescription.getReservationId()));
         _reservationDescription = reservationDescription;
+        updateReservationDescription();
     }
 
     @Override
-    public ReservationDescription startup() throws EC2Exception {
-        return startup(null, 0);
+    public ReservationDescription startup(LaunchConfiguration launchConfiguration) throws EC2Exception {
+        return startup(launchConfiguration, null, 0);
     }
 
     @Override
-    public ReservationDescription startup(TimeUnit timeUnit, long time) throws EC2Exception {
-        // TODO jz: return boolean and don't throw ex, the reservationDescription can be retrieved
-        // via getCurrentR...()
-        if (_reservationDescription != null) {
-            throw new IllegalStateException("instance group already started");
-        }
-        LOG.info(String.format("starting %d to %d instances...", _launchConfiguration.getMinCount(), _launchConfiguration.getMaxCount()));
-        _reservationDescription = _ec2.runInstances(_launchConfiguration);
-        LOG.info(String.format("triggered start of %d instances: %s", _reservationDescription.getInstances().size(), getInstanceIds(_reservationDescription)));
+    public ReservationDescription startup(LaunchConfiguration launchConfiguration, TimeUnit timeUnit, long time) throws EC2Exception {
+        checkAssociation(false);
+        LOG.info(String.format("starting %d to %d instances...", launchConfiguration.getMinCount(), launchConfiguration.getMaxCount()));
+        _reservationDescription = _ec2.runInstances(launchConfiguration);
+        List<String> instanceIds = Ec2Util.getInstanceIds(_reservationDescription);
+        LOG.info(String.format("triggered start of %d instances: %s", _reservationDescription.getInstances().size(), instanceIds));
         if (timeUnit != null) {
             waitUntilServerUp(timeUnit, time);
-            LOG.info(String.format("started %d instances: %s / %s", _reservationDescription.getInstances().size(), getInstanceIds(_reservationDescription), getInstanceDns(_reservationDescription)));
+            LOG.info(String.format("started %d instances: %s / %s", _reservationDescription.getInstances().size(), instanceIds, getInstanceDns(_reservationDescription)));
         }
         return _reservationDescription;
     }
 
+    private void checkAssociation(boolean shouldBeAssociated) throws EC2Exception {
+        if (shouldBeAssociated && !isAssociated()) {
+            throw new IllegalStateException("instance group is not yet associated with ec2 instances");
+        }
+        if (!shouldBeAssociated && isAssociated()) {
+            throw new IllegalStateException("instance group already associated with ec2 instances");
+        }
+    }
+
     @Override
     public void shutdown() throws EC2Exception {
-        List<TerminatingInstanceDescription> terminatedInstances = _ec2.terminateInstances(getInstanceIds(_reservationDescription));
+        checkAssociation(true);
+        List<TerminatingInstanceDescription> terminatedInstances = _ec2.terminateInstances(Ec2Util.getInstanceIds(_reservationDescription));
+        _reservationDescription = null;
         LOG.info("stopped " + terminatedInstances.size() + " instances");
     }
 
-    public static List<String> getInstanceIds(ReservationDescription reservationDescription) {
-        List<Instance> instances = reservationDescription.getInstances();
-        List<String> instanceIds = new ArrayList<String>(instances.size());
-        for (Instance instance : instances) {
-            instanceIds.add(instance.getInstanceId());
-        }
-        return instanceIds;
-    }
-
-    public static List<String> getInstanceDns(ReservationDescription reservationDescription) {
+    private static List<String> getInstanceDns(ReservationDescription reservationDescription) {
         List<Instance> instances = reservationDescription.getInstances();
         List<String> instanceIds = new ArrayList<String>(instances.size());
         for (Instance instance : instances) {
@@ -112,12 +119,13 @@ public class InstanceGroupImpl implements InstanceGroup {
 
     @Override
     public ReservationDescription getCurrentReservationDescription() throws EC2Exception {
+        checkAssociation(true);
         updateReservationDescription();
         return _reservationDescription;
     }
 
     private synchronized void updateReservationDescription() throws EC2Exception {
-        _reservationDescription = _ec2.describeInstances(getInstanceIds(_reservationDescription)).get(0);
+        _reservationDescription = Ec2Util.reloadReservationDescription(_ec2, _reservationDescription);
     }
 
     public ScpUploader createScpUploader(File privateKey, String username) throws EC2Exception {
@@ -126,6 +134,7 @@ public class InstanceGroupImpl implements InstanceGroup {
 
     @Override
     public ScpUploader createScpUploader(File privateKey, String username, int[] instanceIndex) throws EC2Exception {
+        checkAssociation(true);
         updateReservationDescription();
         checkInstanceMode(_reservationDescription.getInstances(), "running");
         List<String> instanceDns = getInstanceDns(_reservationDescription);
@@ -144,6 +153,7 @@ public class InstanceGroupImpl implements InstanceGroup {
 
     @Override
     public SshExecutor createSshExecutor(File privateKey, String username, int[] instanceIndex) throws EC2Exception {
+        checkAssociation(true);
         updateReservationDescription();
         checkInstanceMode(_reservationDescription.getInstances(), "running");
         List<String> instanceDns = getInstanceDns(_reservationDescription);
@@ -161,6 +171,11 @@ public class InstanceGroupImpl implements InstanceGroup {
                 throw new IllegalStateException("instance " + instance.getInstanceId() + " is not in mode '" + desiredMode + "' but in mode '" + instance.getState() + "'");
             }
         }
+    }
+
+    @Override
+    public boolean isAssociated() throws EC2Exception {
+        return _reservationDescription != null;
     }
 
 }

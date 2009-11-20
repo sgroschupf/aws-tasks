@@ -4,8 +4,6 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.AfterClass;
@@ -16,9 +14,9 @@ import org.junit.rules.TemporaryFolder;
 
 import com.dm.awstasks.ssh.ScpUploader;
 import com.dm.awstasks.ssh.SshExecutor;
+import com.dm.awstasks.util.Ec2Util;
 import com.xerox.amazonws.ec2.EC2Exception;
 import com.xerox.amazonws.ec2.Jec2;
-import com.xerox.amazonws.ec2.LaunchConfiguration;
 import com.xerox.amazonws.ec2.ReservationDescription;
 
 public class InstanceInteractionIntegTest extends AbstractIntegrationTest {
@@ -31,34 +29,22 @@ public class InstanceInteractionIntegTest extends AbstractIntegrationTest {
 
     @BeforeClass
     public static void startupInstanceGroup() throws EC2Exception {
-        String imageId = "ami-5059be39";
         _ec2 = new Jec2(_accessKeyId, _accessKeySecret);
-        if (CLUSTER_ALREADY_RUNNING) {
-            LOG.info("using existing instance group");
-            List<ReservationDescription> reservationDescriptions = _ec2.describeInstances(Collections.EMPTY_LIST);
-            ReservationDescription reservationDescription = null;
-            for (ReservationDescription rD : reservationDescriptions) {
-                if (rD.getInstances().get(0).getState().equals("running")) {
-                    reservationDescription = rD;
-                    break;
-                }
-            }
-            if (reservationDescription == null) {
-                LOG.warn("reservation description with running instances found - starting instance group");
-                startupInstanceGroup(imageId);
-            } else {
-                _instanceGroup = new InstanceGroupImpl(_ec2, reservationDescription);
-            }
-        } else {
-            startupInstanceGroup(imageId);
-        }
-    }
+        _instanceGroup = new InstanceGroupImpl(_ec2);
 
-    private static void startupInstanceGroup(String imageId) throws EC2Exception {
-        LaunchConfiguration launchConfiguration = new LaunchConfiguration(imageId, 2, 2);
-        launchConfiguration.setKeyName(_privateKeyName);
-        _instanceGroup = new InstanceGroupImpl(_ec2, launchConfiguration);
-        _instanceGroup.startup(TimeUnit.MINUTES, 5);
+        if (CLUSTER_ALREADY_RUNNING) {
+            LOG.info("try to use existing instance group");
+            ReservationDescription reservationDescription = Ec2Util.findByGroup(_ec2, "default", "running");
+            if (reservationDescription == null) {
+                LOG.warn("reservation description with running instances NOT found - starting instance group");
+            } else {
+                LOG.warn("reservation description with running instances FOUND - using instance group");
+                _instanceGroup.connectTo(reservationDescription);
+            }
+        }
+        if (!_instanceGroup.isAssociated()) {
+            _instanceGroup.startup(createLaunchConfiguration(2), TimeUnit.MINUTES, 5);
+        }
     }
 
     @AfterClass

@@ -1,4 +1,4 @@
-accessKeyId=
-accessKeySecret=
-privateKeyName=
-privateKeyFile=
+ec2.accessKey=
+ec2.accessSecret=
+ec2.privateKeyName=
+ec2.privateKeyFile=

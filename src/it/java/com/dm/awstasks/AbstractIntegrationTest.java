@@ -11,15 +11,17 @@ import org.apache.log4j.Logger;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
+import com.xerox.amazonws.ec2.LaunchConfiguration;
+
 public abstract class AbstractIntegrationTest extends AbstractTest {
 
     protected static final Logger LOG = Logger.getLogger(AbstractIntegrationTest.class);
 
     private static final String EC2_PROPERTIES_FILE = "/ec2.properties";
-    private static final String ACCESS_KEY_ID = "accessKeyId";
-    private static final String ACCESS_KEY_SECRET = "accessKeySecret";
-    private static final String PRIVATE_KEY_NAME = "privateKeyName";
-    private static final String PRIVATE_KEY_FILE = "privateKeyFile";
+    private static final String ACCESS_KEY = "ec2.accessKey";
+    private static final String ACCESS_KEY_SECRET = "ec2.accessSecret";
+    private static final String PRIVATE_KEY_NAME = "ec2.privateKeyName";
+    private static final String PRIVATE_KEY_FILE = "ec2.privateKeyFile";
 
     protected static String _accessKeyId;
     protected static String _accessKeySecret;
@@ -32,7 +34,7 @@ public abstract class AbstractIntegrationTest extends AbstractTest {
         if (inputStream != null) {
             Properties properties = new Properties();
             properties.load(inputStream);
-            _accessKeyId = properties.getProperty(ACCESS_KEY_ID);
+            _accessKeyId = properties.getProperty(ACCESS_KEY);
             _accessKeySecret = properties.getProperty(ACCESS_KEY_SECRET);
             _privateKeyName = properties.getProperty(PRIVATE_KEY_NAME);
             _privateKeyFile = properties.getProperty(PRIVATE_KEY_FILE);
@@ -51,6 +53,17 @@ public abstract class AbstractIntegrationTest extends AbstractTest {
         } else if (!new File(_privateKeyFile).exists()) {
             fail(String.format("private key file '%s' not exists", _privateKeyFile));
         }
+    }
+
+    protected static LaunchConfiguration createLaunchConfiguration(int instanceCount) {
+        String imageId = "ami-5059be39";
+        LaunchConfiguration launchConfiguration = new LaunchConfiguration(imageId, instanceCount, instanceCount);
+        launchConfiguration.setKeyName(_privateKeyName);
+        // launchConfiguration.setInstanceType(InstanceType.DEFAULT);// default is small
+        // launchConfiguration.setUserData(null);// see
+        // http://docs.amazonwebservices.com/AWSEC2/2008-02-01/DeveloperGuide/
+        // launchConfiguration.setAvailabilityZone("");
+        return launchConfiguration;
     }
 
     private static boolean isEc2Configured() {
