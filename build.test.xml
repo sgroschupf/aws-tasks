@@ -12,7 +12,10 @@
 	<!-- ================================================================== -->
 	<!-- CLASSPATH 				                                            -->
 	<!-- ================================================================== -->
-	<path id="compile.classpath">
+	
+	<path id="task.classpath">
+		<pathelement location="${build.dir.main-classes}" />
+		<pathelement location="${main.res.dir}" />
 		<fileset dir="${lib.dir}/compile">
 			<include name="**/*.jar" />
 		</fileset>
@@ -26,22 +29,10 @@
 	<!-- AWS TASKS DEFINITION	                                            -->
 	<!-- ================================================================== -->
 	
-	<taskdef name="ec2-start" classname="com.dm.awstasks.ant.Ec2StartTask" >
-		<classpath>
-			<pathelement location="${build.dir.main-classes}" />
-			<pathelement location="${main.res.dir}" />
-			<path refid="compile.classpath" />
-		</classpath>
-	</taskdef>
-	
-	<taskdef name="ec2-stop" classname="com.dm.awstasks.ant.Ec2StopTask" >
-		<classpath>
-			<pathelement location="${build.dir.main-classes}" />
-			<pathelement location="${main.res.dir}" />
-			<path refid="compile.classpath" />
-		</classpath>
-	</taskdef>
-	
+	<taskdef name="ec2-start" classname="com.dm.awstasks.ec2.ant.Ec2StartTask" classpathref="task.classpath"/>
+	<taskdef name="ec2-stop" classname="com.dm.awstasks.ec2.ant.Ec2StopTask" classpathref="task.classpath"/>
+	<taskdef name="ec2-scp" classname="com.dm.awstasks.ec2.ant.Ec2ScpTask" classpathref="task.classpath"/>
+
 	
 	<!-- ================================================================== -->
 	<!-- START EC2 EXAMPLE TASK	                                            -->
@@ -49,11 +40,27 @@
 	<target name="start-ec2" description="--> start ec2 instance groups">
 		<ec2-start groupName="default"
 			ami="ami-5059be39"
-			instanceCount="2"
+			instanceCount="1"
 			accessKey="${ec2.accessKey}"
 			accessSecret="${ec2.accessSecret}"
 			privateKeyName="${ec2.privateKeyName}">
 		</ec2-start>
+	</target>
+	
+	<!-- ================================================================== -->
+	<!-- PREPARE EC2 EXAMPLE TASK	                                            -->
+	<!-- ================================================================== -->
+	<target name="prepare-ec2" description="--> prepare fresh ec2 instance groups">
+		<property name="myclasspath" refid="task.classpath"/>
+		<echo message="Classpath = ${myclasspath}"/>
+
+		<ec2-scp groupName="default"
+			accessKey="${ec2.accessKey}"
+			accessSecret="${ec2.accessSecret}"
+			username="ubuntu"
+			keyfile="${ec2.privateKeyFile}">
+			<upload localFile="build.xml" remotePath="build.xml" targetInstances="all"/>
+		</ec2-scp>
 	</target>
 	
 	<!-- ================================================================== -->
@@ -69,7 +76,7 @@
 	<!-- ================================================================== -->
 	<!-- TEST EC2 EXAMPLE TASKs	                                            -->
 	<!-- ================================================================== -->
-	<target name="test-ec2" depends="start-ec2, stop-ec2" description="--> test all ec2 tasks">
+	<target name="test-ec2" depends="start-ec2, prepare-ec2, stop-ec2" description="--> test all ec2 tasks">
 		<echo>fin running ec2 tasks</echo>
 	</target>
 	

@@ -1,4 +1,4 @@
-package com.dm.awstasks;
+package com.dm.awstasks.ec2;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -7,10 +7,10 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
-import com.dm.awstasks.ssh.ScpUploader;
-import com.dm.awstasks.ssh.ScpUploaderImpl;
-import com.dm.awstasks.ssh.SshExecutor;
-import com.dm.awstasks.ssh.SshExecutorImpl;
+import com.dm.awstasks.ec2.ssh.Ec2ScpUploader;
+import com.dm.awstasks.ec2.ssh.Ec2ScpUploaderImpl;
+import com.dm.awstasks.ec2.ssh.Ec2SshExecutor;
+import com.dm.awstasks.ec2.ssh.EcSshExecutorImpl;
 import com.dm.awstasks.util.Ec2Util;
 import com.xerox.amazonws.ec2.EC2Exception;
 import com.xerox.amazonws.ec2.Jec2;
@@ -35,6 +35,9 @@ public class InstanceGroupImpl implements InstanceGroup {
         checkAssociation(false);
         LOG.info(String.format("connecting to group '%s'", groupName));
         _reservationDescription = Ec2Util.findByGroup(_ec2, groupName, "running");
+        if (_reservationDescription == null) {
+            throw new EC2Exception("no instances of group '" + groupName + "' running");
+        }
     }
 
     @Override
@@ -128,41 +131,21 @@ public class InstanceGroupImpl implements InstanceGroup {
         _reservationDescription = Ec2Util.reloadReservationDescription(_ec2, _reservationDescription);
     }
 
-    public ScpUploader createScpUploader(File privateKey, String username) throws EC2Exception {
-        return createScpUploader(privateKey, username, null);
-    }
-
-    @Override
-    public ScpUploader createScpUploader(File privateKey, String username, int[] instanceIndex) throws EC2Exception {
+    public Ec2ScpUploader createScpUploader(File privateKey, String username) throws EC2Exception {
         checkAssociation(true);
         updateReservationDescription();
         checkInstanceMode(_reservationDescription.getInstances(), "running");
         List<String> instanceDns = getInstanceDns(_reservationDescription);
-        if (instanceIndex != null) {
-            for (int i = 0; i < instanceIndex.length; i++) {
-                instanceDns.remove(instanceIndex[i]);
-            }
-        }
-        return new ScpUploaderImpl(privateKey, instanceDns, username);
+        return new Ec2ScpUploaderImpl(privateKey, instanceDns, username);
     }
 
     @Override
-    public SshExecutor createSshExecutor(File privateKey, String username) throws EC2Exception {
-        return createSshExecutor(privateKey, username, null);
-    }
-
-    @Override
-    public SshExecutor createSshExecutor(File privateKey, String username, int[] instanceIndex) throws EC2Exception {
+    public Ec2SshExecutor createSshExecutor(File privateKey, String username) throws EC2Exception {
         checkAssociation(true);
         updateReservationDescription();
         checkInstanceMode(_reservationDescription.getInstances(), "running");
         List<String> instanceDns = getInstanceDns(_reservationDescription);
-        if (instanceIndex != null) {
-            for (int i = 0; i < instanceIndex.length; i++) {
-                instanceDns.remove(instanceIndex[i]);
-            }
-        }
-        return new SshExecutorImpl(privateKey, instanceDns, username);
+        return new EcSshExecutorImpl(privateKey, instanceDns, username);
     }
 
     private void checkInstanceMode(List<Instance> instances, String desiredMode) {

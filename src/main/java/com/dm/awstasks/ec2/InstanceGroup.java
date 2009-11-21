@@ -1,16 +1,16 @@
-package com.dm.awstasks;
+package com.dm.awstasks.ec2;
 
 import java.io.File;
 import java.util.concurrent.TimeUnit;
 
-import com.dm.awstasks.ssh.ScpUploader;
-import com.dm.awstasks.ssh.SshExecutor;
+import com.dm.awstasks.ec2.ssh.Ec2ScpUploader;
+import com.dm.awstasks.ec2.ssh.Ec2SshExecutor;
 import com.xerox.amazonws.ec2.EC2Exception;
 import com.xerox.amazonws.ec2.LaunchConfiguration;
 import com.xerox.amazonws.ec2.ReservationDescription;
 
 /**
- * An amazon ec2 group of instances for a given AMI (Amazon machine image).
+ * An amazon ec2 group of instances for a given AMI (Amazon Machine Image).
  */
 public interface InstanceGroup {
 
@@ -59,16 +59,6 @@ public interface InstanceGroup {
      */
     void connectTo(String groupName) throws EC2Exception;
 
-    ReservationDescription getCurrentReservationDescription() throws EC2Exception;
-
-    ScpUploader createScpUploader(File privateKey, String username) throws EC2Exception;
-
-    ScpUploader createScpUploader(File privateKey, String username, int[] instanceIndex) throws EC2Exception;
-
-    SshExecutor createSshExecutor(File privateKey, String username) throws EC2Exception;
-
-    SshExecutor createSshExecutor(File privateKey, String username, int[] instanceIndex) throws EC2Exception;
-
     /**
      * Shut all ec2 instances in this group down.
      * 
@@ -84,4 +74,9 @@ public interface InstanceGroup {
      */
     boolean isAssociated() throws EC2Exception;
 
+    ReservationDescription getCurrentReservationDescription() throws EC2Exception;
+
+    Ec2ScpUploader createScpUploader(File privateKey, String username) throws EC2Exception;
+
+    Ec2SshExecutor createSshExecutor(File privateKey, String username) throws EC2Exception;
 }

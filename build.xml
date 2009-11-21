@@ -44,8 +44,47 @@
 			<fileset dir="${build.dir}" excludes="classes-*-eclipse/" />
 		</delete>
 	</target>
+	
+	<target name="start-ec2" description="--> start ec2 instance groups">
+		<ec2-start name="hadoopCluster" 
+			ami="ami-5059be38" 
+			instanceCount="5"
+			accessKey="${aws.accessKey}"
+			accessSecret="${aws.accessSecret}">
+			<scp keyfile="${aws.keyfile}">
+				<upload localFile="build/dist/b.jar" remotePath="/hadoop/lib/" targetInstances="[0, 1]"/>
+				<upload localFile="build/dist/a.jar" remotePath="/hadoop/lib/" targetInstances="all"/>
+			</scp>
+			<sshExec keyfile="${aws.keyfile}">
+				<exec command="/hadoop/bin/start-all.sh" targetInstances="[0, 1]"/>
+				<exec comanndFile="src/scripts/init-hadoop.sh" targetInstances="all"/>
+			</sshExec>
+		</ec2-start>
+		
+		<ec2-start name="kattaCluster" 
+			ami="ami-5059be39" 
+			instanceCount="3"
+			accessKey="${aws.accessKey}"
+			accessSecret="${aws.accessSecret}">
+			<sshExec keyfile="${aws.keyfile}">
+				<exec command="/katta/bin/start-all.sh" targetInstances="all"/>
+			</sshExec>
+		</ec2-start>
+	</target>
 
-
+	<target name="stop-ec2" description="--> stop ec2 instance groups">
+		<ec2-stop name="hadoopCluster" 
+			accessKey="${aws.accessKey}"
+			accessSecret="${aws.accessSecret}">
+		</ec2-stop>
+		<ec2-stop name="kattaCluster" 
+			accessKey="${aws.accessKey}"
+			accessSecret="${aws.accessSecret}">
+			<scp keyfile="${aws.keyfile}">
+				<download remoteFile="/katta/logs/a.log" localPath="build/ec2/logs" targetInstances="[all]"/>
+			</scp>
+		</ec2-stop>
+	</target>
 
 	<!-- ================================================================== -->
 	<!-- Build sources                                                      -->

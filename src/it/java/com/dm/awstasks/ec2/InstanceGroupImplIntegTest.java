@@ -1,4 +1,4 @@
-package com.dm.awstasks;
+package com.dm.awstasks.ec2;
 
 import static org.junit.Assert.*;
 
@@ -7,12 +7,14 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
+import com.dm.awstasks.ec2.InstanceGroup;
+import com.dm.awstasks.ec2.InstanceGroupImpl;
 import com.dm.awstasks.util.Ec2Util;
 import com.xerox.amazonws.ec2.Jec2;
 import com.xerox.amazonws.ec2.ReservationDescription;
 import com.xerox.amazonws.ec2.ReservationDescription.Instance;
 
-public class InstanceGroupImplIntegTest extends AbstractIntegrationTest {
+public class InstanceGroupImplIntegTest extends AbstractEc2IntegrationTest {
 
     @Test
     public void testStartWithoutWait() throws Exception {

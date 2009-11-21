@@ -1,11 +1,11 @@
-package com.dm.awstasks.ant;
+package com.dm.awstasks.ec2.ant;
 
 import java.util.concurrent.TimeUnit;
 
 import org.apache.tools.ant.BuildException;
 
-import com.dm.awstasks.InstanceGroup;
-import com.dm.awstasks.InstanceGroupImpl;
+import com.dm.awstasks.ec2.InstanceGroup;
+import com.dm.awstasks.ec2.InstanceGroupImpl;
 import com.xerox.amazonws.ec2.EC2Exception;
 import com.xerox.amazonws.ec2.Jec2;
 import com.xerox.amazonws.ec2.LaunchConfiguration;

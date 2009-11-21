@@ -1,4 +1,4 @@
-package com.dm.awstasks;
+package com.dm.awstasks.ec2;
 
 import static org.junit.Assert.*;
 
@@ -11,11 +11,12 @@ import org.apache.log4j.Logger;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
+import com.dm.awstasks.AbstractTest;
 import com.xerox.amazonws.ec2.LaunchConfiguration;
 
-public abstract class AbstractIntegrationTest extends AbstractTest {
+public abstract class AbstractEc2IntegrationTest extends AbstractTest {
 
-    protected static final Logger LOG = Logger.getLogger(AbstractIntegrationTest.class);
+    protected static final Logger LOG = Logger.getLogger(AbstractEc2IntegrationTest.class);
 
     private static final String EC2_PROPERTIES_FILE = "/ec2.properties";
     private static final String ACCESS_KEY = "ec2.accessKey";
@@ -30,7 +31,7 @@ public abstract class AbstractIntegrationTest extends AbstractTest {
 
     @BeforeClass
     public static void readEc2Properties() throws IOException {
-        InputStream inputStream = AbstractIntegrationTest.class.getResourceAsStream(EC2_PROPERTIES_FILE);
+        InputStream inputStream = AbstractEc2IntegrationTest.class.getResourceAsStream(EC2_PROPERTIES_FILE);
         if (inputStream != null) {
             Properties properties = new Properties();
             properties.load(inputStream);

@@ -1,4 +1,4 @@
-package com.dm.awstasks.ant;
+package com.dm.awstasks.ec2.ant;
 
 import org.apache.tools.ant.Task;
 
