@@ -1,16 +1,16 @@
 ABOUT
 =====
 + ant tasks for amazon web services
-+ see https://github.com/sgroschupf/aws-tasks for details
++ see for details https://github.com/sgroschupf/aws-tasks
 
 
 FEATURES
 =====
 + java/ant api for:
-	++ start instances
-	++ stop instances
-	++ scp upload/download 
-	++ ssh command execution
+++ start instances
+++ stop instances
+++ scp upload/download 
+++ ssh command execution
 
 
 USAGE
@@ -28,7 +28,7 @@ JAVA API
     String _accessKeyId;
     String _accessKeySecret;
     String _privateKeyName;
-        
+
     Jec2 ec2 = new Jec2(_accessKeyId, _accessKeySecret);
     InstanceGroup instanceGroup = new InstanceGroupImpl(ec2);
 
@@ -40,20 +40,18 @@ JAVA API
     // or connect to a running one
     instanceGroup.connectTo("securityGroup");
 
-    // use scp - to all instances
-    Ec2ScpUploader scpUploader = instanceGroup.createScpUploader("ubuntu", _privateKeyFile);
-    scpUploader.uploadFile(new File("/etc/someFile"), "~/uploadedFile");
-    scpUploader.uploadFile(new File("/etc/someDir"), "~/");
-    scpUploader.downloadFile("~/someFile", new File("/etc/someFileDownloaded"), false);
+    // scp/ssh - to all instances
+    SshClient sshClient = instanceGroup.createSshClient("ubuntu", _privateKeyFile);
+    sshClient.uploadFile(new File("/etc/someFile"), "~/uploadedFile");
+    sshClient.uploadFile(new File("/etc/someDir"), "~/");
+    sshClient.downloadFile("~/someFile", new File("/etc/someFileDownloaded"), false);
+    sshClient.executeCommand("ls -l ~/");
 
     // or to specific instances
-    scpUploader.uploadFile(new File("/etc/someFile"), "~/uploadedFile", new int[] { 0 });
-    scpUploader.uploadFile(new File("/etc/someFile2"), "~/uploadedFile", new int[] { 1, 2, 3, 4 });
-
-    // same with ssh
-    Ec2SshExecutor sshExecutor = instanceGroup.createSshExecutor("ubuntu", _privateKeyFile);
-    sshExecutor.executeCommand("start-master.sh -v", new int[] { 0 });
-    sshExecutor.executeCommand("start-nodes.sh -v", new int[] { 1, 2, 3, 4 });
+    sshClient.uploadFile(new File("/etc/someFile"), "~/uploadedFile", new int[] { 0 });
+    sshClient.uploadFile(new File("/etc/someFile2"), "~/uploadedFile", new int[] { 1, 2, 3, 4 });
+    sshClient.executeCommand("start-master.sh -v", new int[] { 0 });
+    sshClient.executeCommand("start-nodes.sh -v", new int[] { 1, 2, 3, 4 });
 
     // shutdown ec2 instances
     instanceGroup.shutdown();
