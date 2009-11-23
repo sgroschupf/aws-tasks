@@ -1,6 +1,6 @@
 package com.dm.awstasks.ec2.ant.model;
 
-public abstract class TargetedCommand {
+public abstract class SshCommand {
 
     private String _targetInstances;
 

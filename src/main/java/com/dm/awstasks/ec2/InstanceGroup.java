@@ -3,8 +3,7 @@ package com.dm.awstasks.ec2;
 import java.io.File;
 import java.util.concurrent.TimeUnit;
 
-import com.dm.awstasks.ec2.ssh.Ec2ScpUploader;
-import com.dm.awstasks.ec2.ssh.Ec2SshExecutor;
+import com.dm.awstasks.ec2.ssh.SshClient;
 import com.xerox.amazonws.ec2.EC2Exception;
 import com.xerox.amazonws.ec2.LaunchConfiguration;
 import com.xerox.amazonws.ec2.ReservationDescription;
@@ -76,7 +75,6 @@ public interface InstanceGroup {
 
     ReservationDescription getCurrentReservationDescription() throws EC2Exception;
 
-    Ec2ScpUploader createScpUploader(String username, File privateKey) throws EC2Exception;
+    SshClient createSshClient(String username, File privateKey) throws EC2Exception;
 
-    Ec2SshExecutor createSshExecutor(String username, File privateKey) throws EC2Exception;
 }

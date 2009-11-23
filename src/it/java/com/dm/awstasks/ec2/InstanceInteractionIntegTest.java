@@ -9,8 +9,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import com.dm.awstasks.ec2.ssh.Ec2ScpUploader;
-import com.dm.awstasks.ec2.ssh.Ec2SshExecutor;
+import com.dm.awstasks.ec2.ssh.SshClient;
 
 public class InstanceInteractionIntegTest extends AbstractEc2IntegrationInteractionTest {
 
@@ -20,13 +19,13 @@ public class InstanceInteractionIntegTest extends AbstractEc2IntegrationInteract
     @Test
     public void testScpUploadToAllInstances() throws Exception {
         File privateKeyFile = new File(_privateKeyFile);
-        Ec2ScpUploader scpUploader = _instanceGroup.createScpUploader("ubuntu", privateKeyFile);
+        SshClient sshClient = _instanceGroup.createSshClient("ubuntu", privateKeyFile);
         File localFile = new File("README.markdown");
         String remoteDir = "~/";
-        scpUploader.uploadFile(localFile, remoteDir);
+        sshClient.uploadFile(localFile, remoteDir);
 
         File localDestinationFolder = _folder.newFolder("localDestinationFolder");
-        scpUploader.downloadFile(remoteDir + localFile.getName(), localDestinationFolder, false);
+        sshClient.downloadFile(remoteDir + localFile.getName(), localDestinationFolder, false);
         assertEquals(1, localDestinationFolder.list().length);
         assertEquals(localFile.length(), new File(localDestinationFolder, localFile.getName()).length());
     }
@@ -34,18 +33,18 @@ public class InstanceInteractionIntegTest extends AbstractEc2IntegrationInteract
     @Test
     public void testScpUploadToSpecificInstances() throws Exception {
         File privateKeyFile = new File(_privateKeyFile);
-        Ec2ScpUploader scpUploader = _instanceGroup.createScpUploader("ubuntu", privateKeyFile);
+        SshClient sshClient = _instanceGroup.createSshClient("ubuntu", privateKeyFile);
         File localFile = new File("build.xml");
         String remoteDir = "~/";
-        scpUploader.uploadFile(localFile, remoteDir, new int[] { 0 });
+        sshClient.uploadFile(localFile, remoteDir, new int[] { 0 });
 
         File localDestinationFolder = _folder.newFolder("localDestinationFolder");
-        scpUploader.downloadFile(remoteDir + localFile.getName(), localDestinationFolder, false, new int[] { 0 });
+        sshClient.downloadFile(remoteDir + localFile.getName(), localDestinationFolder, false, new int[] { 0 });
         assertEquals(1, localDestinationFolder.list().length);
         assertEquals(localFile.length(), new File(localDestinationFolder, localFile.getName()).length());
 
         try {
-            scpUploader.downloadFile(remoteDir + localFile.getName(), localDestinationFolder, false, new int[] { 1 });
+            sshClient.downloadFile(remoteDir + localFile.getName(), localDestinationFolder, false, new int[] { 1 });
             fail("should throw exception");
         } catch (Exception e) {
             // expected
@@ -55,29 +54,29 @@ public class InstanceInteractionIntegTest extends AbstractEc2IntegrationInteract
     @Test
     public void testSshExecutionToAllInstances() throws Exception {
         File privateKeyFile = new File(_privateKeyFile);
-        Ec2SshExecutor sshExecutor = _instanceGroup.createSshExecutor("ubuntu", privateKeyFile);
-        sshExecutor.executeCommand("ls -l");
+        SshClient sshClient = _instanceGroup.createSshClient("ubuntu", privateKeyFile);
+        sshClient.executeCommand("ls -l");
         String noneExistingFile = "abcfi";
         try {
-            sshExecutor.executeCommand("rm " + noneExistingFile);
+            sshClient.executeCommand("rm " + noneExistingFile);
             fail("should throw exception");
         } catch (Exception e) {
             // expected
         }
-        sshExecutor.executeCommand("touch " + noneExistingFile);
-        sshExecutor.executeCommand("rm " + noneExistingFile);
+        sshClient.executeCommand("touch " + noneExistingFile);
+        sshClient.executeCommand("rm " + noneExistingFile);
     }
 
     @Test
     public void testShhExecutionToSpecificInstances() throws Exception {
         File privateKeyFile = new File(_privateKeyFile);
-        Ec2SshExecutor sshExecutor1 = _instanceGroup.createSshExecutor("ubuntu", privateKeyFile);
+        SshClient sshClient1 = _instanceGroup.createSshClient("ubuntu", privateKeyFile);
 
         String noneExistingFile = "abcfi";
-        sshExecutor1.executeCommand("touch " + noneExistingFile, new int[] { 0 });
-        sshExecutor1.executeCommand("rm " + noneExistingFile, new int[] { 0 });
+        sshClient1.executeCommand("touch " + noneExistingFile, new int[] { 0 });
+        sshClient1.executeCommand("rm " + noneExistingFile, new int[] { 0 });
         try {
-            sshExecutor1.executeCommand("rm " + noneExistingFile, new int[] { 1 });
+            sshClient1.executeCommand("rm " + noneExistingFile, new int[] { 1 });
             fail("should throw exception");
         } catch (Exception e) {
             // expected
@@ -87,7 +86,7 @@ public class InstanceInteractionIntegTest extends AbstractEc2IntegrationInteract
     @Test
     public void testSshExecutionFromFile() throws Exception {
         File privateKeyFile = new File(_privateKeyFile);
-        Ec2SshExecutor sshExecutor = _instanceGroup.createSshExecutor("ubuntu", privateKeyFile);
+        SshClient sshClient = _instanceGroup.createSshClient("ubuntu", privateKeyFile);
         File commandFile = _folder.newFile("commands.txt");
         FileWriter fileWriter = new FileWriter(commandFile);
         fileWriter.write("ls -l\n");
@@ -95,7 +94,7 @@ public class InstanceInteractionIntegTest extends AbstractEc2IntegrationInteract
         fileWriter.write("touch " + noneExistingFile + "\n");
         fileWriter.write("rm " + noneExistingFile + "\n");
         fileWriter.close();
-        sshExecutor.executeCommandFile(commandFile, new int[] { 0 });
+        sshClient.executeCommandFile(commandFile, new int[] { 0 });
     }
 
 }

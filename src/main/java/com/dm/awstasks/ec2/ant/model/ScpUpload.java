@@ -2,7 +2,7 @@ package com.dm.awstasks.ec2.ant.model;
 
 import java.io.File;
 
-public class ScpUpload extends TargetedCommand {
+public class ScpUpload extends SshCommand {
 
     private File _localFile;
     private String _remotePath;

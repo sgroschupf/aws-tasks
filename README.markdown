@@ -1,8 +1,24 @@
+ABOUT
+=====
++ ant tasks for amazon web services
++ see https://github.com/sgroschupf/aws-tasks for details
+
+
+FEATURES
+=====
++ java/ant api for:
+	++ start instances
+	++ stop instances
+	++ scp upload/download 
+	++ ssh command execution
+
+
 USAGE
 =====
 
 ANT API
 ---------------------------
+
 
 JAVA API
 ---------------------------
@@ -46,6 +62,11 @@ JAVA API
 
 DEVELOPMENT
 =====
+
+Set up in Eclipse
+---------------------------
++ execute: 'ant eclipse'
++ import in eclipse
 
 Enable Integration Tests
 ---------------------------

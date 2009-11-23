@@ -8,10 +8,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
-import com.dm.awstasks.ec2.ssh.Ec2ScpUploader;
-import com.dm.awstasks.ec2.ssh.Ec2ScpUploaderImpl;
-import com.dm.awstasks.ec2.ssh.Ec2SshExecutor;
-import com.dm.awstasks.ec2.ssh.EcSshExecutorImpl;
+import com.dm.awstasks.ec2.ssh.SshClient;
+import com.dm.awstasks.ec2.ssh.SshClientImpl;
 import com.dm.awstasks.ssh.JschRunner;
 import com.dm.awstasks.util.Ec2Util;
 import com.xerox.amazonws.ec2.EC2Exception;
@@ -141,25 +139,14 @@ public class InstanceGroupImpl implements InstanceGroup {
     }
 
     @Override
-    public Ec2ScpUploader createScpUploader(String username, File privateKey) throws EC2Exception {
+    public SshClient createSshClient(String username, File privateKey) throws EC2Exception {
         checkEc2Association(true);
         updateReservationDescription();
         checkInstanceMode(_reservationDescription.getInstances(), "running");
         List<String> instanceDns = getInstanceDns(_reservationDescription);
         checkSshPermissions();
         checkSshConnection(username, instanceDns, privateKey);
-        return new Ec2ScpUploaderImpl(privateKey, instanceDns, username);
-    }
-
-    @Override
-    public Ec2SshExecutor createSshExecutor(String username, File privateKey) throws EC2Exception {
-        checkEc2Association(true);
-        updateReservationDescription();
-        checkInstanceMode(_reservationDescription.getInstances(), "running");
-        List<String> instanceDns = getInstanceDns(_reservationDescription);
-        checkSshPermissions();
-        checkSshConnection(username, instanceDns, privateKey);
-        return new EcSshExecutorImpl(privateKey, instanceDns, username);
+        return new SshClientImpl(privateKey, instanceDns, username);
     }
 
     private void checkSshConnection(String username, List<String> instanceDns, File privateKey) throws EC2Exception {
