@@ -37,7 +37,7 @@ public class InstanceGroupImpl implements InstanceGroup {
     @Override
     public void connectTo(String groupName) throws EC2Exception {
         checkEc2Association(false);
-        LOG.info(String.format("connecting to group '%s'", groupName));
+        LOG.info(String.format("connecting to instances of group '%s'", groupName));
         _reservationDescription = Ec2Util.findByGroup(_ec2, groupName, "running");
         if (_reservationDescription == null) {
             throw new EC2Exception("no instances of group '" + groupName + "' running");
@@ -60,7 +60,7 @@ public class InstanceGroupImpl implements InstanceGroup {
     @Override
     public ReservationDescription startup(LaunchConfiguration launchConfiguration, TimeUnit timeUnit, long time) throws EC2Exception {
         checkEc2Association(false);
-        LOG.info(String.format("starting %d to %d instances...", launchConfiguration.getMinCount(), launchConfiguration.getMaxCount()));
+        LOG.info(String.format("starting %d to %d instances in groups %s...", launchConfiguration.getMinCount(), launchConfiguration.getMaxCount(), launchConfiguration.getSecurityGroup()));
         _reservationDescription = _ec2.runInstances(launchConfiguration);
         List<String> instanceIds = Ec2Util.getInstanceIds(_reservationDescription);
         LOG.info(String.format("triggered start of %d instances: %s", _reservationDescription.getInstances().size(), instanceIds));

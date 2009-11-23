@@ -40,7 +40,7 @@
 	<target name="start-ec2" description="--> start ec2 instance groups">
 		<ec2-start groupName="aws-tasks.test"
 			ami="ami-5059be39"
-			instanceCount="1"
+			instanceCount="2"
 			accessKey="${ec2.accessKey}"
 			accessSecret="${ec2.accessSecret}"
 			privateKeyName="${ec2.privateKeyName}">
@@ -48,18 +48,32 @@
 	</target>
 	
 	<!-- ================================================================== -->
-	<!-- PREPARE EC2 EXAMPLE TASK	                                            -->
+	<!-- PREPARE EC2 EXAMPLE TASK: some ssh/scp commands right after instance startup -->
 	<!-- ================================================================== -->
 	<target name="prepare-ec2" description="--> prepare fresh ec2 instance groups">
-		<property name="myclasspath" refid="task.classpath"/>
-		<echo message="Classpath = ${myclasspath}"/>
-
 		<ec2-scp groupName="aws-tasks.test"
 			accessKey="${ec2.accessKey}"
 			accessSecret="${ec2.accessSecret}"
 			username="ubuntu"
 			keyfile="${ec2.privateKeyFile}">
-			<upload localFile="build.xml" remotePath="build.xml" targetInstances="all"/>
+			<upload localFile="build.xml" remotePath="uploadedFile" targetInstances="all"/>
+			<upload localFile="src/build" remotePath="~/" targetInstances="0"/>
+		</ec2-scp>
+	</target>
+	
+	<!-- ================================================================== -->
+	<!-- DISMANTLE EC2 EXAMPLE TASK: some ssh/scp commands right before instance shutdown -->
+	<!-- ================================================================== -->
+	<target name="dismantle-ec2" description="--> prepare fresh ec2 instance groups">
+		<property name="downloadDir" value="${build.dir}/testDownload"/>
+		<mkdir dir="${downloadDir}"/>
+		<ec2-scp groupName="aws-tasks.test"
+			accessKey="${ec2.accessKey}"
+			accessSecret="${ec2.accessSecret}"
+			username="ubuntu"
+			keyfile="${ec2.privateKeyFile}">
+			<download remotePath="uploadedFile" localFile="${downloadDir}/build.xml" targetInstances="all"/>
+			<download remotePath="build" localFile="${downloadDir}/" recursiv="true" targetInstances="0"/>
 		</ec2-scp>
 	</target>
 	

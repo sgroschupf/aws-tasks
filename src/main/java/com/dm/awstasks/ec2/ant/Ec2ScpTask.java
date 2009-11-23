@@ -1,6 +1,5 @@
 package com.dm.awstasks.ec2.ant;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,15 +7,22 @@ import org.apache.tools.ant.BuildException;
 
 import com.dm.awstasks.ec2.InstanceGroup;
 import com.dm.awstasks.ec2.InstanceGroupImpl;
+import com.dm.awstasks.ec2.ant.model.ScpDownload;
+import com.dm.awstasks.ec2.ant.model.ScpUpload;
 import com.dm.awstasks.ec2.ssh.Ec2ScpUploader;
 import com.xerox.amazonws.ec2.Jec2;
 
 public class Ec2ScpTask extends AbstractEc2SshTask {
 
-    private List<Upload> _uploads = new ArrayList<Upload>();
+    private List<ScpUpload> _uploads = new ArrayList<ScpUpload>();
+    private List<ScpDownload> _downloads = new ArrayList<ScpDownload>();
 
-    public void addUpload(Upload upload) {
+    public void addUpload(ScpUpload upload) {
         _uploads.add(upload);
+    }
+
+    public void addDownload(ScpDownload download) {
+        _downloads.add(download);
     }
 
     @Override
@@ -27,11 +33,18 @@ public class Ec2ScpTask extends AbstractEc2SshTask {
         try {
             instanceGroup.connectTo(_groupName);
             Ec2ScpUploader scpUploader = instanceGroup.createScpUploader(_username, _keyFile);
-            for (Upload upload : _uploads) {
+            for (ScpUpload upload : _uploads) {
                 if (upload.isToAllInstances()) {
                     scpUploader.uploadFile(upload.getLocalFile(), upload.getRemotePath());
                 } else {
                     scpUploader.uploadFile(upload.getLocalFile(), upload.getRemotePath(), upload.compileTargetInstances());
+                }
+            }
+            for (ScpDownload download : _downloads) {
+                if (download.isToAllInstances()) {
+                    scpUploader.downloadFile(download.getRemotePath(), download.getLocalFile(), download.isRecursiv());
+                } else {
+                    scpUploader.downloadFile(download.getRemotePath(), download.getLocalFile(), download.isRecursiv(), download.compileTargetInstances());
                 }
             }
         } catch (Exception e) {
@@ -39,62 +52,4 @@ public class Ec2ScpTask extends AbstractEc2SshTask {
         }
     }
 
-    public static class Upload {
-
-        private File _localFile;
-        private String _remotePath;
-        private String _targetInstances;
-
-        public boolean isToAllInstances() {
-            return _targetInstances == null || _targetInstances.trim().equals("all");
-        }
-
-        public File getLocalFile() {
-            return _localFile;
-        }
-
-        public void setLocalFile(File localFile) {
-            _localFile = localFile;
-        }
-
-        public String getRemotePath() {
-            return _remotePath;
-        }
-
-        public void setRemotePath(String remotePath) {
-            _remotePath = remotePath;
-        }
-
-        public String getTargetInstances() {
-            return _targetInstances;
-        }
-
-        public int[] compileTargetInstances() {
-            int[] targetInstances;
-            if (_targetInstances.contains(",")) {
-                String[] split = _targetInstances.split(",");
-                targetInstances = new int[_targetInstances.length()];
-                for (int i = 0; i < split.length; i++) {
-                    targetInstances[0] = Integer.parseInt(split[i]);
-                }
-            } else if (_targetInstances.contains("-")) {
-                String[] split = _targetInstances.split("-");
-                int min = Integer.parseInt(split[0]);
-                int max = Integer.parseInt(split[1]);
-                targetInstances = new int[max - min];
-                for (int i = 0; i < targetInstances.length; i++) {
-                    targetInstances[i] = min + i;
-                }
-            } else {
-                targetInstances = new int[1];
-                targetInstances[0] = Integer.parseInt(_targetInstances);
-            }
-            return targetInstances;
-        }
-
-        public void setTargetInstances(String targetInstances) {
-            _targetInstances = targetInstances;
-        }
-
-    }
 }
