@@ -7,8 +7,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
-import com.dm.awstasks.ec2.InstanceGroup;
-import com.dm.awstasks.ec2.InstanceGroupImpl;
 import com.dm.awstasks.util.Ec2Util;
 import com.xerox.amazonws.ec2.Jec2;
 import com.xerox.amazonws.ec2.ReservationDescription;

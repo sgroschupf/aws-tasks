@@ -26,7 +26,7 @@ public class Ec2ScpTask extends AbstractEc2SshTask {
         InstanceGroup instanceGroup = new InstanceGroupImpl(ec2);
         try {
             instanceGroup.connectTo(_groupName);
-            Ec2ScpUploader scpUploader = instanceGroup.createScpUploader(_keyFile, _username);
+            Ec2ScpUploader scpUploader = instanceGroup.createScpUploader(_username, _keyFile);
             for (Upload upload : _uploads) {
                 if (upload.isToAllInstances()) {
                     scpUploader.uploadFile(upload.getLocalFile(), upload.getRemotePath());

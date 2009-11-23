@@ -1,6 +1,7 @@
 package com.dm.awstasks.ec2;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -11,12 +12,15 @@ import com.dm.awstasks.ec2.ssh.Ec2ScpUploader;
 import com.dm.awstasks.ec2.ssh.Ec2ScpUploaderImpl;
 import com.dm.awstasks.ec2.ssh.Ec2SshExecutor;
 import com.dm.awstasks.ec2.ssh.EcSshExecutorImpl;
+import com.dm.awstasks.ssh.JschRunner;
 import com.dm.awstasks.util.Ec2Util;
 import com.xerox.amazonws.ec2.EC2Exception;
+import com.xerox.amazonws.ec2.GroupDescription;
 import com.xerox.amazonws.ec2.Jec2;
 import com.xerox.amazonws.ec2.LaunchConfiguration;
 import com.xerox.amazonws.ec2.ReservationDescription;
 import com.xerox.amazonws.ec2.TerminatingInstanceDescription;
+import com.xerox.amazonws.ec2.GroupDescription.IpPermission;
 import com.xerox.amazonws.ec2.ReservationDescription.Instance;
 
 public class InstanceGroupImpl implements InstanceGroup {
@@ -32,7 +36,7 @@ public class InstanceGroupImpl implements InstanceGroup {
 
     @Override
     public void connectTo(String groupName) throws EC2Exception {
-        checkAssociation(false);
+        checkEc2Association(false);
         LOG.info(String.format("connecting to group '%s'", groupName));
         _reservationDescription = Ec2Util.findByGroup(_ec2, groupName, "running");
         if (_reservationDescription == null) {
@@ -42,7 +46,7 @@ public class InstanceGroupImpl implements InstanceGroup {
 
     @Override
     public void connectTo(ReservationDescription reservationDescription) throws EC2Exception {
-        checkAssociation(false);
+        checkEc2Association(false);
         LOG.info(String.format("connecting to reservation '%s'", reservationDescription.getReservationId()));
         _reservationDescription = reservationDescription;
         updateReservationDescription();
@@ -55,7 +59,7 @@ public class InstanceGroupImpl implements InstanceGroup {
 
     @Override
     public ReservationDescription startup(LaunchConfiguration launchConfiguration, TimeUnit timeUnit, long time) throws EC2Exception {
-        checkAssociation(false);
+        checkEc2Association(false);
         LOG.info(String.format("starting %d to %d instances...", launchConfiguration.getMinCount(), launchConfiguration.getMaxCount()));
         _reservationDescription = _ec2.runInstances(launchConfiguration);
         List<String> instanceIds = Ec2Util.getInstanceIds(_reservationDescription);
@@ -67,7 +71,7 @@ public class InstanceGroupImpl implements InstanceGroup {
         return _reservationDescription;
     }
 
-    private void checkAssociation(boolean shouldBeAssociated) throws EC2Exception {
+    private void checkEc2Association(boolean shouldBeAssociated) throws EC2Exception {
         if (shouldBeAssociated && !isAssociated()) {
             throw new IllegalStateException("instance group is not yet associated with ec2 instances");
         }
@@ -77,8 +81,13 @@ public class InstanceGroupImpl implements InstanceGroup {
     }
 
     @Override
+    public boolean isAssociated() throws EC2Exception {
+        return _reservationDescription != null;
+    }
+
+    @Override
     public void shutdown() throws EC2Exception {
-        checkAssociation(true);
+        checkEc2Association(true);
         List<TerminatingInstanceDescription> terminatedInstances = _ec2.terminateInstances(Ec2Util.getInstanceIds(_reservationDescription));
         _reservationDescription = null;
         LOG.info("stopped " + terminatedInstances.size() + " instances");
@@ -122,7 +131,7 @@ public class InstanceGroupImpl implements InstanceGroup {
 
     @Override
     public ReservationDescription getCurrentReservationDescription() throws EC2Exception {
-        checkAssociation(true);
+        checkEc2Association(true);
         updateReservationDescription();
         return _reservationDescription;
     }
@@ -131,21 +140,71 @@ public class InstanceGroupImpl implements InstanceGroup {
         _reservationDescription = Ec2Util.reloadReservationDescription(_ec2, _reservationDescription);
     }
 
-    public Ec2ScpUploader createScpUploader(File privateKey, String username) throws EC2Exception {
-        checkAssociation(true);
+    @Override
+    public Ec2ScpUploader createScpUploader(String username, File privateKey) throws EC2Exception {
+        checkEc2Association(true);
         updateReservationDescription();
         checkInstanceMode(_reservationDescription.getInstances(), "running");
         List<String> instanceDns = getInstanceDns(_reservationDescription);
+        checkSshPermissions();
+        checkSshConnection(username, instanceDns, privateKey);
         return new Ec2ScpUploaderImpl(privateKey, instanceDns, username);
     }
 
     @Override
-    public Ec2SshExecutor createSshExecutor(File privateKey, String username) throws EC2Exception {
-        checkAssociation(true);
+    public Ec2SshExecutor createSshExecutor(String username, File privateKey) throws EC2Exception {
+        checkEc2Association(true);
         updateReservationDescription();
         checkInstanceMode(_reservationDescription.getInstances(), "running");
         List<String> instanceDns = getInstanceDns(_reservationDescription);
+        checkSshPermissions();
+        checkSshConnection(username, instanceDns, privateKey);
         return new EcSshExecutorImpl(privateKey, instanceDns, username);
+    }
+
+    private void checkSshConnection(String username, List<String> instanceDns, File privateKey) throws EC2Exception {
+        LOG.info("checking ssh connections");
+        for (String dns : instanceDns) {
+            JschRunner runner = new JschRunner(username, dns);
+            runner.setKeyfile(privateKey.getAbsolutePath());
+            runner.setTrust(true);
+            try {
+                runner.testConnect(TimeUnit.MINUTES.toMillis(5));
+            } catch (IOException e) {
+                throw new EC2Exception(e.getMessage());
+            }
+        }
+    }
+
+    private void checkSshPermissions() throws EC2Exception {
+        GroupPermission sshPermission = GroupPermission.createStandardSsh();
+        List<IpPermission> tcpPermissions = getPermissions(sshPermission.getProtocol());
+        if (tcpPermissions.isEmpty()) {
+            throw new EC2Exception("no permission for protocol '" + sshPermission.getProtocol() + "' set");
+        }
+        boolean foundMatching = false;
+        for (IpPermission ipPermission : tcpPermissions) {
+            if (ipPermission.getFromPort() == sshPermission.getFromPort() && ipPermission.getToPort() == sshPermission.getToPort()) {
+                foundMatching = true;
+            }
+        }
+        if (!foundMatching) {
+            throw new EC2Exception("found permission for protocol '" + sshPermission.getProtocol() + " but with diverse ports (need " + sshPermission + ")");
+        }
+    }
+
+    private List<IpPermission> getPermissions(String protocol) throws EC2Exception {
+        List<GroupDescription> securityGroups = _ec2.describeSecurityGroups(_reservationDescription.getGroups());
+        List<IpPermission> ipPermissions = new ArrayList<IpPermission>(3);
+        for (GroupDescription groupDescription : securityGroups) {
+            List<IpPermission> permissions = groupDescription.getPermissions();
+            for (IpPermission ipPermission : permissions) {
+                if (ipPermission.getProtocol().equals(protocol)) {
+                    ipPermissions.add(ipPermission);
+                }
+            }
+        }
+        return ipPermissions;
     }
 
     private void checkInstanceMode(List<Instance> instances, String desiredMode) {
@@ -154,11 +213,6 @@ public class InstanceGroupImpl implements InstanceGroup {
                 throw new IllegalStateException("instance " + instance.getInstanceId() + " is not in mode '" + desiredMode + "' but in mode '" + instance.getState() + "'");
             }
         }
-    }
-
-    @Override
-    public boolean isAssociated() throws EC2Exception {
-        return _reservationDescription != null;
     }
 
 }

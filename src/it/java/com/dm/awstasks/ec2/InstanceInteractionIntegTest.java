@@ -20,7 +20,7 @@ public class InstanceInteractionIntegTest extends AbstractEc2IntegrationInteract
     @Test
     public void testScpUploadToAllInstances() throws Exception {
         File privateKeyFile = new File(_privateKeyFile);
-        Ec2ScpUploader scpUploader = _instanceGroup.createScpUploader(privateKeyFile, "ubuntu");
+        Ec2ScpUploader scpUploader = _instanceGroup.createScpUploader("ubuntu", privateKeyFile);
         File localFile = new File("README.markdown");
         String remoteDir = "~/";
         scpUploader.uploadFile(localFile, remoteDir);
@@ -34,7 +34,7 @@ public class InstanceInteractionIntegTest extends AbstractEc2IntegrationInteract
     @Test
     public void testScpUploadToSpecificInstances() throws Exception {
         File privateKeyFile = new File(_privateKeyFile);
-        Ec2ScpUploader scpUploader = _instanceGroup.createScpUploader(privateKeyFile, "ubuntu");
+        Ec2ScpUploader scpUploader = _instanceGroup.createScpUploader("ubuntu", privateKeyFile);
         File localFile = new File("build.xml");
         String remoteDir = "~/";
         scpUploader.uploadFile(localFile, remoteDir, new int[] { 0 });
@@ -55,7 +55,7 @@ public class InstanceInteractionIntegTest extends AbstractEc2IntegrationInteract
     @Test
     public void testSshExecutionToAllInstances() throws Exception {
         File privateKeyFile = new File(_privateKeyFile);
-        Ec2SshExecutor sshExecutor = _instanceGroup.createSshExecutor(privateKeyFile, "ubuntu");
+        Ec2SshExecutor sshExecutor = _instanceGroup.createSshExecutor("ubuntu", privateKeyFile);
         sshExecutor.executeCommand("ls -l");
         String noneExistingFile = "abcfi";
         try {
@@ -71,7 +71,7 @@ public class InstanceInteractionIntegTest extends AbstractEc2IntegrationInteract
     @Test
     public void testShhExecutionToSpecificInstances() throws Exception {
         File privateKeyFile = new File(_privateKeyFile);
-        Ec2SshExecutor sshExecutor1 = _instanceGroup.createSshExecutor(privateKeyFile, "ubuntu");
+        Ec2SshExecutor sshExecutor1 = _instanceGroup.createSshExecutor("ubuntu", privateKeyFile);
 
         String noneExistingFile = "abcfi";
         sshExecutor1.executeCommand("touch " + noneExistingFile, new int[] { 0 });
@@ -87,7 +87,7 @@ public class InstanceInteractionIntegTest extends AbstractEc2IntegrationInteract
     @Test
     public void testSshExecutionFromFile() throws Exception {
         File privateKeyFile = new File(_privateKeyFile);
-        Ec2SshExecutor sshExecutor = _instanceGroup.createSshExecutor(privateKeyFile, "ubuntu");
+        Ec2SshExecutor sshExecutor = _instanceGroup.createSshExecutor("ubuntu", privateKeyFile);
         File commandFile = _folder.newFile("commands.txt");
         FileWriter fileWriter = new FileWriter(commandFile);
         fileWriter.write("ls -l\n");

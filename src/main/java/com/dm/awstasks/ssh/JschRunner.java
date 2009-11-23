@@ -20,14 +20,14 @@ public class JschRunner {
 
     protected static final Logger LOG = Logger.getLogger(JschRunner.class);
 
-    protected static final int CONNECT_TIMEOUT = (int) TimeUnit.MINUTES.toMillis(5);
-
     private final String _user;
     private final String _host;
     private int _port = 22;
     private String _keyFile;
     private String _knownHosts = System.getProperty("user.home") + "/.ssh/known_hosts";
     private boolean _trust;
+    protected int _connectTimeout = (int) TimeUnit.SECONDS.toMillis(80);
+    private int _timeout = 0;
 
     public JschRunner(String user, String host) {
         _user = user;
@@ -58,6 +58,22 @@ public class JschRunner {
         return _port;
     }
 
+    public void setConnectTimeout(int connectTimeout) {
+        _connectTimeout = connectTimeout;
+    }
+
+    public int getConnectTimeout() {
+        return _connectTimeout;
+    }
+
+    public void setTimeout(int timeout) {
+        _timeout = timeout;
+    }
+
+    public int getTimeout() {
+        return _timeout;
+    }
+
     public void run(JschCommand command) throws IOException {
         try {
             Session session = null;
@@ -71,6 +87,42 @@ public class JschRunner {
             }
         } catch (JSchException e) {
             throw new IOException(e);
+        }
+    }
+
+    /**
+     * Connects to the host and then closes the connection. Throws an execption if connection cannot
+     * be established.
+     * 
+     * @throws IOException
+     */
+    public void testConnect() throws IOException {
+        run(new JschCommand() {
+            @Override
+            public void execute(Session session) throws IOException {
+                // nothing todo
+            }
+        });
+    }
+
+    public void testConnect(long maxWaitTime) throws IOException {
+        boolean succeed = false;
+        long startTime = System.currentTimeMillis();
+        do {
+            try {
+                testConnect();
+                succeed = true;
+            } catch (IOException e) {
+                LOG.warn("failed to connect with " + _host + ": " + e.getMessage());
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e1) {
+                    Thread.interrupted();
+                }
+            }
+        } while (!succeed || (System.currentTimeMillis() - startTime) > maxWaitTime);
+        if (!succeed) {
+            throw new IOException("failed to establish ssh connection to " + _host);
         }
     }
 
@@ -88,6 +140,7 @@ public class JschRunner {
         Session session = jsch.getSession(_user, _host, _port);
         session.setSocketFactory(new SocketFactoryWithConnectTimeout());
         session.setUserInfo(new UserInfoImpl());
+        session.setTimeout(_timeout);
         LOG.info("Connecting to " + _host + ":" + _port);
         session.connect();
         return session;
@@ -109,7 +162,7 @@ public class JschRunner {
         public Socket createSocket(String host, int port) throws IOException, UnknownHostException {
             Socket socket = new Socket();
             socket.bind(null);
-            socket.connect(new InetSocketAddress(host, port), CONNECT_TIMEOUT);
+            socket.connect(new InetSocketAddress(host, port), _connectTimeout);
             return socket;
         }
 
@@ -147,4 +200,5 @@ public class JschRunner {
             LOG.info(message);
         }
     }
+
 }

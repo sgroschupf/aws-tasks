@@ -76,7 +76,7 @@ public interface InstanceGroup {
 
     ReservationDescription getCurrentReservationDescription() throws EC2Exception;
 
-    Ec2ScpUploader createScpUploader(File privateKey, String username) throws EC2Exception;
+    Ec2ScpUploader createScpUploader(String username, File privateKey) throws EC2Exception;
 
-    Ec2SshExecutor createSshExecutor(File privateKey, String username) throws EC2Exception;
+    Ec2SshExecutor createSshExecutor(String username, File privateKey) throws EC2Exception;
 }

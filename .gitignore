@@ -4,3 +4,4 @@
 .classpath
 bin/
 ec2.properties
+log.log

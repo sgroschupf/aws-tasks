@@ -3,6 +3,8 @@ package com.dm.awstasks.ssh;
 import static org.junit.Assert.*;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Rule;
@@ -48,10 +50,11 @@ public class SshIntegTest extends AbstractEc2IntegrationInteractionTest {
         assertEquals(countFiles(uploadedFolder), countFiles(new File(downloadFolder, uploadedFolder.getName())));
     }
 
-    private JschRunner createJschRunner() throws EC2Exception {
+    private JschRunner createJschRunner() throws EC2Exception, IOException {
         JschRunner jschRunner = new JschRunner("ubuntu", _instanceGroup.getCurrentReservationDescription().getInstances().get(0).getDnsName());
         jschRunner.setKeyfile(_privateKeyFile);
         jschRunner.setTrust(true);
+        jschRunner.testConnect(TimeUnit.MINUTES.toMillis(5));
         return jschRunner;
     }
 
