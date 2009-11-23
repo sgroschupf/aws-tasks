@@ -6,11 +6,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
-import org.apache.tools.ant.taskdefs.optional.ssh.SSHExec;
 
 import com.dm.awstasks.ssh.JschRunner;
 import com.dm.awstasks.ssh.ScpDownloadCommand;
 import com.dm.awstasks.ssh.ScpUploadCommand;
+import com.dm.awstasks.ssh.SshExecCommand;
 
 public class SshClientImpl implements SshClient {
 
@@ -27,57 +27,39 @@ public class SshClientImpl implements SshClient {
     }
 
     @Override
-    public void executeCommand(String command) {
+    public void executeCommand(String command) throws IOException {
         executeCommand(_hostnames, command);
     }
 
     @Override
-    public void executeCommand(String command, int[] targetedInstances) {
+    public void executeCommand(String command, int[] targetedInstances) throws IOException {
         executeCommand(getHosts(targetedInstances), command);
     }
 
-    private void executeCommand(List<String> hostnames, String command) {
+    private void executeCommand(List<String> hostnames, String command) throws IOException {
         for (String host : hostnames) {
             LOG.info(String.format("executing command '%s' on '%s'", command, host));
-            SSHExec sshExec = createSshExec(host);
-            sshExec.setCommand(command);
-            sshExec.execute();
+            JschRunner jschRunner = createJschRunner(host);
+            jschRunner.run(new SshExecCommand(command));
         }
     }
 
     @Override
-    public void executeCommandFile(File commandFile) {
+    public void executeCommandFile(File commandFile) throws IOException {
         executeCommandFile(_hostnames, commandFile);
     }
 
     @Override
-    public void executeCommandFile(File commandFile, int[] targetedInstances) {
+    public void executeCommandFile(File commandFile, int[] targetedInstances) throws IOException {
         executeCommandFile(getHosts(targetedInstances), commandFile);
     }
 
-    private void executeCommandFile(List<String> hostnames, File commandFile) {
+    private void executeCommandFile(List<String> hostnames, File commandFile) throws IOException {
         for (String host : hostnames) {
             LOG.info(String.format("executing command-file '%s' on '%s'", commandFile.getAbsolutePath(), host));
-            SSHExec sshExec = createSshExec(host);
-            sshExec.setCommandResource(commandFile.getAbsolutePath());
-            sshExec.execute();
+            JschRunner jschRunner = createJschRunner(host);
+            jschRunner.run(new SshExecCommand(commandFile));
         }
-    }
-
-    private SSHExec createSshExec(String host) {
-        SSHExec sshExec = new SSHExec();
-        configureSshBase(sshExec, host);
-        return sshExec;
-    }
-
-    protected void configureSshBase(org.apache.tools.ant.taskdefs.optional.ssh.SSHBase sshExec, String host) {
-        // sshExec.setProject(new Project());
-        sshExec.setUsername(_username);
-        sshExec.setKeyfile(_privateKey.getAbsolutePath());
-        sshExec.setTrust(true);
-        sshExec.setHost(host);
-        sshExec.setVerbose(true);
-        sshExec.setFailonerror(true);
     }
 
     public void uploadFile(File localFile, String targetPath) throws IOException {

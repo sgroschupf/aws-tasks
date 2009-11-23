@@ -33,7 +33,7 @@ public class Ec2SshTask extends AbstractEc2SshTask {
 
     @Override
     public void execute() throws BuildException {
-        System.out.println("executing " + getClass().getSimpleName() + " with groupName '" + _groupName + "'");
+        System.out.println("executing " + getClass().getSimpleName() + " for group '" + _groupName + "'");
         Jec2 ec2 = new Jec2(_accessKey, _accessSecret);
         InstanceGroup instanceGroup = new InstanceGroupImpl(ec2);
         try {
@@ -55,7 +55,7 @@ public class Ec2SshTask extends AbstractEc2SshTask {
         }
     }
 
-    private void doSshExec(SshClient sshClient, SshExec sshCommand) {
+    private void doSshExec(SshClient sshClient, SshExec sshCommand) throws IOException {
         if (sshCommand.getCommandFile() == null) {
             if (sshCommand.isToAllInstances()) {
                 sshClient.executeCommand(sshCommand.getCommand());

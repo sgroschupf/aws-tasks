@@ -12,12 +12,42 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import com.dm.awstasks.ec2.AbstractEc2IntegrationInteractionTest;
+import com.dm.awstasks.util.IoUtil;
 import com.xerox.amazonws.ec2.EC2Exception;
 
 public class SshIntegTest extends AbstractEc2IntegrationInteractionTest {
 
     @Rule
     public TemporaryFolder _folder = new TemporaryFolder();
+
+    @Test
+    public void testSshExec() throws Exception {
+        JschRunner runner = createJschRunner();
+        runner.run(new SshExecCommand("ls -l ~/"));
+        try {
+            runner.run(new SshExecCommand("rogijeorigjo"));
+            fail("should throw exception");
+        } catch (Exception e) {
+            // expected
+        }
+    }
+
+    @Test
+    public void testSshExecWithCommandFile() throws Exception {
+        JschRunner runner = createJschRunner();
+        File goodCommandFile = _folder.newFile("goodCommandfile");
+        File badCommandFile = _folder.newFile("badCommandfile");
+        IoUtil.writeToFile(goodCommandFile, "ls -l ~/", "echo hostname");
+        IoUtil.writeToFile(badCommandFile, "erheaefsg", "gergergerg");
+
+        runner.run(new SshExecCommand(goodCommandFile));
+        try {
+            runner.run(new SshExecCommand(badCommandFile));
+            fail("should throw exception");
+        } catch (Exception e) {
+            // expected
+        }
+    }
 
     @Test
     public void testScpUpload() throws Exception {

@@ -14,7 +14,7 @@ public class AbstractEc2IntegrationInteractionTest extends AbstractEc2Integratio
 
     protected static InstanceGroupImpl _instanceGroup;
     protected static Jec2 _ec2;
-    protected static boolean CLUSTER_ALREADY_RUNNING = false;// to avoid startup time
+    protected static boolean CLUSTER_ALREADY_RUNNING = true;// to avoid startup time
     protected static int INSTANCE_COUNT = 2;
 
     @BeforeClass

@@ -1,5 +1,8 @@
 package com.dm.awstasks.util;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -76,6 +79,29 @@ public class IoUtil {
             oStream.write(bytes, 0, pieceLength);
             length -= pieceLength;
         }
+    }
+
+    public static void writeToFile(File file, String... lines) throws IOException {
+        BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+        for (String line : lines) {
+            writer.write(line);
+            writer.newLine();
+        }
+        writer.close();
+    }
+
+    public static OutputStream closeProtectedStream(final OutputStream outputStream) {
+        return new OutputStream() {
+            @Override
+            public void write(int b) throws IOException {
+                outputStream.write(b);
+            }
+
+            @Override
+            public void close() throws IOException {
+                // ignore
+            }
+        };
     }
 
 }

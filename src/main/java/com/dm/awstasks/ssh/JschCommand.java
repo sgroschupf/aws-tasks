@@ -69,6 +69,6 @@ public abstract class JschCommand {
         NumberFormat format = NumberFormat.getNumberInstance();
         format.setMaximumFractionDigits(2);
         format.setMinimumFractionDigits(1);
-        LOG.info("File transfer time: " + format.format(durationInSec) + " Average Rate: " + format.format(totalLength / durationInSec) + " B/s");
+        LOG.debug("File transfer time: " + format.format(durationInSec) + " Average Rate: " + format.format(totalLength / durationInSec) + " B/s");
     }
 }

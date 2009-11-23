@@ -141,7 +141,7 @@ public class JschRunner {
         session.setSocketFactory(new SocketFactoryWithConnectTimeout());
         session.setUserInfo(new UserInfoImpl());
         session.setTimeout(_timeout);
-        LOG.info("Connecting to " + _host + ":" + _port);
+        LOG.debug("Connecting to " + _host + ":" + _port);
         session.connect();
         return session;
     }

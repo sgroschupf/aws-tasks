@@ -58,7 +58,8 @@
 			keyfile="${ec2.privateKeyFile}">
 			<upload localFile="build.xml" remotePath="uploadedFile" targetInstances="all"/>
 			<upload localFile="src/build" remotePath="~/" targetInstances="0"/>
-			<exec command="ls abc"/>
+			<exec command="ls uploadedFile"/>
+			<exec command="hostname"/>
 		</ec2-ssh>
 	</target>
 	
