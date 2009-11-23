@@ -180,7 +180,7 @@ public class InstanceGroupImpl implements InstanceGroup {
         GroupPermission sshPermission = GroupPermission.createStandardSsh();
         List<IpPermission> tcpPermissions = getPermissions(sshPermission.getProtocol());
         if (tcpPermissions.isEmpty()) {
-            throw new EC2Exception("no permission for protocol '" + sshPermission.getProtocol() + "' set");
+            throw new EC2Exception("no permission for '" + sshPermission + "' set");
         }
         boolean foundMatching = false;
         for (IpPermission ipPermission : tcpPermissions) {

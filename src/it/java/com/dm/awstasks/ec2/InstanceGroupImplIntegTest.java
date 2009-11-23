@@ -27,6 +27,7 @@ public class InstanceGroupImplIntegTest extends AbstractEc2IntegrationTest {
 
         // shutdown
         instanceGroup.shutdown();
+        Thread.sleep(500);
         checkInstanceMode(Ec2Util.reloadReservationDescription(ec2, reservationDescription), "shutting-down");
         assertFalse(instanceGroup.isAssociated());
     }
@@ -44,6 +45,7 @@ public class InstanceGroupImplIntegTest extends AbstractEc2IntegrationTest {
 
         // shutdown
         instanceGroup.shutdown();
+        Thread.sleep(500);
         checkInstanceMode(Ec2Util.reloadReservationDescription(ec2, reservationDescription), "shutting-down");
         assertFalse(instanceGroup.isAssociated());
     }
@@ -64,6 +66,7 @@ public class InstanceGroupImplIntegTest extends AbstractEc2IntegrationTest {
 
         // shutdown
         instanceGroup2.shutdown();
+        Thread.sleep(500);
         checkInstanceMode(Ec2Util.reloadReservationDescription(ec2, reservationDescription), "shutting-down");
         assertFalse(instanceGroup2.isAssociated());
     }
@@ -84,6 +87,7 @@ public class InstanceGroupImplIntegTest extends AbstractEc2IntegrationTest {
 
         // shutdown
         instanceGroup2.shutdown();
+        Thread.sleep(500);
         checkInstanceMode(Ec2Util.reloadReservationDescription(ec2, reservationDescription), "shutting-down");
         assertFalse(instanceGroup2.isAssociated());
     }

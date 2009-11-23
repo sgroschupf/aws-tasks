@@ -1,5 +1,6 @@
 package com.dm.awstasks.ec2.ant;
 
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.tools.ant.BuildException;
@@ -48,6 +49,7 @@ public class Ec2StartTask extends AbstractEc2Task {
         try {
             LaunchConfiguration launchConfiguration = new LaunchConfiguration(_ami, _instanceCount, _instanceCount);
             launchConfiguration.setKeyName(_privateKeyName);
+            launchConfiguration.setSecurityGroup(Arrays.asList("default", _groupName));
             instanceGroup.startup(launchConfiguration, TimeUnit.MINUTES, 10);
         } catch (EC2Exception e) {
             throw new BuildException(e);

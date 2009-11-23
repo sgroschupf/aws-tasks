@@ -38,7 +38,7 @@
 	<!-- START EC2 EXAMPLE TASK	                                            -->
 	<!-- ================================================================== -->
 	<target name="start-ec2" description="--> start ec2 instance groups">
-		<ec2-start groupName="default"
+		<ec2-start groupName="aws-tasks.test"
 			ami="ami-5059be39"
 			instanceCount="1"
 			accessKey="${ec2.accessKey}"
@@ -54,7 +54,7 @@
 		<property name="myclasspath" refid="task.classpath"/>
 		<echo message="Classpath = ${myclasspath}"/>
 
-		<ec2-scp groupName="default"
+		<ec2-scp groupName="aws-tasks.test"
 			accessKey="${ec2.accessKey}"
 			accessSecret="${ec2.accessSecret}"
 			username="ubuntu"
@@ -67,7 +67,7 @@
 	<!-- STOP EC2 EXAMPLE TASK	                                            -->
 	<!-- ================================================================== -->
 	<target name="stop-ec2" description="--> stop ec2 instance groups">
-		<ec2-stop groupName="default"
+		<ec2-stop groupName="aws-tasks.test"
 			accessKey="${ec2.accessKey}"
 			accessSecret="${ec2.accessSecret}">
 		</ec2-stop>

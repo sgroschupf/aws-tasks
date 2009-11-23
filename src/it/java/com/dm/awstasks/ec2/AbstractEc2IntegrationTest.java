@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
@@ -24,7 +25,7 @@ public abstract class AbstractEc2IntegrationTest extends AbstractTest {
     private static final String PRIVATE_KEY_NAME = "ec2.privateKeyName";
     private static final String PRIVATE_KEY_FILE = "ec2.privateKeyFile";
 
-    // private static final String SECURITY_GROUP = "aws-tasks.test";
+    private static final String SECURITY_GROUP = "aws-tasks.test";
 
     protected static String _accessKeyId;
     protected static String _accessKeySecret;
@@ -62,7 +63,7 @@ public abstract class AbstractEc2IntegrationTest extends AbstractTest {
         String imageId = "ami-5059be39";
         LaunchConfiguration launchConfiguration = new LaunchConfiguration(imageId, instanceCount, instanceCount);
         launchConfiguration.setKeyName(_privateKeyName);
-        // launchConfiguration.setSecurityGroup(Arrays.asList(SECURITY_GROUP));
+        launchConfiguration.setSecurityGroup(Arrays.asList(SECURITY_GROUP, "default"));
         // launchConfiguration.setInstanceType(InstanceType.DEFAULT);// default is small
         // launchConfiguration.setUserData(null);// see
         // http://docs.amazonwebservices.com/AWSEC2/2008-02-01/DeveloperGuide/
