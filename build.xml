@@ -96,6 +96,9 @@
 			<compilerarg line="${javac.args} ${javac.args.warnings}" />
 			<classpath refid="compile.classpath" />
 		</javac>
+		<copy todir="${build.dir.main-classes}">
+			<fileset dir="${main.res.dir}"/>
+		</copy>
 	</target>
 
 	
