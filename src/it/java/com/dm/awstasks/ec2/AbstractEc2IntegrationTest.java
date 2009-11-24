@@ -64,8 +64,6 @@ public abstract class AbstractEc2IntegrationTest extends AbstractTest {
         LaunchConfiguration launchConfiguration = new LaunchConfiguration(imageId, instanceCount, instanceCount);
         launchConfiguration.setKeyName(_privateKeyName);
         launchConfiguration.setSecurityGroup(Arrays.asList(TEST_SECURITY_GROUP, "default"));
-        // launchConfiguration.setInstanceType(InstanceType.DEFAULT);// default is small
-        // launchConfiguration.setAvailabilityZone("");
         return launchConfiguration;
     }
 

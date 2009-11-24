@@ -19,6 +19,8 @@ USAGE
 
 ANT API
 ---------------------------
+
+	(see also build.test.xml)
 	
 	<!--define the tasks-->
 	<taskdef name="ec2-start" classname="com.dm.awstasks.ec2.ant.Ec2StartTask" classpathref="task.classpath"/>
@@ -33,6 +35,12 @@ ANT API
 			accessKey="${ec2.accessKey}"
 			accessSecret="${ec2.accessSecret}"
 			privateKeyName="${ec2.privateKeyName}">
+			<!--
+			optional attributes:
+				- instanceType="default|large|xlarge|medium_hcpu|xlarge_hcpu"
+				- userData="a custom string"
+				- availabilityZone="us-east-1a"
+			-->
 		</ec2-start>
 	</target>
 

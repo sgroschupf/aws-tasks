@@ -44,7 +44,9 @@
 			accessKey="${ec2.accessKey}"
 			accessSecret="${ec2.accessSecret}"
 			privateKeyName="${ec2.privateKeyName}"
-			userData="a | b | c">
+			instanceType="default" 
+			userData="a | b | c"
+			availabilityZone="us-east-1a">
 		</ec2-start>
 	</target>
 	
