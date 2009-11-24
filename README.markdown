@@ -112,7 +112,17 @@ JAVA API
     instanceGroup.shutdown();
 
 
-
+DEPENDENCIES
+=====
+ - [typica](http://code.google.com/p/typica/)
+  - JAXB
+  - commons-logging
+  - commons-httpclient
+  - commons-codec 
+ - [jsch](http://www.jcraft.com/jsch/)
+ - [log4j](http://logging.apache.org/log4j/)
+ 
+ 
 DEVELOPMENT
 =====
 
