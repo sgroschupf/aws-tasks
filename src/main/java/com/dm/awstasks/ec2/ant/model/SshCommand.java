@@ -20,15 +20,15 @@ public abstract class SshCommand {
         int[] targetInstances;
         if (_targetInstances.contains(",")) {
             String[] split = _targetInstances.split(",");
-            targetInstances = new int[_targetInstances.length()];
+            targetInstances = new int[split.length];
             for (int i = 0; i < split.length; i++) {
-                targetInstances[0] = Integer.parseInt(split[i]);
+                targetInstances[i] = Integer.parseInt(split[i].trim());
             }
         } else if (_targetInstances.contains("-")) {
             String[] split = _targetInstances.split("-");
             int min = Integer.parseInt(split[0]);
             int max = Integer.parseInt(split[1]);
-            targetInstances = new int[max - min];
+            targetInstances = new int[max - min + 1];
             for (int i = 0; i < targetInstances.length; i++) {
                 targetInstances[i] = min + i;
             }

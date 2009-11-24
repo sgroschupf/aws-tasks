@@ -20,10 +20,10 @@ public class SshClientImpl implements SshClient {
     protected final String _username;
     protected final List<String> _hostnames;
 
-    public SshClientImpl(File privateKey, List<String> hostnames, String username) {
+    public SshClientImpl(String username, File privateKey, List<String> hostnames) {
+        _username = username;
         _privateKey = privateKey;
         _hostnames = hostnames;
-        _username = username;
     }
 
     @Override

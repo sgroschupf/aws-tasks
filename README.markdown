@@ -6,11 +6,12 @@ ABOUT
 
 FEATURES
 =====
-+ java/ant api for:
-++ start instances
-++ stop instances
-++ scp upload/download 
-++ ssh command execution
+Java/Ant API for:
+
++ start instances
++ stop instances
++ scp upload/download 
++ ssh command execution
 
 
 USAGE
@@ -18,8 +19,53 @@ USAGE
 
 ANT API
 ---------------------------
+	
+	<!--define the tasks-->
+	<taskdef name="ec2-start" classname="com.dm.awstasks.ec2.ant.Ec2StartTask" classpathref="task.classpath"/>
+	<taskdef name="ec2-stop" classname="com.dm.awstasks.ec2.ant.Ec2StopTask" classpathref="task.classpath"/>
+	<taskdef name="ec2-ssh" classname="com.dm.awstasks.ec2.ant.Ec2SshTask" classpathref="task.classpath"/>
+	
+	<!-- define a start target -->
+	<target name="start-ec2" description="--> start ec2 instance groups">
+		<ec2-start groupName="aws-tasks.test"
+			ami="ami-5059be39"
+			instanceCount="2"
+			accessKey="${ec2.accessKey}"
+			accessSecret="${ec2.accessSecret}"
+			privateKeyName="${ec2.privateKeyName}">
+		</ec2-start>
+	</target>
 
-
+	<!-- define a target for ssh/scp interactions 
+		You can interact with all instances at one by not specifying the 'targetInstances' attribute
+		or setting it to 'all'. Also you can pick specific instances in following ways.
+			- single index	 	f.e. targetInstances="0"
+			- comma seperated 	f.e. targetInstances="1,2,3"
+			- one range 		f.e. targetInstances="1-5"
+	-->
+	<target name="prepare-ec2" description="--> prepare fresh ec2 instance groups">
+		<ec2-ssh groupName="aws-tasks.test"
+			accessKey="${ec2.accessKey}"
+			accessSecret="${ec2.accessSecret}"
+			username="ubuntu"
+			keyfile="${ec2.privateKeyFile}">
+			<upload localFile="build.xml" remotePath="uploadedFile" targetInstances="all"/>
+			<upload localFile="src/build" remotePath="~/" targetInstances="0"/>
+			<exec command="ls uploadedFile"/>
+			<exec command="hostname"/>
+			<download remotePath="build" localFile="${downloadDir}/" recursiv="true" targetInstances="0"/>
+		</ec2-ssh>
+	</target>
+	
+	<!-- define a stop target -->
+	<target name="stop-ec2" description="--> stop ec2 instance groups">
+		<ec2-stop groupName="aws-tasks.test"
+			accessKey="${ec2.accessKey}"
+			accessSecret="${ec2.accessSecret}">
+		</ec2-stop>
+	</target>
+	
+	
 JAVA API
 ---------------------------
 

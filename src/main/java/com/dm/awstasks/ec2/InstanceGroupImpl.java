@@ -146,7 +146,7 @@ public class InstanceGroupImpl implements InstanceGroup {
         List<String> instanceDns = getInstanceDns(_reservationDescription);
         checkSshPermissions();
         checkSshConnection(username, instanceDns, privateKey);
-        return new SshClientImpl(privateKey, instanceDns, username);
+        return new SshClientImpl(username, privateKey, instanceDns);
     }
 
     private void checkSshConnection(String username, List<String> instanceDns, File privateKey) throws EC2Exception {
