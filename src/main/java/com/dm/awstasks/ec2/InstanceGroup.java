@@ -1,6 +1,7 @@
 package com.dm.awstasks.ec2;
 
 import java.io.File;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.dm.awstasks.ec2.ssh.SshClient;
@@ -72,7 +73,9 @@ public interface InstanceGroup {
      */
     boolean isAssociated();
 
-    ReservationDescription getCurrentReservationDescription() throws EC2Exception;
+    ReservationDescription getReservationDescription(boolean updateBefore) throws EC2Exception;
+
+    List<String> getInstanceHostnames();
 
     SshClient createSshClient(String username, File privateKey) throws EC2Exception;
 

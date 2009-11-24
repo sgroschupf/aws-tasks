@@ -16,7 +16,7 @@ public class InstanceGroupImplIntegTest extends AbstractEc2IntegrationTest {
 
     @Test
     public void testStartWithoutWait() throws Exception {
-        Jec2 ec2 = new Jec2(_accessKeyId, _accessKeySecret);
+        Jec2 ec2 = _ec2Conf.createJEc2();
         InstanceGroup instanceGroup = new InstanceGroupImpl(ec2);
 
         // startup
@@ -36,7 +36,7 @@ public class InstanceGroupImplIntegTest extends AbstractEc2IntegrationTest {
 
     @Test
     public void testStartWithWaitOnRunning() throws Exception {
-        Jec2 ec2 = new Jec2(_accessKeyId, _accessKeySecret);
+        Jec2 ec2 = _ec2Conf.createJEc2();
         InstanceGroup instanceGroup = new InstanceGroupImpl(ec2);
 
         // startup
@@ -54,7 +54,7 @@ public class InstanceGroupImplIntegTest extends AbstractEc2IntegrationTest {
 
     @Test
     public void testConnectToReservation() throws Exception {
-        Jec2 ec2 = new Jec2(_accessKeyId, _accessKeySecret);
+        Jec2 ec2 = _ec2Conf.createJEc2();
         InstanceGroup instanceGroup1 = new InstanceGroupImpl(ec2);
         InstanceGroup instanceGroup2 = new InstanceGroupImpl(ec2);
 
@@ -75,7 +75,7 @@ public class InstanceGroupImplIntegTest extends AbstractEc2IntegrationTest {
 
     @Test
     public void testConnectToGroup() throws Exception {
-        Jec2 ec2 = new Jec2(_accessKeyId, _accessKeySecret);
+        Jec2 ec2 = _ec2Conf.createJEc2();
         InstanceGroup instanceGroup1 = new InstanceGroupImpl(ec2);
         InstanceGroup instanceGroup2 = new InstanceGroupImpl(ec2);
 
@@ -84,7 +84,7 @@ public class InstanceGroupImplIntegTest extends AbstractEc2IntegrationTest {
         assertTrue(instanceGroup1.isAssociated());
 
         // connect
-        instanceGroup2.connectTo("default");
+        instanceGroup2.connectTo(TEST_SECURITY_GROUP);
         assertTrue(instanceGroup2.isAssociated());
 
         // shutdown

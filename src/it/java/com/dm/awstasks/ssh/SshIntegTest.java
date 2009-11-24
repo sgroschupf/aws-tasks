@@ -81,9 +81,11 @@ public class SshIntegTest extends AbstractEc2IntegrationInteractionTest {
     }
 
     private JschRunner createJschRunner() throws EC2Exception, IOException {
-        JschRunner jschRunner = new JschRunner("ubuntu", _instanceGroup.getCurrentReservationDescription().getInstances().get(0).getDnsName());
-        jschRunner.setKeyfile(_privateKeyFile);
+        JschRunner jschRunner = new JschRunner("ubuntu", _instanceGroup.getReservationDescription(false).getInstances().get(0).getDnsName());
+        jschRunner.setKeyfile(_ec2Conf.getPrivateKeyFile());
         jschRunner.setTrust(true);
+
+        LOG.info("test ssh connections");
         jschRunner.testConnect(TimeUnit.MINUTES.toMillis(5));
         return jschRunner;
     }

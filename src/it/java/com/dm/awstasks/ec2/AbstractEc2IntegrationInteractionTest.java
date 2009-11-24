@@ -19,12 +19,12 @@ public class AbstractEc2IntegrationInteractionTest extends AbstractEc2Integratio
 
     @BeforeClass
     public static void startupInstanceGroup() throws EC2Exception {
-        _ec2 = new Jec2(_accessKeyId, _accessKeySecret);
+        _ec2 = _ec2Conf.createJEc2();
         _instanceGroup = new InstanceGroupImpl(_ec2);
 
         if (CLUSTER_ALREADY_RUNNING) {
             LOG.info("try to use existing instance group");
-            ReservationDescription reservationDescription = Ec2Util.findByGroup(_ec2, "default", "running");
+            ReservationDescription reservationDescription = Ec2Util.findByGroup(_ec2, TEST_SECURITY_GROUP, "running");
             if (reservationDescription == null) {
                 LOG.warn("reservation description with running instances NOT found - starting instance group");
             } else {

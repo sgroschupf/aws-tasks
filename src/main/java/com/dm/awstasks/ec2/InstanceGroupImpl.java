@@ -97,15 +97,6 @@ public class InstanceGroupImpl implements InstanceGroup {
         LOG.info("stopped " + terminatedInstances.size() + " instances");
     }
 
-    private static List<String> getInstanceDns(ReservationDescription reservationDescription) {
-        List<Instance> instances = reservationDescription.getInstances();
-        List<String> instanceIds = new ArrayList<String>(instances.size());
-        for (Instance instance : instances) {
-            instanceIds.add(instance.getDnsName());
-        }
-        return instanceIds;
-    }
-
     private ReservationDescription waitUntilServerUp(TimeUnit timeUnit, long waitTime) throws EC2Exception {
         long end = System.currentTimeMillis() + timeUnit.toMillis(waitTime);
         boolean notAllUp;
@@ -134,10 +125,27 @@ public class InstanceGroupImpl implements InstanceGroup {
     }
 
     @Override
-    public ReservationDescription getCurrentReservationDescription() throws EC2Exception {
+    public ReservationDescription getReservationDescription(boolean updateBefore) throws EC2Exception {
         checkEc2Association(true);
-        updateReservationDescription();
+        if (updateBefore) {
+            updateReservationDescription();
+        }
         return _reservationDescription;
+    }
+
+    public List<String> getInstanceHostnames() {
+        checkEc2Association(true);
+        checkInstanceMode(_reservationDescription.getInstances(), "running");
+        return getInstanceDns(_reservationDescription);
+    }
+
+    private static List<String> getInstanceDns(ReservationDescription reservationDescription) {
+        List<Instance> instances = reservationDescription.getInstances();
+        List<String> instanceIds = new ArrayList<String>(instances.size());
+        for (Instance instance : instances) {
+            instanceIds.add(instance.getDnsName());
+        }
+        return instanceIds;
     }
 
     private synchronized void updateReservationDescription() throws EC2Exception {

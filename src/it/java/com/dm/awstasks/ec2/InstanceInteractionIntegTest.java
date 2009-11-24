@@ -18,7 +18,7 @@ public class InstanceInteractionIntegTest extends AbstractEc2IntegrationInteract
 
     @Test
     public void testScpUploadToAllInstances() throws Exception {
-        File privateKeyFile = new File(_privateKeyFile);
+        File privateKeyFile = new File(_ec2Conf.getPrivateKeyFile());
         SshClient sshClient = _instanceGroup.createSshClient("ubuntu", privateKeyFile);
         File localFile = new File("README.markdown");
         String remoteDir = "~/";
@@ -32,7 +32,7 @@ public class InstanceInteractionIntegTest extends AbstractEc2IntegrationInteract
 
     @Test
     public void testScpUploadToSpecificInstances() throws Exception {
-        File privateKeyFile = new File(_privateKeyFile);
+        File privateKeyFile = new File(_ec2Conf.getPrivateKeyFile());
         SshClient sshClient = _instanceGroup.createSshClient("ubuntu", privateKeyFile);
         File localFile = new File("build.xml");
         String remoteDir = "~/";
@@ -53,7 +53,7 @@ public class InstanceInteractionIntegTest extends AbstractEc2IntegrationInteract
 
     @Test
     public void testSshExecutionToAllInstances() throws Exception {
-        File privateKeyFile = new File(_privateKeyFile);
+        File privateKeyFile = new File(_ec2Conf.getPrivateKeyFile());
         SshClient sshClient = _instanceGroup.createSshClient("ubuntu", privateKeyFile);
         sshClient.executeCommand("ls -l");
         String noneExistingFile = "abcfi";
@@ -69,7 +69,7 @@ public class InstanceInteractionIntegTest extends AbstractEc2IntegrationInteract
 
     @Test
     public void testShhExecutionToSpecificInstances() throws Exception {
-        File privateKeyFile = new File(_privateKeyFile);
+        File privateKeyFile = new File(_ec2Conf.getPrivateKeyFile());
         SshClient sshClient1 = _instanceGroup.createSshClient("ubuntu", privateKeyFile);
 
         String noneExistingFile = "abcfi";
@@ -85,7 +85,7 @@ public class InstanceInteractionIntegTest extends AbstractEc2IntegrationInteract
 
     @Test
     public void testSshExecutionFromFile() throws Exception {
-        File privateKeyFile = new File(_privateKeyFile);
+        File privateKeyFile = new File(_ec2Conf.getPrivateKeyFile());
         SshClient sshClient = _instanceGroup.createSshClient("ubuntu", privateKeyFile);
         File commandFile = _folder.newFile("commands.txt");
         FileWriter fileWriter = new FileWriter(commandFile);
