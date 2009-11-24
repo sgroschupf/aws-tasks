@@ -65,8 +65,6 @@ public abstract class AbstractEc2IntegrationTest extends AbstractTest {
         launchConfiguration.setKeyName(_privateKeyName);
         launchConfiguration.setSecurityGroup(Arrays.asList(TEST_SECURITY_GROUP, "default"));
         // launchConfiguration.setInstanceType(InstanceType.DEFAULT);// default is small
-        // launchConfiguration.setUserData(null);// see
-        // http://docs.amazonwebservices.com/AWSEC2/2008-02-01/DeveloperGuide/
         // launchConfiguration.setAvailabilityZone("");
         return launchConfiguration;
     }

@@ -43,7 +43,8 @@
 			instanceCount="2"
 			accessKey="${ec2.accessKey}"
 			accessSecret="${ec2.accessSecret}"
-			privateKeyName="${ec2.privateKeyName}">
+			privateKeyName="${ec2.privateKeyName}"
+			userData="a | b | c">
 		</ec2-start>
 	</target>
 	
@@ -60,7 +61,8 @@
 			<upload localFile="src/build" remotePath="~/" targetInstances="0"/>
 			<exec command="ls uploadedFile" targetInstances="0,1"/>
 			<exec command="hostname" targetInstances="0-n"/>
-			<exec command="hostname"/>
+			<exec command="curl -s http://169.254.169.254/1.0/meta-data/ami-launch-index"/>
+			<exec command="curl -s http://169.254.169.254/1.0/user-data"/>
 		</ec2-ssh>
 	</target>
 	

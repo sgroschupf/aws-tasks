@@ -17,6 +17,8 @@ public class Ec2StartTask extends AbstractEc2Task {
     private int _instanceCount;
     private String _privateKeyName;
 
+    private String _userData;
+
     public void setAmi(String ami) {
         _ami = ami;
     }
@@ -41,6 +43,14 @@ public class Ec2StartTask extends AbstractEc2Task {
         return _privateKeyName;
     }
 
+    public void setUserData(String userData) {
+        _userData = userData;
+    }
+
+    public String getUserData() {
+        return _userData;
+    }
+
     @Override
     public void execute() throws BuildException {
         System.out.println("executing " + getClass().getSimpleName() + " with groupName '" + _groupName + "'");
@@ -50,6 +60,9 @@ public class Ec2StartTask extends AbstractEc2Task {
             LaunchConfiguration launchConfiguration = new LaunchConfiguration(_ami, _instanceCount, _instanceCount);
             launchConfiguration.setKeyName(_privateKeyName);
             launchConfiguration.setSecurityGroup(Arrays.asList("default", _groupName));
+            if (_userData != null) {
+                launchConfiguration.setUserData(_userData.getBytes());
+            }
             instanceGroup.startup(launchConfiguration, TimeUnit.MINUTES, 10);
         } catch (EC2Exception e) {
             throw new BuildException(e);
