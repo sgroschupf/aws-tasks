@@ -69,12 +69,13 @@ public interface InstanceGroup {
      * 
      * @return true if the if the instance group has been started or connected and not been shutdown
      *         yet
-     * @throws EC2Exception
      */
-    boolean isAssociated() throws EC2Exception;
+    boolean isAssociated();
 
     ReservationDescription getCurrentReservationDescription() throws EC2Exception;
 
     SshClient createSshClient(String username, File privateKey) throws EC2Exception;
+
+    int instanceCount();
 
 }

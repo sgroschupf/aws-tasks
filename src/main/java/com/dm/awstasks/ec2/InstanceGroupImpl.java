@@ -69,7 +69,7 @@ public class InstanceGroupImpl implements InstanceGroup {
         return _reservationDescription;
     }
 
-    private void checkEc2Association(boolean shouldBeAssociated) throws EC2Exception {
+    private void checkEc2Association(boolean shouldBeAssociated) {
         if (shouldBeAssociated && !isAssociated()) {
             throw new IllegalStateException("instance group is not yet associated with ec2 instances");
         }
@@ -79,8 +79,14 @@ public class InstanceGroupImpl implements InstanceGroup {
     }
 
     @Override
-    public boolean isAssociated() throws EC2Exception {
+    public boolean isAssociated() {
         return _reservationDescription != null;
+    }
+
+    @Override
+    public int instanceCount() {
+        checkEc2Association(true);
+        return _reservationDescription.getInstances().size();
     }
 
     @Override

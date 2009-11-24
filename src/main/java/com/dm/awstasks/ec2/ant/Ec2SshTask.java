@@ -36,16 +36,25 @@ public class Ec2SshTask extends AbstractEc2SshTask {
         System.out.println("executing " + getClass().getSimpleName() + " for group '" + _groupName + "'");
         Jec2 ec2 = new Jec2(_accessKey, _accessSecret);
         InstanceGroup instanceGroup = new InstanceGroupImpl(ec2);
+
         try {
             instanceGroup.connectTo(_groupName);
+            int instanceCount = instanceGroup.instanceCount();
+            // verify targetIndexes specifications
+            for (SshCommand sshCommand : _sshCommands) {
+                if (!sshCommand.isToAllInstances()) {
+                    sshCommand.compileTargetInstances(instanceCount);
+                }
+            }
+
             SshClient sshClient = instanceGroup.createSshClient(_username, _keyFile);
             for (SshCommand sshCommand : _sshCommands) {
                 if (sshCommand instanceof SshExec) {
-                    doSshExec(sshClient, (SshExec) sshCommand);
+                    doSshExec(sshClient, (SshExec) sshCommand, instanceCount);
                 } else if (sshCommand instanceof ScpUpload) {
-                    doUpload(sshClient, (ScpUpload) sshCommand);
+                    doUpload(sshClient, (ScpUpload) sshCommand, instanceCount);
                 } else if (sshCommand instanceof ScpDownload) {
-                    doDownload(sshClient, (ScpDownload) sshCommand);
+                    doDownload(sshClient, (ScpDownload) sshCommand, instanceCount);
                 } else {
                     throw new IllegalStateException("type '" + sshCommand.getClass().getName() + "' not supported here");
                 }
@@ -55,35 +64,35 @@ public class Ec2SshTask extends AbstractEc2SshTask {
         }
     }
 
-    private void doSshExec(SshClient sshClient, SshExec sshCommand) throws IOException {
+    private void doSshExec(SshClient sshClient, SshExec sshCommand, int instanceCount) throws IOException {
         if (sshCommand.getCommandFile() == null) {
             if (sshCommand.isToAllInstances()) {
                 sshClient.executeCommand(sshCommand.getCommand());
             } else {
-                sshClient.executeCommand(sshCommand.getCommand(), sshCommand.compileTargetInstances());
+                sshClient.executeCommand(sshCommand.getCommand(), sshCommand.compileTargetInstances(instanceCount));
             }
         } else {
             if (sshCommand.isToAllInstances()) {
                 sshClient.executeCommandFile(sshCommand.getCommandFile());
             } else {
-                sshClient.executeCommandFile(sshCommand.getCommandFile(), sshCommand.compileTargetInstances());
+                sshClient.executeCommandFile(sshCommand.getCommandFile(), sshCommand.compileTargetInstances(instanceCount));
             }
         }
     }
 
-    private void doUpload(SshClient scpUploader, ScpUpload upload) throws IOException {
+    private void doUpload(SshClient scpUploader, ScpUpload upload, int instanceCount) throws IOException {
         if (upload.isToAllInstances()) {
             scpUploader.uploadFile(upload.getLocalFile(), upload.getRemotePath());
         } else {
-            scpUploader.uploadFile(upload.getLocalFile(), upload.getRemotePath(), upload.compileTargetInstances());
+            scpUploader.uploadFile(upload.getLocalFile(), upload.getRemotePath(), upload.compileTargetInstances(instanceCount));
         }
     }
 
-    private void doDownload(SshClient scpUploader, ScpDownload download) throws IOException {
+    private void doDownload(SshClient scpUploader, ScpDownload download, int instanceCount) throws IOException {
         if (download.isToAllInstances()) {
             scpUploader.downloadFile(download.getRemotePath(), download.getLocalFile(), download.isRecursiv());
         } else {
-            scpUploader.downloadFile(download.getRemotePath(), download.getLocalFile(), download.isRecursiv(), download.compileTargetInstances());
+            scpUploader.downloadFile(download.getRemotePath(), download.getLocalFile(), download.isRecursiv(), download.compileTargetInstances(instanceCount));
         }
     }
 

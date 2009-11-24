@@ -42,6 +42,7 @@ ANT API
 			- single index	 	f.e. targetInstances="0"
 			- comma seperated 	f.e. targetInstances="1,2,3"
 			- one range 		f.e. targetInstances="1-5"
+			- one range with n	f.e. targetInstances="1-n", where n is the last instance index
 	-->
 	<target name="prepare-ec2" description="--> prepare fresh ec2 instance groups">
 		<ec2-ssh groupName="aws-tasks.test"

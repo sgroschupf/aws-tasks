@@ -16,8 +16,9 @@ public abstract class SshCommand {
         return _targetInstances == null || _targetInstances.trim().equals("all");
     }
 
-    public int[] compileTargetInstances() {
+    public int[] compileTargetInstances(int instanceCount) {
         int[] targetInstances;
+        _targetInstances = _targetInstances.replaceAll("n", Integer.toString(instanceCount - 1));
         if (_targetInstances.contains(",")) {
             String[] split = _targetInstances.split(",");
             targetInstances = new int[split.length];
@@ -36,7 +37,13 @@ public abstract class SshCommand {
             targetInstances = new int[1];
             targetInstances[0] = Integer.parseInt(_targetInstances);
         }
+
+        // check validness
+        for (int index : targetInstances) {
+            if (index >= instanceCount) {
+                throw new IllegalArgumentException("specified '" + index + "' as instance index, but max index is '" + (instanceCount - 1) + "'");
+            }
+        }
         return targetInstances;
     }
-
 }

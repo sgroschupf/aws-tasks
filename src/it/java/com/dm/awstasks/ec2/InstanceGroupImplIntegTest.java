@@ -20,9 +20,11 @@ public class InstanceGroupImplIntegTest extends AbstractEc2IntegrationTest {
         InstanceGroup instanceGroup = new InstanceGroupImpl(ec2);
 
         // startup
-        ReservationDescription reservationDescription = instanceGroup.startup(createLaunchConfiguration(1));
+        int instanceCount = 1;
+        ReservationDescription reservationDescription = instanceGroup.startup(createLaunchConfiguration(instanceCount));
+        assertEquals(instanceCount, instanceGroup.instanceCount());
         assertTrue(instanceGroup.isAssociated());
-        assertEquals(1, reservationDescription.getInstances().size());
+        assertEquals(instanceCount, reservationDescription.getInstances().size());
         checkInstanceMode(reservationDescription, "pending");
 
         // shutdown
