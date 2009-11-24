@@ -14,18 +14,6 @@ Java/Ant API for:
 + ssh command execution
 
 
-GETTING STARTED WITH THE ANT TASKS
-=====
- - put the aws-tasks jar and all it dependencies in your lib folder and make them in your build.xml available as a classpath element  
- - make following properties available in your build.xml (extern properties file recommended)
- 	 `ec2.accessKey=
-	  ec2.accessSecret=
-	  ec2.privateKeyName=
-	  ec2.privateKeyFile=`
- - add the aws-tasks taskdefs you want yo use to your build.xml (see ANT API example) 
- - start using the tasks (see ANT API example)
-
-
 USAGE
 =====
 
@@ -133,9 +121,21 @@ DEPENDENCIES
  	- commons-codec 
  - [jsch](http://www.jcraft.com/jsch/)
  - [log4j](http://logging.apache.org/log4j/)
+
+
+GETTING STARTED WITH THE ANT TASKS
+=====
+ - put the aws-tasks jar and all it dependencies in your lib folder and make them in your build.xml available as a classpath element  
+ - make following properties available in your build.xml (extern properties file recommended)
+ 	- `ec2.accessKey=`<br>
+ 	  `ec2.accessSecret=`<br>
+      `ec2.privateKeyName=`<br>
+      `ec2.privateKeyFile=`<br>
+ - add the aws-tasks taskdefs you want yo use to your build.xml (see ANT API example) 
+ - start using the tasks (see ANT API example) 
  
  
-DEVELOPMENT
+AWS-TASKS DEVELOPMENT
 =====
 
 Set up in Eclipse
