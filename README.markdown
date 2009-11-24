@@ -115,7 +115,7 @@ JAVA API
 DEPENDENCIES
 =====
  - [typica](http://code.google.com/p/typica/)
-  - JAXB
+ 	- JAXB
   - commons-logging
   - commons-httpclient
   - commons-codec 
