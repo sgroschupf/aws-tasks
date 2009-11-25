@@ -21,6 +21,7 @@ public class Ec2Configuration {
     private static final String PRIVATE_KEY_NAME = "ec2.privateKeyName";
     private static final String PRIVATE_KEY_FILE = "ec2.privateKeyFile";
 
+    private Properties _properties;
     protected String _accessKeyId;
     protected String _accessKeySecret;
     protected String _privateKeyName;
@@ -34,12 +35,12 @@ public class Ec2Configuration {
         if (inputStream == null) {
             throw new IOException(EC2_PROPERTIES_FILE + " not found in classpath");
         }
-        Properties properties = new Properties();
-        properties.load(inputStream);
-        _accessKeyId = properties.getProperty(ACCESS_KEY);
-        _accessKeySecret = properties.getProperty(ACCESS_KEY_SECRET);
-        _privateKeyName = properties.getProperty(PRIVATE_KEY_NAME);
-        _privateKeyFile = properties.getProperty(PRIVATE_KEY_FILE);
+        _properties = new Properties();
+        _properties.load(inputStream);
+        _accessKeyId = _properties.getProperty(ACCESS_KEY);
+        _accessKeySecret = _properties.getProperty(ACCESS_KEY_SECRET);
+        _privateKeyName = _properties.getProperty(PRIVATE_KEY_NAME);
+        _privateKeyFile = _properties.getProperty(PRIVATE_KEY_FILE);
     }
 
     public boolean isEc2Configured() {
@@ -60,6 +61,14 @@ public class Ec2Configuration {
 
     public String getPrivateKeyFile() {
         return _privateKeyFile;
+    }
+
+    public String getProperty(String name) {
+        String property = _properties.getProperty(name);
+        if (property == null) {
+            throw new IllegalArgumentException("no property with name '" + name + "' configured");
+        }
+        return property;
     }
 
     public LaunchConfiguration createLaunchConfiguration(String ami, String group, int instanceCount) {
