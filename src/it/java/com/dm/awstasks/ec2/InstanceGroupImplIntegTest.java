@@ -30,7 +30,7 @@ public class InstanceGroupImplIntegTest extends AbstractEc2IntegrationTest {
         // shutdown
         instanceGroup.shutdown();
         Thread.sleep(500);
-        checkInstanceMode(Ec2Util.reloadReservationDescription(ec2, reservationDescription), "shutting-down");
+        checkInstanceMode(Ec2Util.reloadReservationDescription(ec2, reservationDescription), "shutting-down|terminated");
         assertFalse(instanceGroup.isAssociated());
     }
 
@@ -48,7 +48,7 @@ public class InstanceGroupImplIntegTest extends AbstractEc2IntegrationTest {
         // shutdown
         instanceGroup.shutdown();
         Thread.sleep(500);
-        checkInstanceMode(Ec2Util.reloadReservationDescription(ec2, reservationDescription), "shutting-down");
+        checkInstanceMode(Ec2Util.reloadReservationDescription(ec2, reservationDescription), "shutting-down|terminated");
         assertFalse(instanceGroup.isAssociated());
     }
 
@@ -69,7 +69,7 @@ public class InstanceGroupImplIntegTest extends AbstractEc2IntegrationTest {
         // shutdown
         instanceGroup2.shutdown();
         Thread.sleep(500);
-        checkInstanceMode(Ec2Util.reloadReservationDescription(ec2, reservationDescription), "shutting-down");
+        checkInstanceMode(Ec2Util.reloadReservationDescription(ec2, reservationDescription), "shutting-down|terminated");
         assertFalse(instanceGroup2.isAssociated());
     }
 
@@ -90,14 +90,24 @@ public class InstanceGroupImplIntegTest extends AbstractEc2IntegrationTest {
         // shutdown
         instanceGroup2.shutdown();
         Thread.sleep(500);
-        checkInstanceMode(Ec2Util.reloadReservationDescription(ec2, reservationDescription), "shutting-down");
+        checkInstanceMode(Ec2Util.reloadReservationDescription(ec2, reservationDescription), "shutting-down|terminated");
         assertFalse(instanceGroup2.isAssociated());
     }
 
-    private void checkInstanceMode(ReservationDescription reservationDescription, String mode) {
+    private void checkInstanceMode(ReservationDescription reservationDescription, String modesString) {
+        String[] modes = modesString.split("\\|");
         List<Instance> instances = reservationDescription.getInstances();
         for (Instance instance : instances) {
-            assertEquals(mode, instance.getState());
+            boolean inOneOfDesiredStates = false;
+            for (String mode : modes) {
+                if (mode.equals(instance.getState())) {
+                    inOneOfDesiredStates = true;
+                }
+            }
+            if (!inOneOfDesiredStates) {
+                fail("instance is in mode '" + instance.getState() + "' but should be (onn of) '" + modesString + "'");
+            }
         }
+
     }
 }

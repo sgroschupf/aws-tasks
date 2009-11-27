@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 
-import com.dm.awstasks.util.IoUtil;
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.Session;
 
@@ -15,14 +14,17 @@ public class SshExecCommand extends JschCommand {
 
     private final String _command;
     private final File _commandFile;
+    private final OutputStream _outputStream;
 
-    public SshExecCommand(String command) {
+    public SshExecCommand(String command, OutputStream outputStream) {
         _command = command;
+        _outputStream = outputStream;
         _commandFile = null;
     }
 
-    public SshExecCommand(File commandFile) {
+    public SshExecCommand(File commandFile, OutputStream outputStream) {
         _commandFile = commandFile;
+        _outputStream = outputStream;
         _command = null;
     }
 
@@ -42,9 +44,8 @@ public class SshExecCommand extends JschCommand {
 
     private void executeCommand(Session session, String command) throws IOException {
         final Channel channel = openExecChannel(session, command);
-        OutputStream outputStream = IoUtil.closeProtectedStream(System.out);
-        channel.setOutputStream(outputStream);
-        channel.setExtOutputStream(outputStream);
+        channel.setOutputStream(_outputStream);
+        channel.setExtOutputStream(_outputStream);
 
         try {
             do {

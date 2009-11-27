@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -19,13 +20,14 @@ public class SshIntegTest extends AbstractEc2IntegrationInteractionTest {
 
     @Rule
     public TemporaryFolder _folder = new TemporaryFolder();
+    private OutputStream _sysOutStream = IoUtil.closeProtectedStream(System.out);
 
     @Test
     public void testSshExec() throws Exception {
         JschRunner runner = createJschRunner();
-        runner.run(new SshExecCommand("ls -l ~/"));
+        runner.run(new SshExecCommand("ls -l ~/", _sysOutStream));
         try {
-            runner.run(new SshExecCommand("rogijeorigjo"));
+            runner.run(new SshExecCommand("rogijeorigjo", _sysOutStream));
             fail("should throw exception");
         } catch (Exception e) {
             // expected
@@ -40,9 +42,9 @@ public class SshIntegTest extends AbstractEc2IntegrationInteractionTest {
         IoUtil.writeToFile(goodCommandFile, "ls -l ~/", "echo hostname");
         IoUtil.writeToFile(badCommandFile, "erheaefsg", "gergergerg");
 
-        runner.run(new SshExecCommand(goodCommandFile));
+        runner.run(new SshExecCommand(goodCommandFile, _sysOutStream));
         try {
-            runner.run(new SshExecCommand(badCommandFile));
+            runner.run(new SshExecCommand(badCommandFile, _sysOutStream));
             fail("should throw exception");
         } catch (Exception e) {
             // expected

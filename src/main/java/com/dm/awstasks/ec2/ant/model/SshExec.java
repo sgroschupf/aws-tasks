@@ -6,6 +6,7 @@ public class SshExec extends SshCommand {
 
     private String _command;
     private File _commandFile;
+    private String _outputProperty;
 
     public String getCommand() {
         return _command;
@@ -21,6 +22,14 @@ public class SshExec extends SshCommand {
 
     public void setCommandFile(File commandFile) {
         _commandFile = commandFile;
+    }
+
+    public void setOutputProperty(String outputProperty) {
+        _outputProperty = outputProperty;
+    }
+
+    public String getOutputProperty() {
+        return _outputProperty;
     }
 
 }

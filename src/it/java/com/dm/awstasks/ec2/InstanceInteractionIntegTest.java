@@ -4,17 +4,20 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.OutputStream;
 
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import com.dm.awstasks.ec2.ssh.SshClient;
+import com.dm.awstasks.util.IoUtil;
 
 public class InstanceInteractionIntegTest extends AbstractEc2IntegrationInteractionTest {
 
     @Rule
     public TemporaryFolder _folder = new TemporaryFolder();
+    private OutputStream _sysOutStream = IoUtil.closeProtectedStream(System.out);
 
     @Test
     public void testScpUploadToAllInstances() throws Exception {
@@ -55,16 +58,16 @@ public class InstanceInteractionIntegTest extends AbstractEc2IntegrationInteract
     public void testSshExecutionToAllInstances() throws Exception {
         File privateKeyFile = new File(_ec2Conf.getPrivateKeyFile());
         SshClient sshClient = _instanceGroup.createSshClient("ubuntu", privateKeyFile);
-        sshClient.executeCommand("ls -l");
+        sshClient.executeCommand("ls -l", _sysOutStream);
         String noneExistingFile = "abcfi";
         try {
-            sshClient.executeCommand("rm " + noneExistingFile);
+            sshClient.executeCommand("rm " + noneExistingFile, _sysOutStream);
             fail("should throw exception");
         } catch (Exception e) {
             // expected
         }
-        sshClient.executeCommand("touch " + noneExistingFile);
-        sshClient.executeCommand("rm " + noneExistingFile);
+        sshClient.executeCommand("touch " + noneExistingFile, _sysOutStream);
+        sshClient.executeCommand("rm " + noneExistingFile, _sysOutStream);
     }
 
     @Test
@@ -73,10 +76,10 @@ public class InstanceInteractionIntegTest extends AbstractEc2IntegrationInteract
         SshClient sshClient1 = _instanceGroup.createSshClient("ubuntu", privateKeyFile);
 
         String noneExistingFile = "abcfi";
-        sshClient1.executeCommand("touch " + noneExistingFile, new int[] { 0 });
-        sshClient1.executeCommand("rm " + noneExistingFile, new int[] { 0 });
+        sshClient1.executeCommand("touch " + noneExistingFile, _sysOutStream, new int[] { 0 });
+        sshClient1.executeCommand("rm " + noneExistingFile, _sysOutStream, new int[] { 0 });
         try {
-            sshClient1.executeCommand("rm " + noneExistingFile, new int[] { 1 });
+            sshClient1.executeCommand("rm " + noneExistingFile, _sysOutStream, new int[] { 1 });
             fail("should throw exception");
         } catch (Exception e) {
             // expected
@@ -94,7 +97,7 @@ public class InstanceInteractionIntegTest extends AbstractEc2IntegrationInteract
         fileWriter.write("touch " + noneExistingFile + "\n");
         fileWriter.write("rm " + noneExistingFile + "\n");
         fileWriter.close();
-        sshClient.executeCommandFile(commandFile, new int[] { 0 });
+        sshClient.executeCommandFile(commandFile, _sysOutStream, new int[] { 0 });
     }
 
 }

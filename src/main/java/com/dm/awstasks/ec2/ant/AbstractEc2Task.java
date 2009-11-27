@@ -1,8 +1,11 @@
 package com.dm.awstasks.ec2.ant;
 
+import org.apache.log4j.Logger;
 import org.apache.tools.ant.Task;
 
 public class AbstractEc2Task extends Task {
+
+    protected static final Logger LOG = Logger.getLogger(AbstractEc2Task.class);
 
     protected String _groupName;
     protected String _accessKey;

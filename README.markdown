@@ -61,7 +61,9 @@ ANT API
 			<upload localFile="build.xml" remotePath="uploadedFile" targetInstances="all"/>
 			<upload localFile="src/build" remotePath="~/" targetInstances="0"/>
 			<exec command="ls uploadedFile"/>
-			<exec command="hostname"/>
+			<exec command="hostname" targetInstances="0-n" outputProperty="instances.hostnames"/>
+			<exec command="echo '${instances.hostnames}' > hostnames.txt" targetInstances="0"/>
+			<exec command="cat hostnames.txt" targetInstances="0"/>
 			<download remotePath="build" localFile="${downloadDir}/" recursiv="true" targetInstances="0"/>
 		</ec2-ssh>
 	</target>

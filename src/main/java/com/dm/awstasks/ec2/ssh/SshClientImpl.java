@@ -2,6 +2,7 @@ package com.dm.awstasks.ec2.ssh;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,38 +28,38 @@ public class SshClientImpl implements SshClient {
     }
 
     @Override
-    public void executeCommand(String command) throws IOException {
-        executeCommand(_hostnames, command);
+    public void executeCommand(String command, OutputStream outputStream) throws IOException {
+        executeCommand(_hostnames, command, outputStream);
     }
 
     @Override
-    public void executeCommand(String command, int[] targetedInstances) throws IOException {
-        executeCommand(getHosts(targetedInstances), command);
+    public void executeCommand(String command, OutputStream outputStream, int[] targetedInstances) throws IOException {
+        executeCommand(getHosts(targetedInstances), command, outputStream);
     }
 
-    private void executeCommand(List<String> hostnames, String command) throws IOException {
+    private void executeCommand(List<String> hostnames, String command, OutputStream outputStream) throws IOException {
         for (String host : hostnames) {
             LOG.info(String.format("executing command '%s' on '%s'", command, host));
             JschRunner jschRunner = createJschRunner(host);
-            jschRunner.run(new SshExecCommand(command));
+            jschRunner.run(new SshExecCommand(command, outputStream));
         }
     }
 
     @Override
-    public void executeCommandFile(File commandFile) throws IOException {
-        executeCommandFile(_hostnames, commandFile);
+    public void executeCommandFile(File commandFile, OutputStream outputStream) throws IOException {
+        executeCommandFile(_hostnames, commandFile, outputStream);
     }
 
     @Override
-    public void executeCommandFile(File commandFile, int[] targetedInstances) throws IOException {
-        executeCommandFile(getHosts(targetedInstances), commandFile);
+    public void executeCommandFile(File commandFile, OutputStream outputStream, int[] targetedInstances) throws IOException {
+        executeCommandFile(getHosts(targetedInstances), commandFile, outputStream);
     }
 
-    private void executeCommandFile(List<String> hostnames, File commandFile) throws IOException {
+    private void executeCommandFile(List<String> hostnames, File commandFile, OutputStream outputStream) throws IOException {
         for (String host : hostnames) {
             LOG.info(String.format("executing command-file '%s' on '%s'", commandFile.getAbsolutePath(), host));
             JschRunner jschRunner = createJschRunner(host);
-            jschRunner.run(new SshExecCommand(commandFile));
+            jschRunner.run(new SshExecCommand(commandFile, outputStream));
         }
     }
 

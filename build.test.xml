@@ -53,7 +53,7 @@
 	<!-- ================================================================== -->
 	<!-- PREPARE EC2 EXAMPLE TASK: some ssh/scp commands right after instance startup -->
 	<!-- ================================================================== -->
-	<target name="prepare-ec2" description="--> prepare fresh ec2 instance groups">
+	<target name="setup-ec2" description="--> setup fresh ec2 instance groups">
 		<ec2-ssh groupName="aws-tasks.test"
 			accessKey="${ec2.accessKey}"
 			accessSecret="${ec2.accessSecret}"
@@ -62,10 +62,13 @@
 			<upload localFile="build.xml" remotePath="uploadedFile" targetInstances="all"/>
 			<upload localFile="src/build" remotePath="~/" targetInstances="0"/>
 			<exec command="ls uploadedFile" targetInstances="0,1"/>
-			<exec command="hostname" targetInstances="0-n"/>
+			<exec command="hostname" targetInstances="0-n" outputProperty="instances.hostnames"/>
+			<exec command="echo '${instances.hostnames}' > hostnames.txt" targetInstances="0"/>
+			<exec command="cat hostnames.txt" targetInstances="0"/>
 			<exec command="curl -s http://169.254.169.254/1.0/meta-data/ami-launch-index"/>
 			<exec command="curl -s http://169.254.169.254/1.0/user-data"/>
 		</ec2-ssh>
+		<echo message="${instances.hostnames}"/>
 	</target>
 	
 	<!-- ================================================================== -->
@@ -97,7 +100,7 @@
 	<!-- ================================================================== -->
 	<!-- TEST EC2 EXAMPLE TASKs	                                            -->
 	<!-- ================================================================== -->
-	<target name="test-ec2" depends="start-ec2, prepare-ec2,dismantle-ec2, stop-ec2" description="--> test all ec2 tasks">
+	<target name="test-ec2" depends="start-ec2, setup-ec2,dismantle-ec2, stop-ec2" description="--> test all ec2 tasks">
 		<echo>fin running ec2 tasks</echo>
 	</target>
 	
