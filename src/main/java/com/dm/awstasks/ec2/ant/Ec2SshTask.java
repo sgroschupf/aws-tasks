@@ -88,10 +88,10 @@ public class Ec2SshTask extends AbstractEc2Task {
             for (SshCommand sshCommand : _sshCommands) {
                 if (sshCommand instanceof SshExec) {
                     doSshExec(sshClient, (SshExec) sshCommand, instanceCount);
-                } else if (sshCommand instanceof ScpUpload) {
-                    doUpload(sshClient, (ScpUpload) sshCommand, instanceCount);
                 } else if (sshCommand instanceof ScpDownload) {
                     doDownload(sshClient, (ScpDownload) sshCommand, instanceCount);
+                } else if (sshCommand instanceof ScpUpload) {
+                    doUpload(sshClient, (ScpUpload) sshCommand, instanceCount);
                 } else {
                     throw new IllegalStateException("type '" + sshCommand.getClass().getName() + "' not supported here");
                 }
@@ -140,7 +140,7 @@ public class Ec2SshTask extends AbstractEc2Task {
             }
         }
         if (!command.equals(sshCommand.getCommand())) {
-            LOG.info("substitute '" + sshCommand.getCommand() + "' with '" + command + "'");
+            LOG.debug("substitute '" + sshCommand.getCommand() + "' with '" + command + "'");
             sshCommand.setCommand(command);
         }
     }
