@@ -11,24 +11,29 @@
 	<path id="compile.classpath">
 		<fileset dir="${lib.dir}/compile">
 			<include name="**/*.jar" />
+			<exclude name="**/*-sources.jar" />
 		</fileset>
 		<fileset dir="${lib.dir}/provided">
 			<include name="**/*.jar" />
+			<exclude name="**/*-sources.jar" />
 		</fileset>
 	</path>
 	<path id="test.classpath">
 		<fileset dir="${lib.dir}/test">
 			<include name="**/*.jar" />
+			<exclude name="**/*-sources.jar" />
 		</fileset>
 	</path>
 	<path id="provided.classpath">
 		<fileset dir="${lib.dir}/provided">
 			<include name="**/*.jar" />
+			<exclude name="**/*-sources.jar" />
 		</fileset>
 	</path>
 	<path id="build.classpath">
 		<fileset dir="${lib.dir}/build">
 			<include name="**/*.jar" />
+			<exclude name="**/*-sources.jar" />
 		</fileset>
 	</path>
 	
@@ -267,6 +272,7 @@
 		</concat>
 		<copy file="${root.dir}/src/build/eclipse/org.eclipse.jdt.ui.prefs" todir="${root.dir}/.settings" />
 		<replace file="${root.dir}/.settings/org.eclipse.jdt.core.prefs" token="org.eclipse.jdt.core.compiler.compliance=6.0" value="org.eclipse.jdt.core.compiler.compliance=1.6" />
+		<replaceregexp file=".classpath" match="path=&quot;(.*).jar&quot;" replace="path=&quot;\1.jar&quot; sourcepath=&quot;\1-sources.jar&quot;" flags="g" />
 	</target>
 
 	<target name="clean-eclipse" description="--> clean the Eclipse project files">
