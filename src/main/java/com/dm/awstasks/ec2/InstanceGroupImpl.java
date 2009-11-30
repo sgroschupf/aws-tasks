@@ -64,7 +64,7 @@ public class InstanceGroupImpl implements InstanceGroup {
         LOG.info(String.format("triggered start of %d instances: %s", _reservationDescription.getInstances().size(), instanceIds));
         if (timeUnit != null) {
             waitUntilServerUp(timeUnit, time);
-            LOG.info(String.format("started %d instances: %s / %s", _reservationDescription.getInstances().size(), instanceIds, getInstanceDns(_reservationDescription)));
+            LOG.info(String.format("started %d instances: %s / %s", _reservationDescription.getInstances().size(), instanceIds, getPublicDns(_reservationDescription)));
         }
         return _reservationDescription;
     }
@@ -133,13 +133,7 @@ public class InstanceGroupImpl implements InstanceGroup {
         return _reservationDescription;
     }
 
-    public List<String> getInstanceHostnames() {
-        checkEc2Association(true);
-        checkInstanceMode(_reservationDescription.getInstances(), "running");
-        return getInstanceDns(_reservationDescription);
-    }
-
-    private static List<String> getInstanceDns(ReservationDescription reservationDescription) {
+    private static List<String> getPublicDns(ReservationDescription reservationDescription) {
         List<Instance> instances = reservationDescription.getInstances();
         List<String> instanceIds = new ArrayList<String>(instances.size());
         for (Instance instance : instances) {
@@ -157,7 +151,7 @@ public class InstanceGroupImpl implements InstanceGroup {
         checkEc2Association(true);
         updateReservationDescription();
         checkInstanceMode(_reservationDescription.getInstances(), "running");
-        List<String> instanceDns = getInstanceDns(_reservationDescription);
+        List<String> instanceDns = getPublicDns(_reservationDescription);
         checkSshPermissions();
         checkSshConnection(username, instanceDns, privateKey);
         return new SshClientImpl(username, privateKey, instanceDns);
