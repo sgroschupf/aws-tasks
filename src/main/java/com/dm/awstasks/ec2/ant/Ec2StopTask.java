@@ -4,7 +4,6 @@ import org.apache.tools.ant.BuildException;
 
 import com.dm.awstasks.ec2.InstanceGroup;
 import com.dm.awstasks.ec2.InstanceGroupImpl;
-import com.xerox.amazonws.ec2.EC2Exception;
 import com.xerox.amazonws.ec2.Jec2;
 
 public class Ec2StopTask extends AbstractEc2Task {
@@ -17,7 +16,7 @@ public class Ec2StopTask extends AbstractEc2Task {
         try {
             instanceGroup.connectTo(_groupName);
             instanceGroup.shutdown();
-        } catch (EC2Exception e) {
+        } catch (Exception e) {
             throw new BuildException(e);
         }
     }

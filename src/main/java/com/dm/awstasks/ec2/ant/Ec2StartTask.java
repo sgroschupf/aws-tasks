@@ -7,7 +7,6 @@ import org.apache.tools.ant.BuildException;
 
 import com.dm.awstasks.ec2.InstanceGroup;
 import com.dm.awstasks.ec2.InstanceGroupImpl;
-import com.xerox.amazonws.ec2.EC2Exception;
 import com.xerox.amazonws.ec2.InstanceType;
 import com.xerox.amazonws.ec2.Jec2;
 import com.xerox.amazonws.ec2.LaunchConfiguration;
@@ -88,7 +87,7 @@ public class Ec2StartTask extends AbstractEc2Task {
             }
             launchConfiguration.setAvailabilityZone(_availabilityZone);
             instanceGroup.startup(launchConfiguration, TimeUnit.MINUTES, 10);
-        } catch (EC2Exception e) {
+        } catch (Exception e) {
             throw new BuildException(e);
         }
     }
