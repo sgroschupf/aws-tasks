@@ -24,6 +24,7 @@ public class JschRunner {
     private final String _host;
     private int _port = 22;
     private String _keyFile;
+    private String _password;
     private String _knownHosts = System.getProperty("user.home") + "/.ssh/known_hosts";
     private boolean _trust;
     protected int _connectTimeout = (int) TimeUnit.SECONDS.toMillis(80);
@@ -39,7 +40,21 @@ public class JschRunner {
     }
 
     public void setKeyfile(String keyfile) {
+        if (_password != null) {
+            throwAuthenticationAlreadySetException();
+        }
         _keyFile = keyfile;
+    }
+
+    public void setPassword(String password) {
+        if (_keyFile != null) {
+            throwAuthenticationAlreadySetException();
+        }
+        _password = password;
+    }
+
+    private void throwAuthenticationAlreadySetException() {
+        throw new IllegalStateException("set either password or keyfile");
     }
 
     public void setKnownHosts(String knownHosts) {
@@ -85,6 +100,16 @@ public class JschRunner {
                     session.disconnect();
                 }
             }
+        } catch (JSchException e) {
+            throw new IOException(e);
+        }
+    }
+
+    public InputStream openFile(String remoteFile) throws IOException {
+        Session session = null;
+        try {
+            session = openSession();
+            return new ScpFileInputStream(session, remoteFile);
         } catch (JSchException e) {
             throw new IOException(e);
         }
@@ -139,7 +164,7 @@ public class JschRunner {
 
         Session session = jsch.getSession(_user, _host, _port);
         session.setSocketFactory(new SocketFactoryWithConnectTimeout());
-        session.setUserInfo(new UserInfoImpl());
+        session.setUserInfo(new UserInfoImpl(_password));
         session.setTimeout(_timeout);
         LOG.debug("Connecting to " + _host + ":" + _port);
         session.connect();
@@ -168,7 +193,13 @@ public class JschRunner {
 
     }
 
-    class UserInfoImpl implements UserInfo {
+    private static class UserInfoImpl implements UserInfo {
+
+        private final String _password;
+
+        public UserInfoImpl(String password) {
+            _password = password;
+        }
 
         @Override
         public String getPassphrase() {
@@ -177,7 +208,7 @@ public class JschRunner {
 
         @Override
         public String getPassword() {
-            return "";
+            return _password;
         }
 
         @Override

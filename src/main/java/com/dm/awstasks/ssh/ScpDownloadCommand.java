@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 
 import com.dm.awstasks.util.IoUtil;
 import com.jcraft.jsch.Channel;
@@ -43,7 +44,7 @@ public class ScpDownloadCommand extends JschCommand {
         }
     }
 
-    private final static String constructScpInitCommand(String remoteFile, boolean recursive) {
+    protected final static String constructScpInitCommand(String remoteFile, boolean recursive) {
         String command = SCP_DOWNLOAD_COMMAND;
         if (recursive) {
             command += "-r ";
@@ -58,18 +59,10 @@ public class ScpDownloadCommand extends JschCommand {
             // C0644 filesize filename - header for a regular file
             // T time 0 time 0\n - present if perserve time.
             // D directory - this is the header for a directory.
-            ByteArrayOutputStream stream = new ByteArrayOutputStream();
-            while (true) {
-                int read = in.read();
-                if (read < 0) {
-                    return;
-                }
-                if ((byte) read == LINE_FEED) {
-                    break;
-                }
-                stream.write(read);
+            String serverResponse = readServerResponse(in);
+            if (serverResponse == null) {
+                return;
             }
-            String serverResponse = stream.toString("UTF-8");
             if (serverResponse.charAt(0) == 'C') {
                 parseAndDownloadFile(serverResponse, startFile, out, in);
             } else if (serverResponse.charAt(0) == 'D') {
@@ -83,6 +76,22 @@ public class ScpDownloadCommand extends JschCommand {
                 throw new IOException(serverResponse.substring(1));
             }
         }
+    }
+
+    protected static String readServerResponse(InputStream in) throws IOException, UnsupportedEncodingException {
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        while (true) {
+            int read = in.read();
+            if (read < 0) {
+                return null;
+            }
+            if ((byte) read == LINE_FEED) {
+                break;
+            }
+            stream.write(read);
+        }
+        String serverResponse = stream.toString("UTF-8");
+        return serverResponse;
     }
 
     private final static File parseAndCreateDirectory(String serverResponse, File localFile) {
