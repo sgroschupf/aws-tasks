@@ -48,6 +48,7 @@ public class ScpFileInputStream extends InputStream {
 
     @Override
     public int read() throws IOException {
+        checkConnection();
         if (_availible == 0) {
             return -1;
         }
@@ -55,10 +56,20 @@ public class ScpFileInputStream extends InputStream {
         return _sshInputStream.read();
     }
 
+    private void checkConnection() {
+        if (!_session.isConnected()) {
+            throw new IllegalStateException("stream is already closed");
+        }
+    }
+
     @Override
     public void close() throws IOException {
-        JschCommand.checkAcknowledgement(_sshInputStream);
-        JschCommand.sendAckOk(_sshOutputStream);
+        try {
+            JschCommand.checkAcknowledgement(_sshInputStream);
+            JschCommand.sendAckOk(_sshOutputStream);
+        } catch (IOException e) {
+            // happens in the middle of read
+        }
         _execChannel.disconnect();
         _session.disconnect();
     }
