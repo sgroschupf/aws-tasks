@@ -14,6 +14,7 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.SocketFactory;
+import com.jcraft.jsch.UIKeyboardInteractive;
 import com.jcraft.jsch.UserInfo;
 
 public class JschRunner {
@@ -153,6 +154,7 @@ public class JschRunner {
 
     private Session openSession() throws JSchException {
         JSch jsch = new JSch();
+        // JSch.setLogger(DEBUG_LOGGER);
         if (_keyFile != null) {
             jsch.addIdentity(_keyFile);
         }
@@ -193,7 +195,7 @@ public class JschRunner {
 
     }
 
-    private static class UserInfoImpl implements UserInfo {
+    private static class UserInfoImpl implements UserInfo, UIKeyboardInteractive {
 
         private final String _password;
 
@@ -230,6 +232,30 @@ public class JschRunner {
         public void showMessage(String message) {
             LOG.info(message);
         }
+
+        @Override
+        public String[] promptKeyboardInteractive(String destination, String name, String instruction, String[] prompt, boolean[] echo) {
+            if (prompt.length != 1 || echo[0] != false || _password == null) {
+                return null;
+            }
+            String[] response = new String[1];
+            response[0] = _password;
+            return response;
+
+        }
     }
+
+    protected static com.jcraft.jsch.Logger DEBUG_LOGGER = new com.jcraft.jsch.Logger() {
+
+        @Override
+        public void log(int level, String message) {
+            System.out.println("jsch[" + level + "]: " + message);
+        }
+
+        @Override
+        public boolean isEnabled(int level) {
+            return true;
+        }
+    };
 
 }
