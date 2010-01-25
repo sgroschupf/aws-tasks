@@ -1,4 +1,20 @@
 <project name="aws-tasks" default="test">
+	
+	<!--
+	  Copyright 2010 the original author or authors.
+	 
+	  Licensed under the Apache License, Version 2.0 (the "License");
+	  you may not use this file except in compliance with the License.
+	  You may obtain a copy of the License at
+	 
+	  http://www.apache.org/licenses/LICENSE-2.0
+	 
+	  Unless required by applicable law or agreed to in writing, software
+	  distributed under the License is distributed on an "AS IS" BASIS,
+	  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	  See the License for the specific language governing permissions and
+	  limitations under the License.
+	-->
 
 	<property name="root.dir" value="${basedir}" />
 	<property file="${root.dir}/src/build/ant/build.properties" />
@@ -105,14 +121,22 @@
 			<fileset dir="${main.res.dir}"/>
 		</copy>
 	</target>
+	
+	
+	<!-- ================================================================== -->
+	<!-- Build sources                                                      -->
+	<!-- ================================================================== -->
+
+	<target name="check-header" >
+		<exec command="sh src/build/ant/checkHeaders.sh ${basedir}" failonerror="true"/>
+	</target>
 
 	
-
 	<!-- ================================================================== -->
 	<!-- Unit Tests                                                         -->
 	<!-- ================================================================== -->
 
-	<target name="compile-test" depends="compile">
+	<target name="compile-test" depends="check-header,compile">
 		<echo>*** Building Unit Tests Sources ***</echo>
 		<mkdir dir="${build.dir.test-classes}" />
 		<path id="test.path">

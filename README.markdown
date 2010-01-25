@@ -1,7 +1,8 @@
 ABOUT
 =====
 + ant tasks for amazon web services
-+ see for details https://github.com/sgroschupf/aws-tasks
++ Apache 2.0 License
++ for details see https://github.com/sgroschupf/aws-tasks
 
 
 FEATURES
