@@ -24,9 +24,9 @@ ANT API
 	(see also build.test.xml)
 	
 	<!--define the tasks-->
-	<taskdef name="ec2-start" classname="com.dm.awstasks.ec2.ant.Ec2StartTask" classpathref="task.classpath"/>
-	<taskdef name="ec2-stop" classname="com.dm.awstasks.ec2.ant.Ec2StopTask" classpathref="task.classpath"/>
-	<taskdef name="ec2-ssh" classname="com.dm.awstasks.ec2.ant.Ec2SshTask" classpathref="task.classpath"/>
+	<taskdef name="ec2-start" classname="datameer.awstasks.ec2.ant.Ec2StartTask" classpathref="task.classpath"/>
+	<taskdef name="ec2-stop" classname="datameer.awstasks.ec2.ant.Ec2StopTask" classpathref="task.classpath"/>
+	<taskdef name="ec2-ssh" classname="datameer.awstasks.ec2.ant.Ec2SshTask" classpathref="task.classpath"/>
 	
 	<!-- define a start target -->
 	<target name="start-ec2" description="--> start ec2 instance groups">
