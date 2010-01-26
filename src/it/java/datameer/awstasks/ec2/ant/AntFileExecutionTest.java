@@ -20,11 +20,15 @@ import static org.junit.Assert.*;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class AntFileExecutionTest {
 
     @Test
+    @Ignore
+    // we should use another security group since the other integration tests already started a
+    // cluster
     public void execute_build_test_xml() throws Exception {
         String command = "ant -f build.test.xml test-ec2";
         Process process = Runtime.getRuntime().exec(command);
