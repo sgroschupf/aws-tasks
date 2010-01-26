@@ -5,3 +5,4 @@
 bin/
 ec2.properties
 log.log
+junit*.properties
