@@ -17,7 +17,7 @@
 	-->
 
 	<property name="root.dir" value="${basedir}" />
-	<property file="${root.dir}/src/build/ant/build.properties" />
+	<property file="${root.dir}/build.properties" />
 
 	
 	
@@ -257,6 +257,53 @@
 		</javadoc>
 	</target>
 
+	
+	<!-- ================================================================== -->
+	<!-- Generate a distribution                                            -->
+	<!-- ================================================================== -->
+
+	<target name="dist" depends="check-header, jar, doc" description="--> builds the aws-tasks distribution">
+		<defaultexcludes add="**/.git/**,**/.gitignore"/>
+		<delete dir="${build.dir.dist}" />
+
+		<!-- create target directory -->
+		<mkdir dir="${build.dir.dist}" />
+		<mkdir dir="${build.dir.dist}/docs" />
+		<mkdir dir="${build.dir.dist}/docs/javadoc" />
+		<mkdir dir="${build.dir.dist}/lib" />
+		<mkdir dir="${build.dir.dist}/src" />
+
+		<!-- copy  javadoc to target dir  -->
+		<copy todir="${build.dir.dist}/docs/javadoc">
+			<fileset dir="${build.javadoc}" />
+		</copy>
+		<!-- copy jars -->
+		<copy todir="${build.dir.dist}/lib" flatten="true">
+			<fileset dir="${lib.dir}/compile" >
+				<exclude name="*-sources.jar"/>
+			</fileset>
+		</copy>
+		<!-- copy src -->
+		<copy todir="${build.dir.dist}/src">
+			<fileset dir="${basedir}/src">
+				<exclude name="build/**"/>
+				<exclude name="it/resources/ec2.properties"/>
+			</fileset>
+		</copy>
+		<!-- copy to dist dir -->
+		<copy todir="${build.dir.dist}">
+			<fileset file="${build.dir}/${jar.name}" />
+			<fileset file="${basedir}/LICENSE" />
+			<fileset file="${basedir}/README.markdown" />
+			<fileset file="${it.res.dir}/ec2.properties.template" />
+		</copy>
+	
+
+		<tar longfile="gnu" compression="gzip" destfile="${build.release.file}" >
+		    <tarfileset dir="${build.dir.dist}" prefix="${name}-${version}">
+		    </tarfileset>
+		</tar>
+	</target>
 
 
 	<!-- ================================================================== -->

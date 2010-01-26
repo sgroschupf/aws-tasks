@@ -81,7 +81,7 @@ ANT API
 JAVA API
 ---------------------------
 
-    // your aws access data
+    // have your aws access data
     File _privateKeyFile;
     String _accessKeyId;
     String _accessKeySecret;
@@ -89,6 +89,11 @@ JAVA API
 
     Jec2 ec2 = new Jec2(_accessKeyId, _accessKeySecret);
     InstanceGroup instanceGroup = new InstanceGroupImpl(ec2);
+    
+    // or alternatively use the Ec2Configuration
+    Ec2Configuration ec2Configuration = new Ec2Configuration(); //searches for ec2.properties in classpath
+	Jec2 ec2 = ec2Configuration.createJEc2();
+    InstanceGroup instanceGroup = ec2Configuration.createInstanceGroup(ec2);
 
     // startup an instance group
     LaunchConfiguration launchConfiguration = new LaunchConfiguration("ami-5059be39", 5, 5);

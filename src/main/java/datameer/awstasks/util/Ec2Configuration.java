@@ -99,7 +99,11 @@ public class Ec2Configuration {
     }
 
     public InstanceGroup createInstanceGroup() {
-        return new InstanceGroupImpl(createJEc2());
+        return createInstanceGroup(createJEc2());
+    }
+
+    public InstanceGroup createInstanceGroup(Jec2 ec2) {
+        return new InstanceGroupImpl(ec2);
     }
 
     private static boolean nullOrEmpty(String... strings) {
