@@ -21,7 +21,7 @@ USAGE
 ANT API
 ---------------------------
 
-	(see also build.test.xml)
+	(see also src/examples/ant/...)
 	
 	<!--define the tasks-->
 	<taskdef name="ec2-start" classname="datameer.awstasks.ec2.ant.Ec2StartTask" classpathref="task.classpath"/>
@@ -81,6 +81,8 @@ ANT API
 JAVA API
 ---------------------------
 
+	(see also src/examples/java/...)
+	
     // have your aws access data
     File _privateKeyFile;
     String _accessKeyId;
@@ -145,6 +147,8 @@ GETTING STARTED WITH THE ANT TASKS
  
 AWS-TASKS DEVELOPMENT
 =====
+
++ inspect ant tasks with 'ant -p'
 
 Set up in Eclipse
 ---------------------------

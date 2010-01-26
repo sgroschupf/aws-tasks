@@ -60,7 +60,7 @@
 	<!-- General cleaning sources                                           -->
 	<!-- ================================================================== -->
 
-	<target name="clean" description="--> clean the project">
+	<target name="clean" description="--> clean project build files">
 		<echo>cleaning ${ant.project.name}</echo>
 		<delete includeemptydirs="true" failonerror="false">
 			<fileset dir="${build.dir}" excludes="classes-*-eclipse/" />
@@ -129,7 +129,7 @@
 		</antcall>
 	</target>
 	
-	<target name="it">
+	<target name="it" description="--> run integration tests">
 		<property name="ec2.properties" value="${it.res.dir}/ec2.properties"/>
 		<available file="${ec2.properties}" property="ec2.configured" value="true"/>
 		<fail unless="ec2.configured" message="please create and edit ${ec2.properties} to run integration tests (see ${ec2.properties}.template)"/>
@@ -143,7 +143,7 @@
         </antcall>
     </target>
 	
-	<target name="runTests" depends="compile-test" description="--> run unit &amp; integration tests">
+	<target name="runTests" depends="compile-test">
 		<delete dir="${build.dir.test-reports}" />
 		<mkdir dir="${build.dir.test-reports}" />
 
@@ -229,7 +229,7 @@
 	<!-- Generate a distribution                                            -->
 	<!-- ================================================================== -->
 
-	<target name="dist" depends="check-header, jar, doc" description="--> builds the aws-tasks distribution">
+	<target name="dist" depends="check-header, jar, doc" description="--> build distribution">
 		<defaultexcludes add="**/.git/**,**/.gitignore"/>
 		<delete dir="${build.dir.dist}" />
 
@@ -253,7 +253,8 @@
 		<!-- copy src -->
 		<copy todir="${build.dir.dist}/src">
 			<fileset dir="${basedir}/src">
-				<exclude name="build/**"/>
+				<include name="main/**"/>
+				<include name="examples/**"/>
 				<exclude name="it/resources/ec2.properties"/>
 			</fileset>
 		</copy>
@@ -278,7 +279,7 @@
 	<!-- Generating eclipse file                                            -->
 	<!-- ================================================================== -->
 
-	<target name="eclipse" depends="clean-eclipse" description="--> create the Eclipse project files">
+	<target name="eclipse" depends="clean-eclipse" description="--> create Eclipse project files">
 
 		<taskdef name="eclipse" classname="prantl.ant.eclipse.EclipseTask" classpathref="build.classpath" />
 		<mkdir dir="${build.dir.main-classes-eclipse}" />
@@ -293,12 +294,14 @@
 			<classpath>
 				<container path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6" />
 
-				<source path="${basedir}/src/main/java" output="${build.dir.main-classes-eclipse}" />
-				<source path="${basedir}/src/main/resources" output="${build.dir.main-classes-eclipse}" />
-				<source path="${basedir}/src/test/java" output="${build.dir.test-classes-eclipse}" />
-				<source path="${basedir}/src/test/resources" output="${build.dir.test-classes-eclipse}" />
-				<source path="${basedir}/src/it/java" output="${build.dir.it-classes-eclipse}" />
-				<source path="${basedir}/src/it/resources" output="${build.dir.it-classes-eclipse}" />
+				<source path="${basedir}/${main.src.dir}" output="${build.dir.main-classes-eclipse}" />
+				<source path="${basedir}/${main.res.dir}" output="${build.dir.main-classes-eclipse}" />
+				<source path="${basedir}/${examples.java.src.dir}" output="${build.dir.test-classes-eclipse}" />
+				<source path="${basedir}/${examples.ant.src.dir}" output="${build.dir.test-classes-eclipse}" />
+				<source path="${basedir}/${test.src.dir}" output="${build.dir.test-classes-eclipse}" />
+				<source path="${basedir}/${test.res.dir}" output="${build.dir.test-classes-eclipse}" />
+				<source path="${basedir}/${it.src.dir}" output="${build.dir.it-classes-eclipse}" />
+				<source path="${basedir}/${it.res.dir}" output="${build.dir.it-classes-eclipse}" />
 
 				<output path="${build.dir.main-classes-eclipse}" />
 				<library pathref="test.classpath" exported="false" />
@@ -313,7 +316,7 @@
 		<replaceregexp file=".classpath" match="path=&quot;(.*).jar&quot;" replace="path=&quot;\1.jar&quot; sourcepath=&quot;\1-sources.jar&quot;" flags="g" />
 	</target>
 
-	<target name="clean-eclipse" description="--> clean the Eclipse project files">
+	<target name="clean-eclipse" description="--> clean Eclipse project files">
 		<delete file=".classpath" />
 		<delete file=".eclipse" />
 		<delete file=".project" />
