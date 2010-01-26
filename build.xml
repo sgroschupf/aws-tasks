@@ -194,7 +194,7 @@
 		<jar jarfile="${build.dir}/${jar.name}" basedir="${build.dir.main-classes}">
 			<manifest>
 				<section name="aws-tasks">
-					<attribute name="Implementation-Vendor" value="???" />
+					<attribute name="Implementation-Vendor" value="Datameer Inc." />
 					<attribute name="Implementation-Title" value="${ant.project.name}" />
 					<attribute name="Implementation-Version" value="${version}" />
 					<attribute name="Compile-Time" value="${timestamp}" />
