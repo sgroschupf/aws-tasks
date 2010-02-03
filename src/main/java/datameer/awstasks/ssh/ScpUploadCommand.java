@@ -41,7 +41,7 @@ public class ScpUploadCommand extends JschCommand {
 
     @Override
     public void execute(Session session) throws IOException {
-        String command = constructScpUploadCommand(_localFile, _targetPath);
+        String command = constructScpUploadCommand(_localFile.isDirectory(), _targetPath);
         Channel channel = openExecChannel(session, command);
         try {
             OutputStream out = channel.getOutputStream();
@@ -60,8 +60,8 @@ public class ScpUploadCommand extends JschCommand {
         }
     }
 
-    private final static String constructScpUploadCommand(File localFile, String remotePath) {
-        if (localFile.isDirectory()) {
+    protected final static String constructScpUploadCommand(boolean isFolder, String remotePath) {
+        if (isFolder) {
             return SCP_UPLOAD_FOLDER_COMMAND + remotePath;
         }
         return SCP_UPLOAD_FILE_COMMAND + remotePath;
@@ -108,7 +108,7 @@ public class ScpUploadCommand extends JschCommand {
         }
     }
 
-    private final static void writeAcknowledgedMessage(String message, InputStream in, OutputStream out) throws IOException {
+    protected final static void writeAcknowledgedMessage(String message, InputStream in, OutputStream out) throws IOException {
         out.write((message).getBytes());
         out.flush();
         checkAcknowledgement(in);

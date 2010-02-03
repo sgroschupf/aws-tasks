@@ -15,12 +15,15 @@
  */
 package datameer.awstasks.ssh;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
@@ -272,5 +275,28 @@ public class JschRunner {
             return true;
         }
     };
+
+    public static File findStandardKeyFile(boolean failIfNotFound) {
+        String homeFolder = System.getProperty("user.home");
+        if (homeFolder == null) {
+            if (failIfNotFound) {
+                throw new IllegalStateException("no user.home set");
+            }
+            return null;
+        }
+
+        List<File> standardPathes = new ArrayList<File>();
+        standardPathes.add(new File(homeFolder, ".ssh/id_rsa"));
+        standardPathes.add(new File(homeFolder, ".ssh/id_dsa"));
+        for (File file : standardPathes) {
+            if (file.exists()) {
+                return file;
+            }
+        }
+        if (failIfNotFound) {
+            throw new IllegalStateException("no private keyfile found in standard locations: " + standardPathes);
+        }
+        return null;
+    }
 
 }
