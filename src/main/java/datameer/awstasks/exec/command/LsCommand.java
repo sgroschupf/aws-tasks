@@ -27,4 +27,9 @@ public class LsCommand extends ShellCommand<List<String>> {
         setDefaultHandler(new ExecCaptureLinesHandler());
     }
 
+    public LsCommand(String options, String filePath) {
+        super(new String[] { "ls", options, filePath }, true);
+        setDefaultHandler(new ExecCaptureLinesHandler());
+    }
+
 }

@@ -91,8 +91,9 @@ public class JschRunnerTest {
     @Test
     public void testLsCommand() throws Exception {
         JschRunner jschRunner = createJschRunner();
-        LsCommand command = new LsCommand("/");
+        LsCommand command = new LsCommand("-la", "/");
         List<String> result = jschRunner.execute(command);
+        System.out.println(result);
         assertFalse(result.isEmpty());
     }
 
