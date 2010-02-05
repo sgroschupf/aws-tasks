@@ -33,15 +33,14 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.mockito.stubbing.Stubber;
 
-
+import datameer.awstasks.AbstractTest;
 import datameer.awstasks.ec2.InstanceGroup;
-import datameer.awstasks.ec2.ant.Ec2SshTask;
 import datameer.awstasks.ec2.ant.model.ScpDownload;
 import datameer.awstasks.ec2.ant.model.ScpUpload;
 import datameer.awstasks.ec2.ant.model.SshExec;
 import datameer.awstasks.ec2.ssh.SshClient;
 
-public class Ec2SshTaskTest {
+public class Ec2SshTaskTest extends AbstractTest {
 
     private InstanceGroup _instanceGroup = mock(InstanceGroup.class);
     private SshClient _sshClient = mock(SshClient.class);

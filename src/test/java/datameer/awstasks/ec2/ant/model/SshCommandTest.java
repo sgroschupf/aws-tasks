@@ -19,9 +19,9 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import datameer.awstasks.ec2.ant.model.SshCommand;
+import datameer.awstasks.AbstractTest;
 
-public class SshCommandTest {
+public class SshCommandTest extends AbstractTest {
 
     SshCommand _sshCommand = new SshCommand() {
         //

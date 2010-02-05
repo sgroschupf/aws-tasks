@@ -35,7 +35,11 @@ import com.jcraft.jsch.SocketFactory;
 import com.jcraft.jsch.UIKeyboardInteractive;
 import com.jcraft.jsch.UserInfo;
 
-public class JschRunner {
+import datameer.awstasks.exec.ExecOutputHandler;
+import datameer.awstasks.exec.ShellCommand;
+import datameer.awstasks.exec.ShellExecutor;
+
+public class JschRunner extends ShellExecutor {
 
     protected static final Logger LOG = Logger.getLogger(JschRunner.class);
 
@@ -122,6 +126,13 @@ public class JschRunner {
         } catch (JSchException e) {
             throw new IOException(e);
         }
+    }
+
+    @Override
+    public <R> R execute(ShellCommand<?> command, ExecOutputHandler<R> outputHandler) throws IOException {
+        SshExecDelegateCommand<R> sshCommand = new SshExecDelegateCommand<R>(command, outputHandler);
+        run(sshCommand);
+        return sshCommand.getResult();
     }
 
     public InputStream openFile(String remoteFile) throws IOException {

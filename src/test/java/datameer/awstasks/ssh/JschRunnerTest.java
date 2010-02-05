@@ -23,12 +23,14 @@ import static org.junit.Assert.*;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
+import java.util.List;
 
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 
+import datameer.awstasks.exec.command.LsCommand;
 import datameer.awstasks.testsupport.junit.CheckBefore;
 import datameer.awstasks.testsupport.junit.CheckBeforeRunner;
 import datameer.awstasks.util.IoUtil;
@@ -84,6 +86,14 @@ public class JschRunnerTest {
         IoUtil.copyBytes(inputStream, byteOutStream);
         assertEquals(available, byteOutStream.size());
         inputStream.close();
+    }
+
+    @Test
+    public void testLsCommand() throws Exception {
+        JschRunner jschRunner = createJschRunner();
+        LsCommand command = new LsCommand("/");
+        List<String> result = jschRunner.execute(command);
+        assertFalse(result.isEmpty());
     }
 
 }
