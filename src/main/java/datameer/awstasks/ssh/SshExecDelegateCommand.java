@@ -17,9 +17,6 @@ package datameer.awstasks.ssh;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.charset.Charset;
 
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.Session;
@@ -52,10 +49,9 @@ public class SshExecDelegateCommand<R> extends JschCommand {
     private void executeCommand(Session session, String command) throws IOException {
         final Channel channel = openExecChannel(session, command);
         ToLineOutputStream outputStream = new ToLineOutputStream(_outputHandler);
+        // OutputStream outputStream = IoUtil.closeProtectedStream(System.out);
         channel.setOutputStream(outputStream);
-        // channel.setOutputStream(new PrintStream(outputStream, true, "UTF-8"));
-        // channel.setOutputStream(IoUtil.closeProtectedStream(System.out));
-        // channel.setExtOutputStream(outputStream);
+        channel.setExtOutputStream(outputStream);
         try {
             do {
                 Thread.sleep(500);
@@ -63,7 +59,6 @@ public class SshExecDelegateCommand<R> extends JschCommand {
         } catch (InterruptedException e) {
             Thread.interrupted();
         }
-
         int exitCode = channel.getExitStatus();
         if (exitCode != 0 && _command.failOnError()) {
             throw new IOException("could not execute command '" + command + "', got exit code " + exitCode);
@@ -77,8 +72,6 @@ public class SshExecDelegateCommand<R> extends JschCommand {
 
     static class ToLineOutputStream extends OutputStream {
 
-        private Charset _charset = Charset.forName("UTF-8");
-        private ByteBuffer _byteBuffer = ByteBuffer.allocate(1024);
         private final ExecOutputHandler<?> _outputHandler;
 
         public ToLineOutputStream(ExecOutputHandler<?> outputHandler) {
@@ -87,33 +80,43 @@ public class SshExecDelegateCommand<R> extends JschCommand {
 
         @Override
         public void write(byte[] b, int off, int len) throws IOException {
-            for (int i = off; i < len; i++) {
-                addChar(b[i]);
+            try {
+
+                fireText(b, off, len);
+
+            } catch (Exception e) {
+                e.printStackTrace();
             }
+        }
+
+        private void fireText(byte[] b, int off, int len) {
+            // System.err.println(new String(b, off, len));
+            int lastStart = off;
+            for (int i = off; i < len; i++) {
+                char c = (char) b[i];
+                if (c == '\n' || c == '\r') {
+                    fireLine(b, lastStart, i - lastStart);
+                    lastStart = i + 1;
+                }
+            }
+            if (lastStart < len) {
+                fireLine(b, lastStart, len - lastStart - off);
+            }
+        }
+
+        private void fireLine(byte[] b, int off, int len) {
+            // System.err.println(new String(b, off, len));
+            _outputHandler.handleLine(new String(b, off, len));
         }
 
         @Override
         public void write(byte[] b) throws IOException {
-            for (byte c : b) {
-                addChar(c);
-            }
+            fireText(b, 0, b.length);
         }
 
         @Override
         public void write(int b) throws IOException {
-            addChar(b);
-        }
-
-        private void addChar(int b) {
-            char c = (char) b;
-            if (c == '\n' || c == '\r') {
-                _byteBuffer.flip();
-                CharBuffer cb = _charset.decode(_byteBuffer);
-                _outputHandler.handleLine(cb.toString());
-                _byteBuffer.clear();
-            } else {
-                _byteBuffer.put((byte) b);
-            }
+            throw new UnsupportedOperationException();
         }
 
     }

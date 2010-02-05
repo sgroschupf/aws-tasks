@@ -23,6 +23,7 @@ import static org.junit.Assert.*;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Rule;
@@ -30,7 +31,9 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 
-import datameer.awstasks.exec.command.LsCommand;
+import datameer.awstasks.exec.ShellCommand;
+import datameer.awstasks.exec.handler.ExecCaptureLineHandler;
+import datameer.awstasks.exec.handler.ExecCaptureLinesHandler;
 import datameer.awstasks.testsupport.junit.CheckBefore;
 import datameer.awstasks.testsupport.junit.CheckBeforeRunner;
 import datameer.awstasks.util.IoUtil;
@@ -89,12 +92,41 @@ public class JschRunnerTest {
     }
 
     @Test
-    public void testLsCommand() throws Exception {
+    public void testExecuteShellCommand() throws Exception {
         JschRunner jschRunner = createJschRunner();
-        LsCommand command = new LsCommand("-la", "/");
-        List<String> result = jschRunner.execute(command);
-        System.out.println(result);
+        ShellCommand<?> command = new ShellCommand<List<String>>(new String[] { "ls", "/" }, true);
+        List<String> result = jschRunner.execute(command, new ExecCaptureLinesHandler());
         assertFalse(result.isEmpty());
     }
 
+    @Test
+    public void testExecuteShellCommandWithNoEofOutput() throws Exception {
+        JschRunner jschRunner = createJschRunner();
+        ShellCommand<List<String>> command = new ShellCommand<List<String>>(new String[] { "ls", "-dl", "/" }, true);
+        String result = jschRunner.execute(command, new ExecCaptureLineHandler());
+        assertNotNull(result);
+    }
+
+    @Test
+    public void testExecuteShellCommandCompleteOutput() throws Exception {
+        JschRunner jschRunner = createJschRunner();
+        ShellCommand<List<String>> command = new ShellCommand<List<String>>(new String[] { "ls", "-Al", new File(".").getAbsolutePath() }, true);
+        List<String> result = jschRunner.execute(command, new ExecCaptureLinesHandler());
+        assertThat(result.get(0), startsWith("total"));
+        for (int i = 1; i < result.size(); i++) {
+            assertEquals(9, split(result.get(i), " ").length);
+        }
+        assertNotNull(result);
+    }
+
+    private static String[] split(String string, String regex) {
+        List<String> splitList = new ArrayList<String>();
+        String[] splits = string.split(regex);
+        for (String split : splits) {
+            if (split.length() > 0) {
+                splitList.add(split);
+            }
+        }
+        return splitList.toArray(new String[splitList.size()]);
+    }
 }

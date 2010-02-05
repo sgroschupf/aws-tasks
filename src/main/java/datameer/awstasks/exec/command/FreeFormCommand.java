@@ -16,11 +16,13 @@
 package datameer.awstasks.exec.command;
 
 import datameer.awstasks.exec.ShellCommand;
+import datameer.awstasks.exec.handler.ExecExitCodeHandler;
 
 public class FreeFormCommand extends ShellCommand<Integer> {
 
     public FreeFormCommand(String... command) {
         super(command, true);
+        setDefaultHandler(new ExecExitCodeHandler());
     }
 
 }

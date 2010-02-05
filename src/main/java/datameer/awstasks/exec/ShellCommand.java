@@ -25,7 +25,7 @@ import datameer.awstasks.exec.handler.ExecVoidHandler;
  * 
  */
 @SuppressWarnings("unchecked")
-public abstract class ShellCommand<R> {
+public class ShellCommand<R> {
 
     private final String[] _command;
     private boolean _failOnError;
