@@ -65,7 +65,7 @@ public class ScpDownloadCommand extends JschCommand {
         if (recursive) {
             command += "-r ";
         }
-        command += remoteFile;
+        command += "'" + remoteFile + "'";
         return command;
     }
 

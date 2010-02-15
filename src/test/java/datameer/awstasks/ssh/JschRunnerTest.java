@@ -31,6 +31,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 
+import datameer.awstasks.AbstractTest;
 import datameer.awstasks.exec.ShellCommand;
 import datameer.awstasks.exec.handler.ExecCaptureLineHandler;
 import datameer.awstasks.exec.handler.ExecCaptureLinesHandler;
@@ -45,7 +46,7 @@ import datameer.awstasks.util.IoUtil;
  * 
  */
 @RunWith(CheckBeforeRunner.class)
-public class JschRunnerTest {
+public class JschRunnerTest extends AbstractTest {
 
     private static final String USER = System.getProperty("user.name");
     private static final String HOST = "localhost";
@@ -88,6 +89,14 @@ public class JschRunnerTest {
         assertThat(available, greaterThan(0));
         IoUtil.copyBytes(inputStream, byteOutStream);
         assertEquals(available, byteOutStream.size());
+        inputStream.close();
+    }
+
+    @Test
+    public void testOpen_WhitespaceInName() throws Exception {
+        File aFile = _tempFolder.newFile("a file");
+        JschRunner jschRunner = createJschRunner();
+        InputStream inputStream = jschRunner.openFile(aFile.getAbsolutePath());
         inputStream.close();
     }
 
