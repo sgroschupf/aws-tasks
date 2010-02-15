@@ -80,6 +80,25 @@ public class JschRunnerTest extends AbstractTest {
     }
 
     @Test
+    public void testUploadDownloadWithWhitespaceInName() throws Exception {
+        JschRunner jschRunner = createJschRunner();
+        File uploadSrcFile = _tempFolder.newFile("a file");
+        File uploadDestFolder = _tempFolder.newFolder("upload");
+        File uploadDestFile = new File(uploadDestFolder, uploadSrcFile.getName());
+        File downloadDestFolder = _tempFolder.newFolder("download");
+        File downloadDestFile = new File(downloadDestFolder, uploadSrcFile.getName());
+        assertFalse(uploadDestFile.exists());
+
+        jschRunner.run(new ScpUploadCommand(uploadSrcFile, uploadDestFolder.getAbsolutePath()));
+        assertTrue(uploadDestFile.exists());
+        assertEquals(uploadSrcFile.length(), downloadDestFile.length());
+
+        jschRunner.run(new ScpDownloadCommand(uploadDestFile.getAbsolutePath(), downloadDestFolder, false));
+        assertTrue(downloadDestFile.exists());
+        assertEquals(uploadSrcFile.length(), downloadDestFile.length());
+    }
+
+    @Test
     public void testOpen() throws Exception {
         JschRunner jschRunner = createJschRunner();
         InputStream inputStream = jschRunner.openFile(new File("build.xml").getAbsolutePath());

@@ -86,7 +86,7 @@ public class InstanceInteractionIntegTest extends AbstractEc2IntegrationInteract
     }
 
     @Test
-    public void testShhExecutionToSpecificInstances() throws Exception {
+    public void testSshExecutionToSpecificInstances() throws Exception {
         File privateKeyFile = new File(_ec2Conf.getPrivateKeyFile());
         SshClient sshClient1 = _instanceGroup.createSshClient("ubuntu", privateKeyFile);
 
