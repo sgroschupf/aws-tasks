@@ -25,6 +25,10 @@ public class ExecLogHandler implements ExecOutputHandler<Void> {
     private static Logger LOG = Logger.getLogger(ExecLogHandler.class);
     private final Level _logLevel;
 
+    public ExecLogHandler() {
+        this(Level.INFO);
+    }
+
     public ExecLogHandler(Level logLevel) {
         _logLevel = logLevel;
     }

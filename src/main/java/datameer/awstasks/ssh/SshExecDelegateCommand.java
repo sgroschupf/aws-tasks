@@ -80,13 +80,7 @@ public class SshExecDelegateCommand<R> extends JschCommand {
 
         @Override
         public void write(byte[] b, int off, int len) throws IOException {
-            try {
-
-                fireText(b, off, len);
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            fireText(b, off, len);
         }
 
         private void fireText(byte[] b, int off, int len) {
@@ -100,7 +94,7 @@ public class SshExecDelegateCommand<R> extends JschCommand {
                 }
             }
             if (lastStart < len) {
-                fireLine(b, lastStart, len - lastStart - off);
+                fireLine(b, lastStart, len - lastStart + off);
             }
         }
 
