@@ -13,26 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package datameer.awstasks.ec2.ant;
+package datameer.awstasks.ant;
 
 import org.apache.log4j.Logger;
 import org.apache.tools.ant.Task;
+import org.jets3t.service.S3Service;
+import org.jets3t.service.S3ServiceException;
+import org.jets3t.service.impl.rest.httpclient.RestS3Service;
+import org.jets3t.service.security.AWSCredentials;
 
-public class AbstractEc2Task extends Task {
+import com.xerox.amazonws.ec2.Jec2;
 
-    protected static final Logger LOG = Logger.getLogger(AbstractEc2Task.class);
+public abstract class AbstractAwsTask extends Task {
 
-    protected String _groupName;
+    protected static final Logger LOG = Logger.getLogger(AbstractAwsTask.class);
+
     protected String _accessKey;
     protected String _accessSecret;
-
-    public void setGroupName(String name) {
-        _groupName = name;
-    }
-
-    public String getName() {
-        return _groupName;
-    }
 
     public String getAccessKey() {
         return _accessKey;
@@ -49,4 +46,14 @@ public class AbstractEc2Task extends Task {
     public void setAccessSecret(String accessSecret) {
         _accessSecret = accessSecret;
     }
+
+    public Jec2 createJec2() {
+        return new Jec2(_accessKey, _accessSecret);
+    }
+
+    public S3Service createS3Service() throws S3ServiceException {
+        AWSCredentials awsCredentials = new AWSCredentials(_accessKey, _accessSecret);
+        return new RestS3Service(awsCredentials);
+    }
+
 }

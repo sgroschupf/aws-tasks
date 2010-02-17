@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package datameer.awstasks.ec2;
+package datameer.awstasks;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,11 +23,12 @@ import com.xerox.amazonws.ec2.EC2Exception;
 import com.xerox.amazonws.ec2.Jec2;
 import com.xerox.amazonws.ec2.LaunchConfiguration;
 
+import datameer.awstasks.ec2.InstanceGroup;
 import datameer.awstasks.ec2.ssh.SshClient;
 import datameer.awstasks.util.Ec2Configuration;
 import datameer.awstasks.util.IoUtil;
 
-public class StartInstanceGroup {
+public class Ec2Example {
 
     public static void main(String[] args) throws EC2Exception, IOException {
         // have your aws access data

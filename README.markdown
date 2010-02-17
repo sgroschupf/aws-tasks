@@ -1,4 +1,4 @@
-ABOUT
+ABOUT - version 0.2.dev
 =====
 + ant tasks for amazon web services
 + Apache 2.0 License
@@ -9,11 +9,10 @@ FEATURES
 =====
 Java/Ant API for:
 
-+ start instances
-+ stop instances
-+ scp upload/download 
-+ ssh command execution
-
++ ec2 start/stop instances
++ ec2 scp upload/download  
++ ec2 ssh command execution
++ s3 bucket management
 
 USAGE
 =====
@@ -24,9 +23,9 @@ ANT API
 	(see also src/examples/ant/...)
 	
 	<!--define the tasks-->
-	<taskdef name="ec2-start" classname="datameer.awstasks.ec2.ant.Ec2StartTask" classpathref="task.classpath"/>
-	<taskdef name="ec2-stop" classname="datameer.awstasks.ec2.ant.Ec2StopTask" classpathref="task.classpath"/>
-	<taskdef name="ec2-ssh" classname="datameer.awstasks.ec2.ant.Ec2SshTask" classpathref="task.classpath"/>
+	<taskdef name="ec2-start" classname="datameer.awstasks.ant.ec2.Ec2StartTask" classpathref="task.classpath"/>
+	<taskdef name="ec2-stop" classname="datameer.awstasks.ant.ec2.Ec2StopTask" classpathref="task.classpath"/>
+	<taskdef name="ec2-ssh" classname="datameer.awstasks.ant.ec2.Ec2SshTask" classpathref="task.classpath"/>
 	
 	<!-- define a start target -->
 	<target name="start-ec2" description="--> start ec2 instance groups">
@@ -45,7 +44,7 @@ ANT API
 		</ec2-start>
 	</target>
 
-	<!-- define a target for ssh/scp interactions 
+	<!-- define a target for ssh/scp ec2 interactions 
 		You can interact with all instances at one by not specifying the 'targetInstances' attribute
 		or setting it to 'all'. Also you can pick specific instances in following ways.
 			- single index	 	f.e. targetInstances="0"
@@ -67,6 +66,16 @@ ANT API
 			<exec command="cat hostnames.txt" targetInstances="0"/>
 			<download remotePath="build" localFile="${downloadDir}/" recursiv="true" targetInstances="0"/>
 		</ec2-ssh>
+	</target>
+	
+	<!-- define a target for s3 interactions -->
+	<target name="prepare-s3" description="--> prepare s3">
+		<s3 accessKey="${ec2.accessKey}"
+			accessSecret="${ec2.accessSecret}">
+			<createBucket name="aws.test.bucket" deleteBefore="true"/>
+			<listBuckets/>
+			<deleteBucket name="aws.test.bucket"/>
+		</s3>
 	</target>
 	
 	<!-- define a stop target -->
@@ -120,6 +129,12 @@ JAVA API
 
     // shutdown ec2 instances
     instanceGroup.shutdown();
+    
+    -------------------------------------------------
+    // S3 example
+    Ec2Configuration ec2Configuration = new Ec2Configuration(); // searches for ec2.properties
+    S3Service s3Service = ec2Configuration.createS3Service();
+    S3Bucket s3Bucket = s3Service.createBucket("aExampleBucket");
 
 
 DEPENDENCIES
@@ -129,6 +144,7 @@ DEPENDENCIES
  	- commons-logging
  	- commons-httpclient
  	- commons-codec 
+ - [jetS3t](http://bitbucket.org/jmurty/jets3t)
  - [jsch](http://www.jcraft.com/jsch/)
  - [log4j](http://logging.apache.org/log4j/)
 

@@ -13,29 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package datameer.awstasks.ec2.ant.model;
+package datameer.awstasks.ant.s3.model;
 
-import java.io.File;
+import org.jets3t.service.S3Service;
+import org.jets3t.service.S3ServiceException;
 
-public class ScpUpload extends SshCommand {
+public abstract class S3Command {
 
-    private File _localFile;
-    private String _remotePath;
-
-    public File getLocalFile() {
-        return _localFile;
-    }
-
-    public void setLocalFile(File localFile) {
-        _localFile = localFile;
-    }
-
-    public String getRemotePath() {
-        return _remotePath;
-    }
-
-    public void setRemotePath(String remotePath) {
-        _remotePath = remotePath;
-    }
+    public abstract void execute(S3Service s3Service) throws S3ServiceException;
 
 }

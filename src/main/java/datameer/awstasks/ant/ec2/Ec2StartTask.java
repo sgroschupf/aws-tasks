@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package datameer.awstasks.ec2.ant;
+package datameer.awstasks.ant.ec2;
 
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package datameer.awstasks.ec2.ant;
+package datameer.awstasks.ant.ec2;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -28,12 +28,12 @@ import org.apache.tools.ant.BuildException;
 
 import com.xerox.amazonws.ec2.Jec2;
 
+import datameer.awstasks.ant.ec2.model.ScpDownload;
+import datameer.awstasks.ant.ec2.model.ScpUpload;
+import datameer.awstasks.ant.ec2.model.SshCommand;
+import datameer.awstasks.ant.ec2.model.SshExec;
 import datameer.awstasks.ec2.InstanceGroup;
 import datameer.awstasks.ec2.InstanceGroupImpl;
-import datameer.awstasks.ec2.ant.model.ScpDownload;
-import datameer.awstasks.ec2.ant.model.ScpUpload;
-import datameer.awstasks.ec2.ant.model.SshCommand;
-import datameer.awstasks.ec2.ant.model.SshExec;
 import datameer.awstasks.ec2.ssh.SshClient;
 import datameer.awstasks.util.IoUtil;
 
@@ -85,7 +85,7 @@ public class Ec2SshTask extends AbstractEc2Task {
     public void execute() throws BuildException {
         System.out.println("executing " + getClass().getSimpleName() + " for group '" + _groupName + "'");
         if (_instanceGroup == null) {
-            Jec2 ec2 = new Jec2(_accessKey, _accessSecret);
+            Jec2 ec2 = createJec2();
             _instanceGroup = new InstanceGroupImpl(ec2);
         }
 

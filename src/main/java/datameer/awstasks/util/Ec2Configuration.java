@@ -20,6 +20,11 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Properties;
 
+import org.jets3t.service.S3Service;
+import org.jets3t.service.S3ServiceException;
+import org.jets3t.service.impl.rest.httpclient.RestS3Service;
+import org.jets3t.service.security.AWSCredentials;
+
 import com.xerox.amazonws.ec2.Jec2;
 import com.xerox.amazonws.ec2.LaunchConfiguration;
 
@@ -96,6 +101,11 @@ public class Ec2Configuration {
 
     public Jec2 createJEc2() {
         return new Jec2(_accessKeyId, _accessKeySecret);
+    }
+
+    public S3Service createS3Service() throws S3ServiceException {
+        AWSCredentials awsCredentials = new AWSCredentials(_accessKeyId, _accessKeySecret);
+        return new RestS3Service(awsCredentials);
     }
 
     public InstanceGroup createInstanceGroup() {

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package datameer.awstasks.ec2.ant;
+package datameer.awstasks.ant.ec2;
 
 import static org.junit.Assert.*;
 
@@ -34,10 +34,10 @@ import org.mockito.stubbing.Answer;
 import org.mockito.stubbing.Stubber;
 
 import datameer.awstasks.AbstractTest;
+import datameer.awstasks.ant.ec2.model.ScpDownload;
+import datameer.awstasks.ant.ec2.model.ScpUpload;
+import datameer.awstasks.ant.ec2.model.SshExec;
 import datameer.awstasks.ec2.InstanceGroup;
-import datameer.awstasks.ec2.ant.model.ScpDownload;
-import datameer.awstasks.ec2.ant.model.ScpUpload;
-import datameer.awstasks.ec2.ant.model.SshExec;
 import datameer.awstasks.ec2.ssh.SshClient;
 
 public class Ec2SshTaskTest extends AbstractTest {
@@ -67,7 +67,6 @@ public class Ec2SshTaskTest extends AbstractTest {
         inOrder.verify(_sshClient).uploadFile(scpUpload2.getLocalFile(), scpUpload2.getRemotePath());
         inOrder.verify(_sshClient).downloadFile(scpDownload3.getRemotePath(), scpDownload3.getLocalFile(), false);
         inOrder.verify(_sshClient).executeCommand(eq(sshExec4.getCommand()), (OutputStream) notNull());
-
     }
 
     @Test

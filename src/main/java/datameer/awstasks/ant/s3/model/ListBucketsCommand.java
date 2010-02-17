@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package datameer.awstasks.ec2.ant.model;
+package datameer.awstasks.ant.s3.model;
 
-public class ScpDownload extends ScpUpload {
+import org.jets3t.service.S3Service;
+import org.jets3t.service.S3ServiceException;
+import org.jets3t.service.model.S3Bucket;
 
-    private boolean _recursiv;
+public class ListBucketsCommand extends S3Command {
 
-    public boolean isRecursiv() {
-        return _recursiv;
+    @Override
+    public void execute(S3Service s3Service) throws S3ServiceException {
+        S3Bucket[] buckets = s3Service.listAllBuckets();
+        for (S3Bucket s3Bucket : buckets) {
+            System.out.println(s3Bucket);
+        }
     }
 
-    public void setRecursiv(boolean recursiv) {
-        _recursiv = recursiv;
-    }
 }
