@@ -17,12 +17,14 @@ package datameer.awstasks.ant.s3.model;
 
 import org.jets3t.service.S3Service;
 import org.jets3t.service.S3ServiceException;
+import org.jets3t.service.model.S3Bucket;
+import org.jets3t.service.model.S3Object;
 
 public class CreateBucketCommand extends S3Command {
 
     private String _name;
     private String _location;
-    private boolean _deleteBefore;
+    private boolean _emptyIfExistent;
 
     public void setName(String name) {
         _name = name;
@@ -40,21 +42,28 @@ public class CreateBucketCommand extends S3Command {
         return _location;
     }
 
-    public void setDeleteBefore(boolean deleteBefore) {
-        _deleteBefore = deleteBefore;
+    public void setEmptyIfExistent(boolean emptyIfExistent) {
+        _emptyIfExistent = emptyIfExistent;
     }
 
-    public boolean isDeleteBefore() {
-        return _deleteBefore;
+    public boolean isEmptyIfExistent() {
+        return _emptyIfExistent;
     }
 
     @Override
     public void execute(S3Service s3Service) throws S3ServiceException {
         // S3Bucket s3Bucket = new S3Bucket(_name, _location);
-        if (isDeleteBefore() && s3Service.getBucket(_name) != null) {
-            s3Service.deleteBucket(_name);
+        S3Bucket bucket = s3Service.getBucket(_name);
+        if (isEmptyIfExistent() && bucket != null) {
+            S3Object[] s3Objects = s3Service.listObjects(bucket);
+            for (S3Object s3Object : s3Objects) {
+                s3Service.deleteObject(bucket, s3Object.getKey());
+            }
+            bucket = null;
         }
-        s3Service.getOrCreateBucket(_name, _location);
+        if (bucket == null) {
+            s3Service.createBucket(_name, _location);
+        }
     }
 
 }

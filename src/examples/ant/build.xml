@@ -74,7 +74,7 @@
 	<target name="setup-s3" description="--> setup fresh ec2 instance groups">
 		<s3 accessKey="${ec2.accessKey}"
 			accessSecret="${ec2.accessSecret}">
-			<createBucket name="aws.test.bucket" deleteBefore="true"/>
+			<createBucket name="aws.test.bucket" emptyIfExistent="true"/>
 			<listBuckets/>
 			<deleteBucket name="aws.test.bucket"/>
 		</s3>
