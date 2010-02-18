@@ -164,20 +164,36 @@ public class InstanceGroupImpl implements InstanceGroup {
 
     @Override
     public SshClient createSshClient(String username, File privateKey) throws EC2Exception {
+        List<String> instanceDns = checkSshPreconditions();
+        checkSshConnection(username, instanceDns, privateKey, null);
+        return new SshClientImpl(username, privateKey, instanceDns);
+    }
+
+    private List<String> checkSshPreconditions() throws EC2Exception {
         checkEc2Association(true);
         updateReservationDescription();
         checkInstanceMode(_reservationDescription.getInstances(), "running");
         List<String> instanceDns = getPublicDns(_reservationDescription);
         checkSshPermissions();
-        checkSshConnection(username, instanceDns, privateKey);
-        return new SshClientImpl(username, privateKey, instanceDns);
+        return instanceDns;
     }
 
-    private void checkSshConnection(String username, List<String> instanceDns, File privateKey) throws EC2Exception {
+    @Override
+    public SshClient createSshClient(String username, String password) throws EC2Exception {
+        List<String> instanceDns = checkSshPreconditions();
+        checkSshConnection(username, instanceDns, null, password);
+        return new SshClientImpl(username, password, instanceDns);
+    }
+
+    private void checkSshConnection(String username, List<String> instanceDns, File privateKey, String password) throws EC2Exception {
         LOG.info("checking ssh connections");
         for (String dns : instanceDns) {
             JschRunner runner = new JschRunner(username, dns);
-            runner.setKeyfile(privateKey.getAbsolutePath());
+            if (privateKey != null) {
+                runner.setKeyfile(privateKey.getAbsolutePath());
+            } else {
+                runner.setPassword(password);
+            }
             runner.setTrust(true);
             try {
                 runner.testConnect(TimeUnit.MINUTES.toMillis(5));

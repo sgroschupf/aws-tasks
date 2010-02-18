@@ -92,6 +92,8 @@ public interface InstanceGroup {
 
     SshClient createSshClient(String username, File privateKey) throws EC2Exception;
 
+    SshClient createSshClient(String username, String password) throws EC2Exception;
+
     int instanceCount();
 
 }

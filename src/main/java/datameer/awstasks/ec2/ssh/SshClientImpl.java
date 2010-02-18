@@ -32,13 +32,20 @@ public class SshClientImpl implements SshClient {
 
     protected static final Logger LOG = Logger.getLogger(SshClientImpl.class);
 
-    protected final File _privateKey;
+    protected File _privateKey;
+    protected String _password;
     protected final String _username;
     protected final List<String> _hostnames;
 
     public SshClientImpl(String username, File privateKey, List<String> hostnames) {
         _username = username;
         _privateKey = privateKey;
+        _hostnames = hostnames;
+    }
+
+    public SshClientImpl(String username, String password, List<String> hostnames) {
+        _username = username;
+        _password = password;
         _hostnames = hostnames;
     }
 
@@ -120,7 +127,11 @@ public class SshClientImpl implements SshClient {
 
     protected JschRunner createJschRunner(String host) {
         JschRunner runner = new JschRunner(_username, host);
-        runner.setKeyfile(_privateKey.getAbsolutePath());
+        if (_privateKey != null) {
+            runner.setKeyfile(_privateKey.getAbsolutePath());
+        } else {
+            runner.setPassword(_password);
+        }
         runner.setTrust(true);
         return runner;
     }
