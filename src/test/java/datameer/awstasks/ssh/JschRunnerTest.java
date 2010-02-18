@@ -33,8 +33,10 @@ import org.junit.runner.RunWith;
 
 import datameer.awstasks.AbstractTest;
 import datameer.awstasks.exec.ShellCommand;
+import datameer.awstasks.exec.command.FreeFormCommand;
 import datameer.awstasks.exec.handler.ExecCaptureLineHandler;
 import datameer.awstasks.exec.handler.ExecCaptureLinesHandler;
+import datameer.awstasks.exec.handler.ExecExitCodeHandler;
 import datameer.awstasks.testsupport.junit.CheckBefore;
 import datameer.awstasks.testsupport.junit.CheckBeforeRunner;
 import datameer.awstasks.util.IoUtil;
@@ -145,6 +147,25 @@ public class JschRunnerTest extends AbstractTest {
             assertEquals(9, split(result.get(i), " ").length);
         }
         assertNotNull(result);
+    }
+
+    @Test
+    public void testExecuteShellCommand_LineDoesNotEndWithNewLine() throws Exception {
+        _tempFolder.newFile("file1");
+        _tempFolder.newFile("file2");
+        JschRunner jschRunner = createJschRunner();
+        FreeFormCommand existsCommand = new FreeFormCommand("ls", "-lA", _tempFolder.getRoot().getAbsolutePath());
+        existsCommand.setFailOnError(false);
+        ExecCaptureLinesHandler lineHandler = new ExecCaptureLinesHandler();
+        int exitCode = jschRunner.execute(existsCommand, new ExecExitCodeHandler(), lineHandler);
+        assertEquals(0, exitCode);
+        List<String> lines = lineHandler.getResult(exitCode);
+        lines.remove(0);// total line
+        assertEquals(2, lines.size());
+        for (String line : lines) {
+            System.out.println("'" + line + "'");
+            assertFalse(line.endsWith("\n"));
+        }
     }
 
     private static String[] split(String string, String regex) {

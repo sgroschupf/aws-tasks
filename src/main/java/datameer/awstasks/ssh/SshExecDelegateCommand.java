@@ -54,7 +54,7 @@ public class SshExecDelegateCommand<R> extends JschCommand {
         channel.setExtOutputStream(outputStream);
         try {
             do {
-                Thread.sleep(500);
+                Thread.sleep(250);
             } while (!channel.isClosed());// jz: should we also build in a timeout mechanism ?
         } catch (InterruptedException e) {
             Thread.interrupted();
@@ -84,7 +84,7 @@ public class SshExecDelegateCommand<R> extends JschCommand {
         }
 
         private void fireText(byte[] b, int off, int len) {
-            // System.err.println(new String(b, off, len));
+            // System.err.println("'" + new String(b, off, len - 1) + "'");
             int lastStart = off;
             for (int i = off; i < len; i++) {
                 char c = (char) b[i];
@@ -94,7 +94,11 @@ public class SshExecDelegateCommand<R> extends JschCommand {
                 }
             }
             if (lastStart < len) {
-                fireLine(b, lastStart, len - lastStart + off);
+                int lenOfLast = len - lastStart + off;
+                if (b[lastStart + lenOfLast - 1] == '\n') {
+                    lenOfLast--;
+                }
+                fireLine(b, lastStart, lenOfLast);
             }
         }
 
