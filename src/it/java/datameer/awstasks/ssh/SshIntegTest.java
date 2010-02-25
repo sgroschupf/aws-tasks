@@ -27,7 +27,7 @@ import org.junit.Test;
 
 import com.xerox.amazonws.ec2.EC2Exception;
 
-import datameer.awstasks.ec2.AbstractEc2IntegrationInteractionTest;
+import datameer.awstasks.aws.ec2.AbstractEc2IntegrationInteractionTest;
 import datameer.awstasks.util.IoUtil;
 
 public class SshIntegTest extends AbstractEc2IntegrationInteractionTest {
