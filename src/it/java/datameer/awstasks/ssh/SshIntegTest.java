@@ -23,9 +23,7 @@ import java.io.OutputStream;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 import com.xerox.amazonws.ec2.EC2Exception;
 
@@ -34,8 +32,6 @@ import datameer.awstasks.util.IoUtil;
 
 public class SshIntegTest extends AbstractEc2IntegrationInteractionTest {
 
-    @Rule
-    public TemporaryFolder _folder = new TemporaryFolder();
     private OutputStream _sysOutStream = IoUtil.closeProtectedStream(System.out);
 
     @Test
@@ -53,10 +49,10 @@ public class SshIntegTest extends AbstractEc2IntegrationInteractionTest {
     @Test
     public void testSshExecWithCommandFile() throws Exception {
         JschRunner runner = createJschRunner();
-        File goodCommandFile = _folder.newFile("goodCommandfile");
-        File badCommandFile = _folder.newFile("badCommandfile");
-        IoUtil.writeToFile(goodCommandFile, "ls -l ~/", "echo hostname");
-        IoUtil.writeToFile(badCommandFile, "erheaefsg", "gergergerg");
+        File goodCommandFile = _tempFolder.newFile("goodCommandfile");
+        File badCommandFile = _tempFolder.newFile("badCommandfile");
+        IoUtil.writeFile(goodCommandFile, "ls -l ~/", "echo hostname");
+        IoUtil.writeFile(badCommandFile, "erheaefsg", "gergergerg");
 
         runner.run(new SshExecCommand(goodCommandFile, _sysOutStream));
         try {
@@ -90,8 +86,8 @@ public class SshIntegTest extends AbstractEc2IntegrationInteractionTest {
         runner.run(new ScpUploadCommand(uploadedFile, "~/build2.xml"));
         runner.run(new ScpUploadCommand(uploadedFolder, "~/"));
 
-        File downloadedFile = _folder.newFile("aaaaaaaa.xml");
-        File downloadFolder = _folder.getRoot();
+        File downloadedFile = _tempFolder.newFile("aaaaaaaa.xml");
+        File downloadFolder = _tempFolder.getRoot();
         runner.run(new ScpDownloadCommand("~/build2.xml", downloadedFile, false));
         runner.run(new ScpDownloadCommand("~/build", downloadFolder, true));
         assertEquals(uploadedFile.length(), downloadedFile.length());

@@ -19,6 +19,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.MethodRule;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.Statement;
 
@@ -26,6 +27,8 @@ public class AbstractTest {
 
     @Rule
     public PrintTestNameRule _printPrintTestNameRule = new PrintTestNameRule();
+    @Rule
+    public TemporaryFolder _tempFolder = new TemporaryFolder();
     private static String TEST_CLASS_NAME;
 
     @AfterClass

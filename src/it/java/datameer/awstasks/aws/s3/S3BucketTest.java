@@ -24,10 +24,12 @@ import datameer.awstasks.aws.AbstractAwsIntegrationTest;
 
 public class S3BucketTest extends AbstractAwsIntegrationTest {
 
+    public static final String AWS_TEST_BUCKET = "aws.test.bucket";
+
     @Test
     public void testCreateDeleteBucket() throws Exception {
         S3Service s3Service = _ec2Conf.createS3Service();
-        String bucketName = "aws.test.bucket";
+        String bucketName = AWS_TEST_BUCKET;
         assertNull(s3Service.getBucket(bucketName));
 
         s3Service.createBucket(bucketName);

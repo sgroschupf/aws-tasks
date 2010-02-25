@@ -24,14 +24,12 @@ import java.io.PipedOutputStream;
 
 import org.junit.Test;
 
-import datameer.awstasks.util.IoUtil;
-
 public class IoUtilTest {
 
     @Test
     public void testWriteBytes() throws IOException {
         // set size not over 1024 otherwise PipedOutputStream will hang
-        long size = IoUtil.KB_BYTE;
+        long size = 1024;
         byte transferValue = 8;
 
         // fill iStream1
@@ -63,7 +61,7 @@ public class IoUtilTest {
     @Test
     public void testWriteBytesWithLength() throws IOException {
         // set size not over 1024 otherwise PipedOutputStream will hang
-        long size = IoUtil.KB_BYTE;
+        long size = 1024;
         byte transferValue = 8;
 
         // fill iStream1

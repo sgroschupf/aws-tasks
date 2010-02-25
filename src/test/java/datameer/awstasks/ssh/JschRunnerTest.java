@@ -26,9 +26,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 
 import datameer.awstasks.AbstractTest;
@@ -52,9 +50,6 @@ public class JschRunnerTest extends AbstractTest {
 
     private static final String USER = System.getProperty("user.name");
     private static final String HOST = "localhost";
-
-    @Rule
-    public TemporaryFolder _tempFolder = new TemporaryFolder();
 
     @CheckBefore
     public void checkBefore() throws Exception {

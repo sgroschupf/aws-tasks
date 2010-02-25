@@ -21,17 +21,13 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.OutputStream;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 import datameer.awstasks.aws.ec2.ssh.SshClient;
 import datameer.awstasks.util.IoUtil;
 
 public class InstanceInteractionIntegTest extends AbstractEc2IntegrationInteractionTest {
 
-    @Rule
-    public TemporaryFolder _folder = new TemporaryFolder();
     private OutputStream _sysOutStream = IoUtil.closeProtectedStream(System.out);
 
     @Test
@@ -42,7 +38,7 @@ public class InstanceInteractionIntegTest extends AbstractEc2IntegrationInteract
         String remoteDir = "~/";
         sshClient.uploadFile(localFile, remoteDir);
 
-        File localDestinationFolder = _folder.newFolder("localDestinationFolder");
+        File localDestinationFolder = _tempFolder.newFolder("localDestinationFolder");
         sshClient.downloadFile(remoteDir + localFile.getName(), localDestinationFolder, false);
         assertEquals(1, localDestinationFolder.list().length);
         assertEquals(localFile.length(), new File(localDestinationFolder, localFile.getName()).length());
@@ -56,7 +52,7 @@ public class InstanceInteractionIntegTest extends AbstractEc2IntegrationInteract
         String remoteDir = "~/";
         sshClient.uploadFile(localFile, remoteDir, new int[] { 0 });
 
-        File localDestinationFolder = _folder.newFolder("localDestinationFolder");
+        File localDestinationFolder = _tempFolder.newFolder("localDestinationFolder");
         sshClient.downloadFile(remoteDir + localFile.getName(), localDestinationFolder, false, new int[] { 0 });
         assertEquals(1, localDestinationFolder.list().length);
         assertEquals(localFile.length(), new File(localDestinationFolder, localFile.getName()).length());
@@ -105,7 +101,7 @@ public class InstanceInteractionIntegTest extends AbstractEc2IntegrationInteract
     public void testSshExecutionFromFile() throws Exception {
         File privateKeyFile = new File(_ec2Conf.getPrivateKeyFile());
         SshClient sshClient = _instanceGroup.createSshClient("ubuntu", privateKeyFile);
-        File commandFile = _folder.newFile("commands.txt");
+        File commandFile = _tempFolder.newFile("commands.txt");
         FileWriter fileWriter = new FileWriter(commandFile);
         fileWriter.write("ls -l\n");
         String noneExistingFile = "abcfi";

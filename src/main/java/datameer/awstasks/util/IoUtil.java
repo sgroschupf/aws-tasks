@@ -17,35 +17,20 @@ package datameer.awstasks.util;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import org.jets3t.service.S3Service;
+import org.jets3t.service.S3ServiceException;
+import org.jets3t.service.model.S3Object;
+
 /**
  * Util class providing some file-/stream operations and some units of measurement.
  */
 public class IoUtil {
-
-    /**
-     * The size of one kilobyte in byte.
-     */
-    public static final long KB_BYTE = 1024;
-
-    /**
-     * The size of one megabyte in byte.
-     */
-    public static final long MB_Byte = KB_BYTE * KB_BYTE;
-
-    /**
-     * The size of one gigabyte in byte.
-     */
-    public static final long GB_BYTE = KB_BYTE * MB_Byte;
-
-    /**
-     * The size of one terrabyte in byte.
-     */
-    public static final long TB_BYTE = KB_BYTE * GB_BYTE;
 
     /**
      * A default buffer size, could be used f.e. by copying bytes from stream to stream.
@@ -96,13 +81,24 @@ public class IoUtil {
         }
     }
 
-    public static void writeToFile(File file, String... lines) throws IOException {
+    public static void writeFile(File file, String... lines) throws IOException {
         BufferedWriter writer = new BufferedWriter(new FileWriter(file));
         for (String line : lines) {
             writer.write(line);
             writer.newLine();
         }
         writer.close();
+    }
+
+    public static void uploadFile(S3Service s3Service, String bucket, File file, String remotePath) throws IOException, S3ServiceException {
+        if (remotePath.startsWith("/")) {
+            remotePath = remotePath.substring(1);
+        }
+        S3Object object = new S3Object(remotePath);
+        object.setDataInputStream(new FileInputStream(file));
+        object.setContentType("binary/octet-stream");
+        object.setContentLength(file.length());
+        s3Service.putObject(bucket, object);
     }
 
     public static OutputStream closeProtectedStream(final OutputStream outputStream) {
