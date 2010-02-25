@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package datameer.awstasks.ec2.ssh;
+package datameer.awstasks.aws.ec2.ssh;
 
 import java.io.File;
 import java.io.IOException;

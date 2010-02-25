@@ -25,7 +25,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import datameer.awstasks.ec2.ssh.SshClient;
+import datameer.awstasks.aws.ec2.ssh.SshClient;
 import datameer.awstasks.util.IoUtil;
 
 public class InstanceInteractionIntegTest extends AbstractEc2IntegrationInteractionTest {

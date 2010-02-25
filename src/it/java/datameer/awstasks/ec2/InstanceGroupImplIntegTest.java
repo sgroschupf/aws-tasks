@@ -26,6 +26,8 @@ import com.xerox.amazonws.ec2.Jec2;
 import com.xerox.amazonws.ec2.ReservationDescription;
 import com.xerox.amazonws.ec2.ReservationDescription.Instance;
 
+import datameer.awstasks.aws.ec2.InstanceGroup;
+import datameer.awstasks.aws.ec2.InstanceGroupImpl;
 import datameer.awstasks.util.Ec2Util;
 
 public class InstanceGroupImplIntegTest extends AbstractEc2IntegrationTest {

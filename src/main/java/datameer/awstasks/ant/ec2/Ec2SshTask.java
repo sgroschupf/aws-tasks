@@ -32,9 +32,9 @@ import datameer.awstasks.ant.ec2.model.ScpDownload;
 import datameer.awstasks.ant.ec2.model.ScpUpload;
 import datameer.awstasks.ant.ec2.model.SshCommand;
 import datameer.awstasks.ant.ec2.model.SshExec;
-import datameer.awstasks.ec2.InstanceGroup;
-import datameer.awstasks.ec2.InstanceGroupImpl;
-import datameer.awstasks.ec2.ssh.SshClient;
+import datameer.awstasks.aws.ec2.InstanceGroup;
+import datameer.awstasks.aws.ec2.InstanceGroupImpl;
+import datameer.awstasks.aws.ec2.ssh.SshClient;
 import datameer.awstasks.util.IoUtil;
 
 public class Ec2SshTask extends AbstractEc2Task {

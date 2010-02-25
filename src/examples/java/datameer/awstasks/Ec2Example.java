@@ -23,8 +23,8 @@ import com.xerox.amazonws.ec2.EC2Exception;
 import com.xerox.amazonws.ec2.Jec2;
 import com.xerox.amazonws.ec2.LaunchConfiguration;
 
-import datameer.awstasks.ec2.InstanceGroup;
-import datameer.awstasks.ec2.ssh.SshClient;
+import datameer.awstasks.aws.ec2.InstanceGroup;
+import datameer.awstasks.aws.ec2.ssh.SshClient;
 import datameer.awstasks.util.Ec2Configuration;
 import datameer.awstasks.util.IoUtil;
 

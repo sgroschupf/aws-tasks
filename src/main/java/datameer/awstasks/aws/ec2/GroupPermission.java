@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package datameer.awstasks.ec2;
+package datameer.awstasks.aws.ec2;
 
 class GroupPermission {
 

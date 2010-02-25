@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package datameer.awstasks.ec2.support;
+package datameer.awstasks.aws.ec2.support;
 
 import java.io.IOException;
 import java.net.InetAddress;

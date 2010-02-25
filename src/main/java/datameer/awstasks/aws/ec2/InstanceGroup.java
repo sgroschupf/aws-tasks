@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package datameer.awstasks.ec2;
+package datameer.awstasks.aws.ec2;
 
 import java.io.File;
 import java.util.concurrent.TimeUnit;
@@ -22,7 +22,7 @@ import com.xerox.amazonws.ec2.EC2Exception;
 import com.xerox.amazonws.ec2.LaunchConfiguration;
 import com.xerox.amazonws.ec2.ReservationDescription;
 
-import datameer.awstasks.ec2.ssh.SshClient;
+import datameer.awstasks.aws.ec2.ssh.SshClient;
 
 /**
  * An amazon ec2 group of instances for a given AMI (Amazon Machine Image).

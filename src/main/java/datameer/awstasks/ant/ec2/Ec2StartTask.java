@@ -24,8 +24,8 @@ import com.xerox.amazonws.ec2.InstanceType;
 import com.xerox.amazonws.ec2.Jec2;
 import com.xerox.amazonws.ec2.LaunchConfiguration;
 
-import datameer.awstasks.ec2.InstanceGroup;
-import datameer.awstasks.ec2.InstanceGroupImpl;
+import datameer.awstasks.aws.ec2.InstanceGroup;
+import datameer.awstasks.aws.ec2.InstanceGroupImpl;
 
 public class Ec2StartTask extends AbstractEc2Task {
 

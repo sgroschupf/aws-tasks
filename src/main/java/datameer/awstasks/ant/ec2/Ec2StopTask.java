@@ -19,8 +19,8 @@ import org.apache.tools.ant.BuildException;
 
 import com.xerox.amazonws.ec2.Jec2;
 
-import datameer.awstasks.ec2.InstanceGroup;
-import datameer.awstasks.ec2.InstanceGroupImpl;
+import datameer.awstasks.aws.ec2.InstanceGroup;
+import datameer.awstasks.aws.ec2.InstanceGroupImpl;
 
 public class Ec2StopTask extends AbstractEc2Task {
 

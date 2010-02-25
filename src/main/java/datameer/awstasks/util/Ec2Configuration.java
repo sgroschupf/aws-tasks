@@ -28,8 +28,8 @@ import org.jets3t.service.security.AWSCredentials;
 import com.xerox.amazonws.ec2.Jec2;
 import com.xerox.amazonws.ec2.LaunchConfiguration;
 
-import datameer.awstasks.ec2.InstanceGroup;
-import datameer.awstasks.ec2.InstanceGroupImpl;
+import datameer.awstasks.aws.ec2.InstanceGroup;
+import datameer.awstasks.aws.ec2.InstanceGroupImpl;
 
 /**
  * Configuration class that can be used to read all ec2 access information from an properties file.

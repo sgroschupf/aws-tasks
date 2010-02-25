@@ -24,6 +24,7 @@ import com.xerox.amazonws.ec2.EC2Exception;
 import com.xerox.amazonws.ec2.Jec2;
 import com.xerox.amazonws.ec2.ReservationDescription;
 
+import datameer.awstasks.aws.ec2.InstanceGroupImpl;
 import datameer.awstasks.util.Ec2Util;
 
 public class AbstractEc2IntegrationInteractionTest extends AbstractEc2IntegrationTest {

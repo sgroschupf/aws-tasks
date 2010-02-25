@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package datameer.awstasks.ec2;
+package datameer.awstasks.aws.ec2;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,8 +32,8 @@ import com.xerox.amazonws.ec2.TerminatingInstanceDescription;
 import com.xerox.amazonws.ec2.GroupDescription.IpPermission;
 import com.xerox.amazonws.ec2.ReservationDescription.Instance;
 
-import datameer.awstasks.ec2.ssh.SshClient;
-import datameer.awstasks.ec2.ssh.SshClientImpl;
+import datameer.awstasks.aws.ec2.ssh.SshClient;
+import datameer.awstasks.aws.ec2.ssh.SshClientImpl;
 import datameer.awstasks.ssh.JschRunner;
 import datameer.awstasks.util.Ec2Util;
 

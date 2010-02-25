@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package datameer.awstasks.ec2.support;
+package datameer.awstasks.aws.ec2.support;
 
 import static org.junit.Assert.*;
 
@@ -22,7 +22,7 @@ import java.net.Socket;
 
 import org.junit.Test;
 
-import datameer.awstasks.ec2.support.Ec2SocketFactory;
+import datameer.awstasks.aws.ec2.support.Ec2SocketFactory;
 
 public class Ec2SocketFactoryTest {
 
