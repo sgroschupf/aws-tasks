@@ -5,6 +5,7 @@ ABOUT - version 0.2.dev
 + for details see [aws-tasks webpage]
 
 [aws-tasks webpage]: https://github.com/sgroschupf/aws-tasks
+[ec2-example](http://github.com/sgroschupf/aws-tasks/blob/master/src/examples/java/datameer/awstasks/Ec2Example.java)
 
 
 FEATURES
