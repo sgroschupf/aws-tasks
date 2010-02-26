@@ -83,8 +83,7 @@ ANT API
 		</ec2-stop>
 	</target>
 
-       (more ant examples under src/examples/ant/...)
-       [ant-ec2-example]
+(more ant examples under src/examples/ant/...)
 [ant s3 example]
 	
 JAVA API
