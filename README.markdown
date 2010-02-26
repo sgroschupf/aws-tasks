@@ -19,13 +19,13 @@ USAGE
 =====
 
 ANT API
----------------------------
-
 	(more ant examples under src/examples/ant/...)
 
 	[ec2-example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.ec2.xml)
 	[emr-example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.emr.xml)
 	[s3-example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.s3.xml)
+---------------------------
+
 
 	(Ec2 Example) 
 	
