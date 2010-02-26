@@ -87,6 +87,10 @@ public class EmrCluster {
         return _clusterName;
     }
 
+    public String getAccessKey() {
+        return _accessKey;
+    }
+
     public void setS3LogPath(String s3LogPath) {
         _s3LogPath = s3LogPath;
     }
