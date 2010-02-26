@@ -2,11 +2,8 @@ ABOUT - version 0.2.dev
 =====
 + ant tasks for amazon web services
 + Apache 2.0 License
-+ for details see [aws-tasks webpage]
++ for details see [aws-tasks webpage](https://github.com/sgroschupf/aws-tasks)
 
-[aws-tasks webpage]: https://github.com/sgroschupf/aws-tasks
-[ant-ec2-example]: http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.ec2.xml
-[ant-emr-ant-example]: http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.emr.xml
 
 FEATURES
 =====
@@ -17,11 +14,10 @@ Java/Ant API for:
 + EC2 ssh command execution
 + S3 bucket management
 + EMR management
-[aws-tasks webpage]
+
 
 USAGE
 =====
-
 
 ANT API
 ---------------------------
@@ -83,7 +79,9 @@ ANT API
 	</target>
 
 (more ant examples under src/examples/ant/...)<br>
-[ant s3 example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.s3.xml)
+[s3 example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.s3.xml)
+[ec2 example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.ec2.xml)
+[emr example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.emr.xml)
 	
 JAVA API
 ---------------------------
@@ -127,12 +125,11 @@ JAVA API
     // shutdown ec2 instances
     instanceGroup.shutdown();
     
-    (more java examples under src/examples/java/...)
-	[ec2-example](http://github.com/sgroschupf/aws-tasks/blob/master/src/examples/java/datameer/awstasks/Ec2Example.java)
-	[emr-example](http://github.com/sgroschupf/aws-tasks/blob/master/src/examples/java/datameer/awstasks/EmrExample.java)
-	[s3-example](http://github.com/sgroschupf/aws-tasks/blob/master/src/examples/java/datameer/awstasks/S3Example.java)
+(more java examples under src/examples/java/...)
+[ec2 example](http://github.com/sgroschupf/aws-tasks/blob/master/src/examples/java/datameer/awstasks/Ec2Example.java)
+[emr example](http://github.com/sgroschupf/aws-tasks/blob/master/src/examples/java/datameer/awstasks/EmrExample.java)
+[s3 example](http://github.com/sgroschupf/aws-tasks/blob/master/src/examples/java/datameer/awstasks/S3Example.java)
 
-- [aws-tasks webpage]
 
 DEPENDENCIES
 =====
