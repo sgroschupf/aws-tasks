@@ -79,12 +79,14 @@ ANT API
 	</target>
 
 more ant examples under src/examples/ant/... :
-- [s3 example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.s3.xml)
-- [ec2 example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.ec2.xml)
-- [emr example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.emr.xml)
++ [s3 example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.s3.xml)
++ [ec2 example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.ec2.xml)
++ [emr example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.emr.xml)
 	
 JAVA API
 ---------------------------
+
+    (Ec2 Example) 
 
     // have your aws access data
     File _privateKeyFile;
@@ -125,9 +127,9 @@ JAVA API
     instanceGroup.shutdown();
     
 more java examples under src/examples/java/... :
-- [ec2 example](http://github.com/sgroschupf/aws-tasks/blob/master/src/examples/java/datameer/awstasks/Ec2Example.java)
-- [emr example](http://github.com/sgroschupf/aws-tasks/blob/master/src/examples/java/datameer/awstasks/EmrExample.java)
-- [s3 example](http://github.com/sgroschupf/aws-tasks/blob/master/src/examples/java/datameer/awstasks/S3Example.java)
++ [ec2 example](http://github.com/sgroschupf/aws-tasks/blob/master/src/examples/java/datameer/awstasks/Ec2Example.java)
++ [emr example](http://github.com/sgroschupf/aws-tasks/blob/master/src/examples/java/datameer/awstasks/EmrExample.java)
++ [s3 example](http://github.com/sgroschupf/aws-tasks/blob/master/src/examples/java/datameer/awstasks/S3Example.java)
 
 
 DEPENDENCIES
