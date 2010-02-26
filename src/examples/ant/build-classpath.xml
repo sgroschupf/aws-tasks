@@ -1,0 +1,24 @@
+<!-- sets the classpath and common properties up for the ant examples -->
+<project name="aws-tasks-examples-classpath">
+    
+	<property name="root.dir" value="${basedir}/../../.." />
+	<property file="${root.dir}/build.properties" />
+	<property file="${root.dir}/src/it/resources/ec2.properties" />
+	
+	<!-- ================================================================== -->
+	<!-- CLASSPATH 				                                            -->
+	<!-- ================================================================== -->
+	
+	<path id="task.classpath">
+		<pathelement location="${build.dir.main-classes}" />
+		<pathelement location="${main.res.dir}" />
+		<fileset dir="${lib.dir}/compile">
+			<include name="**/*.jar" />
+		</fileset>
+		<fileset dir="${lib.dir}/provided">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
+	
+	
+</project>

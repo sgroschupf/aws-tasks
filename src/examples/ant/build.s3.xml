@@ -1,0 +1,36 @@
+<!-- run with (from project root): 
+	ant compile
+	ant -f src/examples/ant/build.s3.xml  
+-->
+<project name="aws-tasks-example-s3" default="run-s3">
+    
+	<import file="build-classpath.xml"/>
+
+	<!-- ================================================================== -->
+	<!-- AWS TASKS DEFINITION	                                            -->
+	<!-- ================================================================== -->
+	
+	<taskdef name="s3" classname="datameer.awstasks.ant.s3.S3Task" classpathref="task.classpath"/>
+
+	
+	<!-- ================================================================== -->
+	<!-- BASIC S3 COMMANDS TASK	                                            -->
+	<!-- ================================================================== -->
+	
+	<target name="basic-s3" description="--> setup fresh ec2 instance groups">
+		<s3 accessKey="${ec2.accessKey}"
+			accessSecret="${ec2.accessSecret}">
+			<createBucket name="aws.test.bucket" emptyIfExistent="true"/>
+			<listBuckets/>
+			<deleteBucket name="aws.test.bucket"/>
+		</s3>
+	</target>
+	
+	<!-- ================================================================== -->
+	<!-- RUN AWS EXAMPLE TASKs	                                            -->
+	<!-- ================================================================== -->
+	<target name="run-s3" depends="basic-s3" description="--> test all s3 tasks">
+		<echo>fin running s3 tasks</echo>
+	</target>
+	
+</project>

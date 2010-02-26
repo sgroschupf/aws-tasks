@@ -1,0 +1,50 @@
+<!-- run with (from project root): 
+	ant compile
+	ant -f src/examples/ant/build.emr.xml  
+-->
+<project name="aws-tasks-example-emr" default="run-emr">
+    
+	<import file="build-classpath.xml"/>
+
+	<!-- ================================================================== -->
+	<!-- AWS TASKS DEFINITION	                                            -->
+	<!-- ================================================================== -->
+	
+	<taskdef name="emr" classname="datameer.awstasks.ant.emr.EmrTask" classpathref="task.classpath"/>
+
+	
+	<!-- ================================================================== -->
+	<!-- START TASK	                       			                     -->
+	<!-- ================================================================== -->
+	<target name="start-emr" description="--> start emr cluster/jobFlow">
+		<emr clusterName="aws-tasks.emr.ant.test"
+			accessKey="${ec2.accessKey}"
+			accessSecret="${ec2.accessSecret}"
+			s3Bucket="aws.test.bucket"
+			>
+			<startCluster privateKeyName="${ec2.privateKeyName}" instanceCount="1"/>
+		</emr>
+	</target>
+	
+	
+	<!-- ================================================================== -->
+	<!-- STOP TASK			                                            -->
+	<!-- ================================================================== -->
+	<target name="stop-emr" description="--> stop emr cluster/jobFlow">
+		<emr clusterName="aws-tasks.emr.ant.test"
+			accessKey="${ec2.accessKey}"
+			accessSecret="${ec2.accessSecret}"
+			s3Bucket="aws.test.bucket"
+			>
+			<stopCluster/>
+		</emr>
+	</target>
+	
+	<!-- ================================================================== -->
+	<!-- RUN AWS EXAMPLE TASKs	                                            -->
+	<!-- ================================================================== -->
+	<target name="run-emr" depends="start-emr, stop-emr" description="--> test all emr tasks">
+		<echo>fin running emr tasks</echo>
+	</target>
+	
+</project>
