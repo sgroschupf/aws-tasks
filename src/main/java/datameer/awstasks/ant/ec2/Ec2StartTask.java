@@ -37,6 +37,7 @@ public class Ec2StartTask extends AbstractEc2Task {
     private String _userData;
     private String _availabilityZone;
     private String _kernelId;
+    private String _ramDiskId;
 
     public void setAmi(String ami) {
         _ami = ami;
@@ -94,6 +95,14 @@ public class Ec2StartTask extends AbstractEc2Task {
         return _kernelId;
     }
 
+    public void setRamDiskId(String ramDiskId) {
+        _ramDiskId = ramDiskId;
+    }
+
+    public String getRamDiskId() {
+        return _ramDiskId;
+    }
+
     @Override
     public void execute() throws BuildException {
         System.out.println("executing " + getClass().getSimpleName() + " with groupName '" + _groupName + "'");
@@ -103,6 +112,9 @@ public class Ec2StartTask extends AbstractEc2Task {
             LaunchConfiguration launchConfiguration = new LaunchConfiguration(_ami, _instanceCount, _instanceCount);
             if (_kernelId != null) {
                 launchConfiguration.setKernelId(_kernelId);
+            }
+            if (_ramDiskId != null) {
+                launchConfiguration.setKernelId(_ramDiskId);
             }
             launchConfiguration.setKeyName(_privateKeyName);
             launchConfiguration.setSecurityGroup(Arrays.asList("default", _groupName));
