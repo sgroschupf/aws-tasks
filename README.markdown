@@ -2,7 +2,8 @@ ABOUT - version 0.2.dev
 =====
 + ant tasks for amazon web services
 + Apache 2.0 License
-+ for details see https://github.com/sgroschupf/aws-tasks
++ for details see [aws-tasks webpage]: https://github.com/sgroschupf/aws-tasks
+
 
 
 FEATURES
