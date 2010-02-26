@@ -23,7 +23,6 @@ ANT API
 ---------------------------
 
 	(Ec2 Example) 
-	<pre><code>
 	<!--define the tasks-->
 	<taskdef name="ec2-start" classname="datameer.awstasks.ant.ec2.Ec2StartTask" classpathref="task.classpath"/>
 	<taskdef name="ec2-stop" classname="datameer.awstasks.ant.ec2.Ec2StopTask" classpathref="task.classpath"/>
@@ -77,9 +76,9 @@ ANT API
 			accessSecret="${ec2.accessSecret}">
 		</ec2-stop>
 	</target>
-        </code></pre>
 
 more ant examples under src/examples/ant/... :<br>
+
 + [s3 example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.s3.xml)
 + [ec2 example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.ec2.xml)
 + [emr example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.emr.xml)
