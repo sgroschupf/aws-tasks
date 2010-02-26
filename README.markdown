@@ -7,7 +7,6 @@ ABOUT - version 0.2.dev
 [aws-tasks webpage]: https://github.com/sgroschupf/aws-tasks
 
 
-
 FEATURES
 =====
 Java/Ant API for:
@@ -24,7 +23,7 @@ USAGE
 ANT API
 ---------------------------
 
-	(see also src/examples/ant/...)
+	(Ec2 Example) 
 	
 	<!--define the tasks-->
 	<taskdef name="ec2-start" classname="datameer.awstasks.ant.ec2.Ec2StartTask" classpathref="task.classpath"/>
@@ -72,16 +71,6 @@ ANT API
 		</ec2-ssh>
 	</target>
 	
-	<!-- define a target for s3 interactions -->
-	<target name="prepare-s3" description="--> prepare s3">
-		<s3 accessKey="${ec2.accessKey}"
-			accessSecret="${ec2.accessSecret}">
-			<createBucket name="aws.test.bucket" deleteBefore="true"/>
-			<listBuckets/>
-			<deleteBucket name="aws.test.bucket"/>
-		</s3>
-	</target>
-	
 	<!-- define a stop target -->
 	<target name="stop-ec2" description="--> stop ec2 instance groups">
 		<ec2-stop groupName="aws-tasks.test"
@@ -90,12 +79,15 @@ ANT API
 		</ec2-stop>
 	</target>
 	
+	(more ant examples under src/examples/ant/...)
+	[ec2-example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.ec2.xml)
+	[emr-example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.emr.xml)
+	[s3-example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.s3.xml)
+	
 	
 JAVA API
 ---------------------------
 
-	(see also src/examples/java/...)
-	
     // have your aws access data
     File _privateKeyFile;
     String _accessKeyId;
@@ -134,11 +126,10 @@ JAVA API
     // shutdown ec2 instances
     instanceGroup.shutdown();
     
-    -------------------------------------------------
-    // S3 example
-    Ec2Configuration ec2Configuration = new Ec2Configuration(); // searches for ec2.properties
-    S3Service s3Service = ec2Configuration.createS3Service();
-    S3Bucket s3Bucket = s3Service.createBucket("aExampleBucket");
+    (more java examples under src/examples/java/...)
+	[ec2-example](http://github.com/sgroschupf/aws-tasks/blob/master/src/examples/java/datameer/awstasks/Ec2Example.java)
+	[emr-example](http://github.com/sgroschupf/aws-tasks/blob/master/src/examples/java/datameer/awstasks/EmrExample.java)
+	[s3-example](http://github.com/sgroschupf/aws-tasks/blob/master/src/examples/java/datameer/awstasks/S3Example.java)
 
 
 DEPENDENCIES
