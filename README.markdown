@@ -2,7 +2,7 @@ ABOUT - version 0.2.dev
 =====
 + ant tasks for amazon web services
 + Apache 2.0 License
-+ for details see [aws-tasks webpage](https://github.com/sgroschupf/aws-tasks)
++ for details see [aws-tasks webpage]
 
 [aws-tasks webpage]: https://github.com/sgroschupf/aws-tasks
 
@@ -25,9 +25,9 @@ ANT API
 [aws-tasks webpage]
 	(more ant examples under src/examples/ant/...)
 
-	[ec2-example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.ec2.xml)
-	[emr-example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.emr.xml)
-	[s3-example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.s3.xml)
+	[ant-ec2-example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.ec2.xml)
+	[ant-emr-ant-example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.emr.xml)
+	[ant-s3-example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.s3.xml)
 ---------------------------
 [aws-tasks webpage]
 
