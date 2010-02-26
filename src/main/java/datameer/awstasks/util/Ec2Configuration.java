@@ -30,6 +30,7 @@ import com.xerox.amazonws.ec2.LaunchConfiguration;
 
 import datameer.awstasks.aws.ec2.InstanceGroup;
 import datameer.awstasks.aws.ec2.InstanceGroupImpl;
+import datameer.awstasks.aws.emr.EmrCluster;
 
 /**
  * Configuration class that can be used to read all ec2 access information from an properties file.
@@ -106,6 +107,10 @@ public class Ec2Configuration {
     public S3Service createS3Service() throws S3ServiceException {
         AWSCredentials awsCredentials = new AWSCredentials(_accessKeyId, _accessKeySecret);
         return new RestS3Service(awsCredentials);
+    }
+
+    public EmrCluster createEmrCluster(String s3Bucket) throws S3ServiceException {
+        return new EmrCluster(_accessKeyId, _accessKeySecret, s3Bucket);
     }
 
     public InstanceGroup createInstanceGroup() {

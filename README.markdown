@@ -9,11 +9,11 @@ FEATURES
 =====
 Java/Ant API for:
 
-+ ec2 start/stop instances
-+ ec2 scp upload/download  
-+ ec2 ssh command execution
-+ s3 bucket management
-+ emr management
++ EC2 start/stop instances
++ EC2 scp upload/download  
++ EC2 ssh command execution
++ S3 bucket management
++ EMR management
 
 USAGE
 =====
