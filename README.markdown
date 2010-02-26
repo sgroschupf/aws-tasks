@@ -10,13 +10,13 @@ FEATURES
 Java/Ant API for:
 
 + [EC2](https://aws.amazon.com/s3/) 
- + start/stop instances
- + scp upload/download  
- + ssh command execution
+	+ start/stop instances
+	+ scp upload/download  
+	+ ssh command execution
 + [S3](https://aws.amazon.com/s3/) 
- + create, delete, list bucket
+	+ create, delete, list bucket
 + [EMR](http://aws.amazon.com/elasticmapreduce/) 
- + start/stop cluster(jobFlow)
+	+ start/stop cluster(jobFlow)
 
 
 USAGE
