@@ -127,6 +127,7 @@ JAVA API
     instanceGroup.shutdown();
     
 more java examples under src/examples/java/... :
+
 + [ec2 example](http://github.com/sgroschupf/aws-tasks/blob/master/src/examples/java/datameer/awstasks/Ec2Example.java)
 + [emr example](http://github.com/sgroschupf/aws-tasks/blob/master/src/examples/java/datameer/awstasks/EmrExample.java)
 + [s3 example](http://github.com/sgroschupf/aws-tasks/blob/master/src/examples/java/datameer/awstasks/S3Example.java)
