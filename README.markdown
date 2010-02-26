@@ -82,9 +82,9 @@ ANT API
 
 more ant examples under src/examples/ant/... :<br>
 
-+ [s3 example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.s3.xml)
-+ [ec2 example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.ec2.xml)
-+ [emr example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.emr.xml)
++ [s3 example](http://github.com/sgroschupf/aws-tasks/blob/master/src/examples/ant/build.s3.xml)
++ [ec2 example](http://github.com/sgroschupf/aws-tasks/blob/master/src/examples/ant/build.ec2.xml)
++ [emr example](http://github.com/sgroschupf/aws-tasks/blob/master/src/examples/ant/build.emr.xml)
 	
 JAVA API
 ---------------------------
