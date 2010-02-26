@@ -129,6 +129,9 @@ public class EmrCluster {
 
     public void startup(int instanceCount, String privateKeyName) throws InterruptedException, AmazonElasticMapReduceException {
         checkConnection(false);
+        if (privateKeyName == null) {
+            throw new NullPointerException("privateKeyName must not be null");
+        }
         LOG.info("starting elastic cluster (job flow) '" + _clusterName + "' ...");
         if (!getRunningJobFlowDetailsByName(_clusterName).isEmpty()) {
             throw new IllegalStateException("cluster/jobFlow with name '" + _clusterName + "' already running");
