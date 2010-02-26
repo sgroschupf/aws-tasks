@@ -7,7 +7,6 @@ ABOUT - version 0.2.dev
 [aws-tasks webpage]: https://github.com/sgroschupf/aws-tasks
 [ant-ec2-example]: http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.ec2.xml
 [ant-emr-ant-example]: http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.emr.xml
-[ant s3 example]: http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.s3.xml
 
 FEATURES
 =====
@@ -84,7 +83,7 @@ ANT API
 	</target>
 
 (more ant examples under src/examples/ant/...)
-[ant s3 example]
+[ant s3 example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.s3.xml)
 	
 JAVA API
 ---------------------------
