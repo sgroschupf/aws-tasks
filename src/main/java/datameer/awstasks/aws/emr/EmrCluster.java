@@ -126,7 +126,7 @@ public class EmrCluster {
             throw new IllegalStateException("cluster/jobFlow with name '" + _clusterName + "' already running");
         }
         boolean keepAlive = true;
-        // TODO configure instance sizes, instance count
+        // TODO configure instance sizes
         JobFlowInstancesConfig jobConfig = new JobFlowInstancesConfig("m1.small", "m1.small", instanceCount, privateKeyName, new PlacementType(), keepAlive);
         RunJobFlowRequest startRequest = new RunJobFlowRequest();
         startRequest.setLogUri("s3n://" + _bucket + _s3LogPath);
@@ -196,15 +196,20 @@ public class EmrCluster {
     }
 
     public void executeJobStep(String name, File jobJar, Class<?> mainClass, String... args) throws InterruptedException, IOException, AmazonElasticMapReduceException, S3ServiceException {
-        String s3JobJarUri = uploadingJobJar(jobJar);
+        executeJobStep(name, jobJar, jobJar.getName(), mainClass, args);
+    }
+
+    public void executeJobStep(String name, File jobJar, String s3JobJarName, Class<?> mainClass, String... args) throws InterruptedException, IOException, AmazonElasticMapReduceException,
+            S3ServiceException {
+        String s3JobJarUri = uploadingJobJar(jobJar, s3JobJarName);
         HadoopJarStepConfig jarConfig = new HadoopJarStepConfig(null, s3JobJarUri, mainClass == null ? null : mainClass.getName(), Arrays.asList(args));
         StepConfig stepConfig = new StepConfig(name, "CONTINUE", jarConfig);
         _emrService.addJobFlowSteps(new AddJobFlowStepsRequest().withJobFlowId(_jobFlowId).withSteps(stepConfig));
         waitUntilStepFinished(_jobFlowId, stepConfig);
     }
 
-    private String uploadingJobJar(File jobJar) throws S3ServiceException, IOException {
-        String s3JobJarPath = new File(_s3JobJarBasePath, jobJar.getName()).getPath();
+    private String uploadingJobJar(File jobJar, String s3JobJarName) throws S3ServiceException, IOException {
+        String s3JobJarPath = new File(_s3JobJarBasePath, s3JobJarName).getPath();
         S3Bucket bucket = _s3Service.getBucket(_bucket);
         if (!exists(s3JobJarPath, bucket)) {
             LOG.info("uploading " + jobJar + " to " + s3JobJarPath);
