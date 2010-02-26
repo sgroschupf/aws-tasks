@@ -5,6 +5,9 @@ ABOUT - version 0.2.dev
 + for details see [aws-tasks webpage]
 
 [aws-tasks webpage]: https://github.com/sgroschupf/aws-tasks
+[ant-ec2-example]: http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.ec2.xml
+[ant-emr-ant-example]: http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.emr.xml
+[ant-s3-example]: http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.s3.xml
 
 FEATURES
 =====
@@ -20,16 +23,9 @@ Java/Ant API for:
 USAGE
 =====
 
-[aws-tasks webpage]
-ANT API
-[aws-tasks webpage]
-	(more ant examples under src/examples/ant/...)
 
-	[ant-ec2-example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.ec2.xml)
-	[ant-emr-ant-example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.emr.xml)
-	[ant-s3-example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.s3.xml)
+ANT API
 ---------------------------
-[aws-tasks webpage]
 
 	(Ec2 Example) 
 	
@@ -87,7 +83,8 @@ ANT API
 		</ec2-stop>
 	</target>
 
-[aws-tasks webpage]	
+       (more ant examples under src/examples/ant/...)
+       [ant-ec2-example]
 	
 JAVA API
 ---------------------------
