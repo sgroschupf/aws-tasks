@@ -30,6 +30,7 @@ public class S3BucketTest extends AbstractAwsIntegrationTest {
     public void testCreateDeleteBucket() throws Exception {
         S3Service s3Service = _ec2Conf.createS3Service();
         String bucketName = AWS_TEST_BUCKET;
+        s3Service.deleteBucket(bucketName);
         assertNull(s3Service.getBucket(bucketName));
 
         s3Service.createBucket(bucketName);
