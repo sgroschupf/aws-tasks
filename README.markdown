@@ -82,7 +82,7 @@ ANT API
 		</ec2-stop>
 	</target>
 
-(more ant examples under src/examples/ant/...)
+(more ant examples under src/examples/ant/...)<br>
 [ant s3 example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.s3.xml)
 	
 JAVA API
