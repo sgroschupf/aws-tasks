@@ -91,6 +91,10 @@ public class EmrCluster {
         return _accessKey;
     }
 
+    public String getS3Bucket() {
+        return _bucket;
+    }
+
     public void setS3LogPath(String s3LogPath) {
         _s3LogPath = s3LogPath;
     }
