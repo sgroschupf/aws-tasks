@@ -78,7 +78,7 @@ ANT API
 		</ec2-stop>
 	</target>
 
-more ant examples under src/examples/ant/... :
+more ant examples under src/examples/ant/... :<br>
 + [s3 example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.s3.xml)
 + [ec2 example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.ec2.xml)
 + [emr example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.emr.xml)
