@@ -9,11 +9,14 @@ FEATURES
 =====
 Java/Ant API for:
 
-+ EC2 start/stop instances
-+ EC2 scp upload/download  
-+ EC2 ssh command execution
-+ S3 bucket management
-+ EMR management
++ [EC2](https://aws.amazon.com/s3/) 
+++ start/stop instances
+++ scp upload/download  
+++ ssh command execution
++ [S3](https://aws.amazon.com/s3/) 
+++ create, delete, list bucket
++ [EMR](http://aws.amazon.com/elasticmapreduce/) 
+++ start/stop cluster(jobFlow)
 
 
 USAGE
@@ -141,6 +144,7 @@ DEPENDENCIES
  	- commons-httpclient
  	- commons-codec 
  - [jetS3t](http://bitbucket.org/jmurty/jets3t)
+ - [amazon-elasticmapreduce](http://developer.amazonwebservices.com/connect/entry.jspa?externalID=2305&categoryID=262)
  - [jsch](http://www.jcraft.com/jsch/)
  - [log4j](http://logging.apache.org/log4j/)
 
