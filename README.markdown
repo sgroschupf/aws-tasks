@@ -4,6 +4,7 @@ ABOUT - version 0.2.dev
 + Apache 2.0 License
 + for details see [aws-tasks webpage](https://github.com/sgroschupf/aws-tasks)
 
+[aws-tasks webpage]: https://github.com/sgroschupf/aws-tasks
 
 FEATURES
 =====
@@ -14,18 +15,21 @@ Java/Ant API for:
 + EC2 ssh command execution
 + S3 bucket management
 + EMR management
+[aws-tasks webpage]
 
 USAGE
 =====
 
+[aws-tasks webpage]
 ANT API
+[aws-tasks webpage]
 	(more ant examples under src/examples/ant/...)
 
 	[ec2-example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.ec2.xml)
 	[emr-example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.emr.xml)
 	[s3-example](http://github.com/sgroschupf/aws-tasks/raw/master/src/examples/ant/build.s3.xml)
 ---------------------------
-
+[aws-tasks webpage]
 
 	(Ec2 Example) 
 	
@@ -83,11 +87,11 @@ ANT API
 		</ec2-stop>
 	</target>
 
-	
+[aws-tasks webpage]	
 	
 JAVA API
 ---------------------------
-
+[aws-tasks webpage]
     // have your aws access data
     File _privateKeyFile;
     String _accessKeyId;
@@ -131,6 +135,7 @@ JAVA API
 	[emr-example](http://github.com/sgroschupf/aws-tasks/blob/master/src/examples/java/datameer/awstasks/EmrExample.java)
 	[s3-example](http://github.com/sgroschupf/aws-tasks/blob/master/src/examples/java/datameer/awstasks/S3Example.java)
 
+- [aws-tasks webpage]
 
 DEPENDENCIES
 =====
