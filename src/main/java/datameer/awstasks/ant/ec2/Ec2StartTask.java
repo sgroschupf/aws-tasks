@@ -36,6 +36,7 @@ public class Ec2StartTask extends AbstractEc2Task {
     private String _instanceType;
     private String _userData;
     private String _availabilityZone;
+    private String _kernelId;
 
     public void setAmi(String ami) {
         _ami = ami;
@@ -85,6 +86,14 @@ public class Ec2StartTask extends AbstractEc2Task {
         return _availabilityZone;
     }
 
+    public void setKernelId(String kernelId) {
+        _kernelId = kernelId;
+    }
+
+    public String getKernelId() {
+        return _kernelId;
+    }
+
     @Override
     public void execute() throws BuildException {
         System.out.println("executing " + getClass().getSimpleName() + " with groupName '" + _groupName + "'");
@@ -92,6 +101,9 @@ public class Ec2StartTask extends AbstractEc2Task {
         InstanceGroup instanceGroup = new InstanceGroupImpl(ec2);
         try {
             LaunchConfiguration launchConfiguration = new LaunchConfiguration(_ami, _instanceCount, _instanceCount);
+            if (_kernelId != null) {
+                launchConfiguration.setKernelId(_kernelId);
+            }
             launchConfiguration.setKeyName(_privateKeyName);
             launchConfiguration.setSecurityGroup(Arrays.asList("default", _groupName));
             if (_userData != null) {
