@@ -35,8 +35,6 @@ public class AmazonElasticMapReduceCustomClient extends AmazonElasticMapReduceCl
     public RunJobFlowResponse runJobFlow(RunJobFlowRequest request) throws AmazonElasticMapReduceException {
         try {
             Map<String, String> parameters = (Map<String, String>) _converRunJobFlowMethod.invoke(this, request);
-            System.out.println(parameters);
-            System.out.println(_customRunFlowParameters);
             parameters.putAll(_customRunFlowParameters);
             return (RunJobFlowResponse) _invokeMethod.invoke(this, RunJobFlowResponse.class, parameters);
         } catch (Exception e) {
