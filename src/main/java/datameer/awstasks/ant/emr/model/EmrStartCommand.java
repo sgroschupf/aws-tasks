@@ -21,6 +21,7 @@ public class EmrStartCommand implements EmrCommand {
 
     private String _privateKeyName;
     private int _instanceCount;
+    private String _customParameters;
 
     public String getPrivateKeyName() {
         return _privateKeyName;
@@ -38,8 +39,18 @@ public class EmrStartCommand implements EmrCommand {
         _instanceCount = instanceCount;
     }
 
+    public void setCustomParameters(String customParameter) {
+        _customParameters = customParameter;
+
+    }
+
     @Override
     public void execute(EmrCluster cluster) throws Exception {
+        String[] parameterStrings = _customParameters.split(",");
+        for (String parameterString : parameterStrings) {
+            String[] key_value = parameterString.split(":");
+            cluster.getCustomStartParameter().put(key_value[0], key_value[1]);
+        }
         cluster.startup(_instanceCount, _privateKeyName);
     }
 

@@ -22,7 +22,7 @@
 			accessSecret="${ec2.accessSecret}"
 			s3Bucket="aws.test.bucket"
 			>
-			<startCluster privateKeyName="${ec2.privateKeyName}" instanceCount="1"/>
+			<startCluster privateKeyName="${ec2.privateKeyName}" instanceCount="1" customParameters="name1:value1,name2:value2"/>
 		</emr>
 	</target>
 	

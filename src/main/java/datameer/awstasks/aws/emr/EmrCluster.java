@@ -18,8 +18,10 @@ package datameer.awstasks.aws.emr;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 import org.apache.log4j.Logger;
@@ -31,7 +33,6 @@ import org.jets3t.service.model.S3Object;
 import org.jets3t.service.security.AWSCredentials;
 
 import com.amazonaws.elasticmapreduce.AmazonElasticMapReduce;
-import com.amazonaws.elasticmapreduce.AmazonElasticMapReduceClient;
 import com.amazonaws.elasticmapreduce.AmazonElasticMapReduceException;
 import com.amazonaws.elasticmapreduce.model.AddJobFlowStepsRequest;
 import com.amazonaws.elasticmapreduce.model.DescribeJobFlowsRequest;
@@ -63,6 +64,7 @@ public class EmrCluster {
     private final String _bucket;
     private final AmazonElasticMapReduce _emrService;
     private final S3Service _s3Service;
+    private final Map<String, String> _customStartParameter = new HashMap<String, String>();
 
     private String _clusterName = "elastic-cluster";
     private String _s3LogPath = "/emr/logs";
@@ -75,7 +77,7 @@ public class EmrCluster {
         _accessKey = accessKey;
         _accessSecret = accessSecret;
         _bucket = bucket;
-        _emrService = new AmazonElasticMapReduceClient(_accessKey, _accessSecret);
+        _emrService = new AmazonElasticMapReduceCustomClient(_accessKey, _accessSecret, _customStartParameter);
         _s3Service = new RestS3Service(new AWSCredentials(_accessKey, _accessSecret));
     }
 
@@ -89,6 +91,10 @@ public class EmrCluster {
 
     public String getAccessKey() {
         return _accessKey;
+    }
+
+    public Map<String, String> getCustomStartParameter() {
+        return _customStartParameter;
     }
 
     public String getS3Bucket() {
