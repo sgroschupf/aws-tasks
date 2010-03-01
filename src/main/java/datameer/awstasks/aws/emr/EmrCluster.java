@@ -28,8 +28,6 @@ import org.apache.log4j.Logger;
 import org.jets3t.service.S3Service;
 import org.jets3t.service.S3ServiceException;
 import org.jets3t.service.impl.rest.httpclient.RestS3Service;
-import org.jets3t.service.model.S3Bucket;
-import org.jets3t.service.model.S3Object;
 import org.jets3t.service.security.AWSCredentials;
 
 import com.amazonaws.elasticmapreduce.AmazonElasticMapReduce;
@@ -227,22 +225,11 @@ public class EmrCluster {
 
     private String uploadingJobJar(File jobJar, String s3JobJarName) throws S3ServiceException, IOException {
         String s3JobJarPath = new File(_s3JobJarBasePath, s3JobJarName).getPath();
-        S3Bucket bucket = _s3Service.getBucket(_bucket);
-        if (!exists(s3JobJarPath, bucket)) {
+        if (!IoUtil.existsFile(_s3Service, _bucket, s3JobJarPath)) {
             LOG.info("uploading " + jobJar + " to " + s3JobJarPath);
             IoUtil.uploadFile(_s3Service, _bucket, jobJar, s3JobJarPath);
         }
         return "s3n://" + _accessKey + "@" + _bucket + s3JobJarPath;
-    }
-
-    private boolean exists(String s3JobJarPath, S3Bucket bucket) throws S3ServiceException {
-        S3Object[] s3Objects = _s3Service.listObjects(bucket, s3JobJarPath, null);
-        for (S3Object s3Object : s3Objects) {
-            if (s3Object.getKey().equals(s3JobJarPath)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private void waitUntilClusterStarted(final String jobFlowId) throws AmazonElasticMapReduceException, InterruptedException {

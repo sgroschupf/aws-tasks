@@ -25,6 +25,7 @@ import java.io.OutputStream;
 
 import org.jets3t.service.S3Service;
 import org.jets3t.service.S3ServiceException;
+import org.jets3t.service.model.S3Bucket;
 import org.jets3t.service.model.S3Object;
 
 /**
@@ -99,6 +100,20 @@ public class IoUtil {
         object.setContentType("binary/octet-stream");
         object.setContentLength(file.length());
         s3Service.putObject(bucket, object);
+    }
+
+    public static boolean existsFile(S3Service s3Service, String bucketName, String remotePath) throws S3ServiceException {
+        if (remotePath.startsWith("/")) {
+            remotePath = remotePath.substring(1);
+        }
+        S3Bucket bucket = s3Service.getBucket(bucketName);
+        S3Object[] s3Objects = s3Service.listObjects(bucket, remotePath, null);
+        for (S3Object s3Object : s3Objects) {
+            if (s3Object.getKey().equals(remotePath)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static OutputStream closeProtectedStream(final OutputStream outputStream) {

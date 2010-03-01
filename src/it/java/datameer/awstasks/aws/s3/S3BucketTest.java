@@ -17,10 +17,16 @@ package datameer.awstasks.aws.s3;
 
 import static org.junit.Assert.*;
 
+import java.io.File;
+
 import org.jets3t.service.S3Service;
+import org.jets3t.service.S3ServiceException;
+import org.jets3t.service.model.S3Bucket;
+import org.jets3t.service.model.S3Object;
 import org.junit.Test;
 
 import datameer.awstasks.aws.AbstractAwsIntegrationTest;
+import datameer.awstasks.util.IoUtil;
 
 public class S3BucketTest extends AbstractAwsIntegrationTest {
 
@@ -30,6 +36,7 @@ public class S3BucketTest extends AbstractAwsIntegrationTest {
     public void testCreateDeleteBucket() throws Exception {
         S3Service s3Service = _ec2Conf.createS3Service();
         String bucketName = AWS_TEST_BUCKET;
+        cleanBucket(s3Service, bucketName);
         s3Service.deleteBucket(bucketName);
         assertNull(s3Service.getBucket(bucketName));
 
@@ -38,5 +45,22 @@ public class S3BucketTest extends AbstractAwsIntegrationTest {
 
         s3Service.deleteBucket(bucketName);
         assertNull(s3Service.getBucket(bucketName));
+    }
+
+    private void cleanBucket(S3Service s3Service, String bucketName) throws S3ServiceException {
+        S3Bucket bucket = s3Service.getBucket(bucketName);
+        S3Object[] s3Objects = s3Service.listObjects(bucket);
+        for (S3Object s3Object : s3Objects) {
+            s3Service.deleteObject(bucket, s3Object.getKey());
+        }
+    }
+
+    @Test
+    public void testUploadFile_ExistsFile() throws Exception {
+        S3Service s3Service = _ec2Conf.createS3Service();
+        s3Service.getOrCreateBucket(AWS_TEST_BUCKET);
+        String remotePath = "/tmp/build.xml";
+        IoUtil.uploadFile(s3Service, AWS_TEST_BUCKET, new File("build.xml"), remotePath);
+        assertTrue(IoUtil.existsFile(s3Service, AWS_TEST_BUCKET, remotePath));
     }
 }
