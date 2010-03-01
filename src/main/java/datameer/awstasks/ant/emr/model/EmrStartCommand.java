@@ -46,9 +46,15 @@ public class EmrStartCommand implements EmrCommand {
 
     @Override
     public void execute(EmrCluster cluster) throws Exception {
-        String[] parameterStrings = _customParameters.split(",");
+        String[] parameterStrings;
+        if (_customParameters.contains("|")) {
+            parameterStrings = _customParameters.split("|");
+        } else {
+            parameterStrings = new String[] { _customParameters };
+
+        }
         for (String parameterString : parameterStrings) {
-            String[] key_value = parameterString.split(":");
+            String[] key_value = parameterString.split("=");
             cluster.getCustomStartParameter().put(key_value[0], key_value[1]);
         }
         cluster.startup(_instanceCount, _privateKeyName);
