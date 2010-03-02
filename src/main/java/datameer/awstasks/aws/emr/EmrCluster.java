@@ -238,7 +238,7 @@ public class EmrCluster {
             public Boolean call() throws Exception {
                 JobFlowDetail jobFlowDetail = getJobFlowDetail(jobFlowId);
                 JobFlowState state = JobFlowState.valueOf(jobFlowDetail.getExecutionStatusDetail().getState());
-                LOG.info("elastic cluster '" + jobFlowId + "' in state '" + state + "'");
+                LOG.info("elastic cluster '" + jobFlowDetail.getName() + "/" + jobFlowId + "' in state '" + state + "'");
                 boolean finished = state != JobFlowState.STARTING;
                 if (finished) {
                     if (!state.isOperational()) {
@@ -292,6 +292,7 @@ public class EmrCluster {
                 finished = callable.call();
             } catch (AmazonElasticMapReduceException e) {
                 String errorCode = e.getErrorCode();
+                System.out.println(e.getXML());
                 if (errorCode == null || !errorCode.equals("Throttling")) {
                     throw e;
                 }

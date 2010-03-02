@@ -109,7 +109,7 @@ public class EmrClusterTest extends AbstractAwsIntegrationTest {
     }
 
     @Test
-    public void testShutdwon() throws Exception {
+    public void testShutdown() throws Exception {
         _emrCluster.connect();
         assertTrue(_emrCluster.isConnected());
         _emrCluster.shutdown();
