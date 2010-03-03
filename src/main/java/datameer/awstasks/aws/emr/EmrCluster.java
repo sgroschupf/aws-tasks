@@ -132,6 +132,14 @@ public class EmrCluster {
         return _debugEnabled;
     }
 
+    public AmazonElasticMapReduce getEmrService() {
+        return _emrService;
+    }
+
+    public S3Service getS3Service() {
+        return _s3Service;
+    }
+
     public void startup(int instanceCount, String privateKeyName) throws InterruptedException, AmazonElasticMapReduceException {
         checkConnection(false);
         if (privateKeyName == null) {
