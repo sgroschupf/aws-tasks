@@ -32,4 +32,9 @@ public enum InstanceType {
     public String getId() {
         return _id;
     }
+
+    public String getFullName() {
+        return name() + "(" + getId() + ")";
+    }
+
 }
