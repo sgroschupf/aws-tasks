@@ -55,9 +55,10 @@ public class EmrStartCommand implements EmrCommand {
         }
         for (String parameterString : parameterStrings) {
             String[] key_value = parameterString.split("=");
-            cluster.getCustomStartParameter().put(key_value[0], key_value[1]);
+            cluster.getSettings().getCustomStartParameter().put(key_value[0], key_value[1]);
         }
-        cluster.startup(_instanceCount, _privateKeyName);
+        cluster.getSettings().setInstanceCount(_instanceCount);
+        cluster.startup();
     }
 
 }

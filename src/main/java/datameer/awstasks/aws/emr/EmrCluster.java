@@ -17,13 +17,12 @@ package datameer.awstasks.aws.emr;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 import org.jets3t.service.S3Service;
@@ -59,62 +58,34 @@ public class EmrCluster {
             "s3://us-east-1.elasticmapreduce/libs/script-runner/script-runner.jar", null, Arrays.asList("s3://us-east-1.elasticmapreduce/libs/state-pusher/0.1/fetch")));
 
     protected static final Logger LOG = Logger.getLogger(EmrCluster.class);
+    protected final static SimpleDateFormat FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
-    private final String _accessKey;
+    private final EmrSettings _settings;
     private final String _accessSecret;
-    private final String _bucket;
-    protected final ThrottleSafeWebServiceClient _emrService;
-    private final S3Service _s3Service;
-    private final Map<String, String> _customStartParameter = new HashMap<String, String>();
+    protected ThrottleSafeWebServiceClient _emrService;
+    private S3Service _s3Service;
+    protected long _startTime;
 
-    private String _clusterName = "elastic-cluster";
-    private String _s3LogPath = "/emr/logs";
-    private String _s3JobJarBasePath = "/emr/jobjars";
-    private boolean _debugEnabled = true;
     protected String _jobFlowId;
 
-    public EmrCluster(String accessKey, String accessSecret, String bucket) throws S3ServiceException {
-        _accessKey = accessKey;
-        _accessSecret = accessSecret;
-        _bucket = bucket;
-        _emrService = new ThrottleSafeWebServiceClient(new AmazonElasticMapReduceCustomClient(_accessKey, _accessSecret, _customStartParameter));
-        _s3Service = new RestS3Service(new AWSCredentials(_accessKey, _accessSecret));
-    }
+    // TODO jz: rethrow interrupted exceptions
 
-    public void setName(String clusterName) {
-        _clusterName = clusterName;
+    public EmrCluster(EmrSettings settings, String accessSecret) {
+        _accessSecret = accessSecret;
+        _settings = settings;
+        _emrService = new ThrottleSafeWebServiceClient(new AmazonElasticMapReduceCustomClient(settings.getAccessKey(), _accessSecret, getSettings().getCustomStartParameter()));
     }
 
     public String getName() {
-        return _clusterName;
+        return getSettings().getClusterName();
     }
 
-    public String getAccessKey() {
-        return _accessKey;
+    public EmrSettings getSettings() {
+        return _settings;
     }
 
-    public Map<String, String> getCustomStartParameter() {
-        return _customStartParameter;
-    }
-
-    public String getS3Bucket() {
-        return _bucket;
-    }
-
-    public void setS3LogPath(String s3LogPath) {
-        _s3LogPath = s3LogPath;
-    }
-
-    public String getS3LogPath() {
-        return _s3LogPath;
-    }
-
-    public void setS3JobJarBasePath(String s3JobJarBasePath) {
-        _s3JobJarBasePath = s3JobJarBasePath;
-    }
-
-    public String getS3JobJarBasePath() {
-        return _s3JobJarBasePath;
+    public AmazonElasticMapReduce getEmrService() {
+        return _emrService;
     }
 
     public void setRequestInterval(int requestInterval) {
@@ -125,51 +96,35 @@ public class EmrCluster {
         return _emrService.getRequestInterval();
     }
 
-    public void setDebugEnabled(boolean debugEnabled) {
-        _debugEnabled = debugEnabled;
-    }
-
-    public boolean isDebugEnabled() {
-        return _debugEnabled;
-    }
-
-    public AmazonElasticMapReduce getEmrService() {
-        return _emrService;
-    }
-
-    public S3Service getS3Service() {
-        return _s3Service;
-    }
-
-    public long getStartTime() throws AmazonElasticMapReduceException {
+    public long getStartTime() {
         checkConnection(true);
-        String startDateTime = getJobFlowDetail(_jobFlowId).getExecutionStatusDetail().getStartDateTime();
-        return TimeUnit.SECONDS.toMillis((long) Double.parseDouble(startDateTime));
+        return _startTime;
     }
 
-    public void startup(int instanceCount, String privateKeyName) throws InterruptedException, AmazonElasticMapReduceException {
+    public void startup() throws InterruptedException, AmazonElasticMapReduceException {
         checkConnection(false);
-        if (privateKeyName == null) {
-            throw new NullPointerException("privateKeyName must not be null");
+        EmrSettings settings = getSettings();
+        if (settings.getPrivateKeyName() == null) {
+            throw new NullPointerException("privateKeyName must not be null please configure settings properly");
         }
-        LOG.info("starting elastic cluster (job flow) '" + _clusterName + "' ...");
-        if (!getRunningJobFlowDetailsByName(_clusterName).isEmpty()) {
-            throw new IllegalStateException("cluster/jobFlow with name '" + _clusterName + "' already running");
+        LOG.info("starting elastic cluster (job flow) '" + getName() + "' ...");
+        if (!getRunningJobFlowDetailsByName(getName()).isEmpty()) {
+            throw new IllegalStateException("cluster/jobFlow with name '" + getName() + "' already running");
         }
         boolean keepAlive = true;
-        // TODO configure instance sizes
-        JobFlowInstancesConfig jobConfig = new JobFlowInstancesConfig("m1.small", "m1.small", instanceCount, privateKeyName, new PlacementType(), keepAlive);
+        JobFlowInstancesConfig jobConfig = new JobFlowInstancesConfig(settings.getMasterInstanceType().getId(), settings.getNodeInstanceType().getId(), settings.getInstanceCount(), settings
+                .getPrivateKeyName(), new PlacementType(), keepAlive);
         final RunJobFlowRequest startRequest = new RunJobFlowRequest();
-        startRequest.setLogUri("s3n://" + _bucket + _s3LogPath);
+        startRequest.setLogUri("s3n://" + settings.getS3Bucket() + settings.getS3LogPath());
         startRequest.setInstances(jobConfig);
-        startRequest.setName(_clusterName);
-        if (isDebugEnabled()) {
+        startRequest.setName(getName());
+        if (settings.isDebugEnabled()) {
             startRequest.withSteps(DEBUG_STEP);
         }
         RunJobFlowResponse startResponse = _emrService.runJobFlow(startRequest);
         _jobFlowId = startResponse.getRunJobFlowResult().getJobFlowId();
         waitUntilClusterStarted(_jobFlowId);
-        LOG.info("elastic cluster '" + _clusterName + "/" + _jobFlowId + "' started");
+        LOG.info("elastic cluster '" + getName() + "/" + _jobFlowId + "' started, master-host is " + getJobFlowDetail(_jobFlowId).getInstances().getMasterPublicDnsName());
     }
 
     /**
@@ -178,14 +133,14 @@ public class EmrCluster {
      * @throws InterruptedException
      * @throws AmazonElasticMapReduceException
      */
-    public void connect() throws InterruptedException, AmazonElasticMapReduceException {
+    public void connectByName() throws InterruptedException, AmazonElasticMapReduceException {
         checkConnection(false);
-        List<JobFlowDetail> jobFlows = getRunningJobFlowDetailsByName(_clusterName);
+        List<JobFlowDetail> jobFlows = getRunningJobFlowDetailsByName(getName());
         if (jobFlows.isEmpty()) {
-            throw new IllegalStateException("no cluster/jobFlow with name '" + _clusterName + "' running");
+            throw new IllegalStateException("no cluster/jobFlow with name '" + getName() + "' running");
         }
         if (jobFlows.size() > 1) {
-            throw new IllegalStateException("more then one cluster/jobFlow with name '" + _clusterName + "' running");
+            throw new IllegalStateException("more then one cluster/jobFlow with name '" + getName() + "' running");
         }
         connectById(jobFlows.get(0).getJobFlowId());
     }
@@ -197,21 +152,33 @@ public class EmrCluster {
      * @throws InterruptedException
      * @throws AmazonElasticMapReduceException
      */
-    public void connect(String jobFlowId) throws InterruptedException, AmazonElasticMapReduceException {
+    public void connectById(String jobFlowId) throws InterruptedException, AmazonElasticMapReduceException {
         checkConnection(false);
-        connectById(jobFlowId);
-    }
-
-    private void connectById(String jobFlowId) throws AmazonElasticMapReduceException, InterruptedException {
         _jobFlowId = jobFlowId;
         waitUntilClusterStarted(jobFlowId);
+    }
+
+    public void disconnect() {
+        checkConnection(true);
+        _jobFlowId = null;
+        shutdownS3Service();
     }
 
     public void shutdown() throws InterruptedException, AmazonElasticMapReduceException {
         checkConnection(true);
         _emrService.terminateJobFlows(new TerminateJobFlowsRequest().withJobFlowIds(_jobFlowId));
         waitUntilClusterShutdown(_jobFlowId);
-        _jobFlowId = null;
+        disconnect();
+    }
+
+    private void shutdownS3Service() {
+        if (_s3Service != null) {
+            try {
+                _s3Service.shutdown();
+            } catch (S3ServiceException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     public boolean isConnected() {
@@ -249,12 +216,16 @@ public class EmrCluster {
     }
 
     private String uploadingJobJar(File jobJar, String s3JobJarName) throws S3ServiceException, IOException {
-        String s3JobJarPath = new File(_s3JobJarBasePath, s3JobJarName).getPath();
-        if (!IoUtil.existsFile(_s3Service, _bucket, s3JobJarPath)) {
-            LOG.info("uploading " + jobJar + " to " + s3JobJarPath);
-            IoUtil.uploadFile(_s3Service, _bucket, jobJar, s3JobJarPath);
+        if (_s3Service == null) {
+            _s3Service = new RestS3Service(new AWSCredentials(getSettings().getAccessKey(), _accessSecret));
         }
-        return "s3n://" + _accessKey + "@" + _bucket + s3JobJarPath;
+        String s3JobJarPath = new File(getSettings().getS3JobJarBasePath(), s3JobJarName).getPath();
+        String s3Bucket = getSettings().getS3Bucket();
+        if (!IoUtil.existsFile(_s3Service, s3Bucket, s3JobJarPath)) {
+            LOG.info("uploading " + jobJar + " to " + s3JobJarPath);
+            IoUtil.uploadFile(_s3Service, s3Bucket, jobJar, s3JobJarPath);
+        }
+        return "s3n://" + getSettings().getAccessKey() + "@" + s3Bucket + s3JobJarPath;
     }
 
     private void waitUntilClusterStarted(final String jobFlowId) throws AmazonElasticMapReduceException, InterruptedException {
@@ -266,6 +237,13 @@ public class EmrCluster {
                 LOG.info("elastic cluster '" + jobFlowDetail.getName() + "/" + jobFlowId + "' in state '" + state + "'");
                 boolean finished = state != JobFlowState.STARTING;
                 if (finished) {
+                    String startDateTime = jobFlowDetail.getExecutionStatusDetail().getStartDateTime();
+                    try {
+                        _startTime = FORMAT.parse(startDateTime).getTime();
+                    } catch (ParseException e) {
+                        throw new RuntimeException("could not parse '" + startDateTime + "' with '" + FORMAT.toPattern() + "'", e);
+                    }
+
                     if (!state.isOperational()) {
                         throw new IllegalStateException("starting of job flow '" + jobFlowId + "' failed with state '" + state + "'");
                     }
@@ -351,6 +329,9 @@ public class EmrCluster {
         throw new IllegalStateException("no step detail with name '" + stepConfig.getName() + "' found in " + flowDetail.getJobFlowId());
     }
 
+    /**
+     * TODO move to {@link AmazonElasticMapReduceCustomClient} ??
+     */
     static class ThrottleSafeWebServiceClient implements AmazonElasticMapReduce {
 
         private int _requestInterval = 10000;

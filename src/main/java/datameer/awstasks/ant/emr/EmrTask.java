@@ -19,13 +19,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.tools.ant.BuildException;
-import org.jets3t.service.S3ServiceException;
 
 import datameer.awstasks.ant.AbstractAwsTask;
 import datameer.awstasks.ant.emr.model.EmrCommand;
 import datameer.awstasks.ant.emr.model.EmrStartCommand;
 import datameer.awstasks.ant.emr.model.EmrStopCommand;
 import datameer.awstasks.aws.emr.EmrCluster;
+import datameer.awstasks.aws.emr.EmrSettings;
 
 public class EmrTask extends AbstractAwsTask {
 
@@ -53,10 +53,9 @@ public class EmrTask extends AbstractAwsTask {
         return _s3Bucket;
     }
 
-    public EmrCluster createEmrCluster() throws S3ServiceException {
-        EmrCluster emrCluster = new EmrCluster(_accessKey, _accessSecret, _s3Bucket);
-        emrCluster.setName(_clusterName);
-        return emrCluster;
+    public EmrCluster createEmrCluster() {
+        EmrSettings settings = new EmrSettings(_clusterName, _accessKey, _s3Bucket);
+        return new EmrCluster(settings, _accessSecret);
     }
 
     @Override

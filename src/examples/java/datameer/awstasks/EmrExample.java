@@ -28,19 +28,22 @@ import datameer.awstasks.util.Ec2Configuration;
 public class EmrExample {
 
     public static void main(String[] args) throws IOException, S3ServiceException, InterruptedException, AmazonElasticMapReduceException {
+        String clusterName = "my-cluster";
         String s3Bucket = "testbucket";
         // have your aws access data
         // String accessKeyId = null;
         // String accessKeySecret = null;
-        // EmrCluster emrCluster =new EmrCluster(accessKeyId, accessKeySecret, s3Bucket);
+        // String privateKeyName;
+        // EmrSettings settings = new EmrSettings(clusterName, accessKeyId, privateKeyName,
+        // s3Bucket, 5);
+        // EmrCluster emrCluster = new EmrCluster(settings, accessKeySecret);
 
         // or alternatively use the Ec2Configuration
         Ec2Configuration ec2Configuration = new Ec2Configuration(); // searches for ec2.properties
-        String privateKeyName = ec2Configuration.getPrivateKeyName();
-        EmrCluster emrCluster = ec2Configuration.createEmrCluster(s3Bucket);
+        EmrCluster emrCluster = ec2Configuration.createEmrCluster(clusterName, s3Bucket, 5);
 
         // start a new flow
-        emrCluster.startup(2, privateKeyName);
+        emrCluster.startup();
 
         // or connect to an existing
         // emrCluster.setName("myCluster"); //by name

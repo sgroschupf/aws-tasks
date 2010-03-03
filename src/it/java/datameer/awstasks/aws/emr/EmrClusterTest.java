@@ -47,14 +47,14 @@ public class EmrClusterTest extends AbstractAwsIntegrationTest {
         for (S3Object s3Object : s3Objects) {
             _s3Service.deleteObject(_s3Bucket, s3Object.getKey());
         }
-        _emrCluster = new EmrCluster(_ec2Conf.getAccessKey(), _ec2Conf.getAccessSecret(), _s3Bucket.getName());
-        _emrCluster.setName(getClass().getName());
+        EmrSettings settings = new EmrSettings(getClass().getName(), _ec2Conf.getAccessKey(), _ec2Conf.getPrivateKeyName(), _s3Bucket.getName(), 1);
+        _emrCluster = new EmrCluster(settings, _ec2Conf.getAccessSecret());
     }
 
     @Test
     public void testStart() throws Exception {
         assertNull(_emrCluster.getJobFlowId());
-        _emrCluster.startup(1, _ec2Conf.getPrivateKeyName());
+        _emrCluster.startup();
         assertTrue(_emrCluster.isConnected());
         _jobFlowId = _emrCluster.getJobFlowId();
         assertNotNull(_jobFlowId);
@@ -62,27 +62,27 @@ public class EmrClusterTest extends AbstractAwsIntegrationTest {
 
     @Test(expected = Exception.class)
     public void testStart2nClusterWithSameName() throws Exception {
-        _emrCluster.startup(1, _ec2Conf.getPrivateKeyName());
+        _emrCluster.startup();
     }
 
     @Test
     public void testConnectById() throws Exception {
         assertNull(_emrCluster.getJobFlowId());
-        _emrCluster.connect(_jobFlowId);
+        _emrCluster.connectById(_jobFlowId);
         assertTrue(_emrCluster.isConnected());
         assertNotNull(_emrCluster.getJobFlowId());
     }
 
     @Test
     public void testConnectByName() throws Exception {
-        _emrCluster.connect();
+        _emrCluster.connectByName();
         assertTrue(_emrCluster.isConnected());
         assertNotNull(_emrCluster.getJobFlowId());
     }
 
     @Test
     public void testExecuteJobStep() throws Exception {
-        _emrCluster.connect();
+        _emrCluster.connectByName();
         File jobJar = new File("lib/test/hadoop-0.18.3-examples.jar");
 
         // prepare input
@@ -110,7 +110,7 @@ public class EmrClusterTest extends AbstractAwsIntegrationTest {
 
     @Test
     public void testShutdown() throws Exception {
-        _emrCluster.connect();
+        _emrCluster.connectByName();
         assertTrue(_emrCluster.isConnected());
         _emrCluster.shutdown();
         assertFalse(_emrCluster.isConnected());

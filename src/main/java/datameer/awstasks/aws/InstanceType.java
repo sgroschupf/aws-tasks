@@ -13,18 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package datameer.awstasks.ant.emr.model;
+package datameer.awstasks.aws;
 
-import datameer.awstasks.aws.emr.EmrCluster;
+/**
+ * Link to description <a href="http://aws.amazon.com/ec2/#instance">instance description</a>.
+ * 
+ */
+public enum InstanceType {
 
-public class EmrStopCommand implements EmrCommand {
+    SMALL("m1.small"), LARGE("m1.large"), EXTRA_LARGE("m1.xlarge"), MEMORY_DOUBLE_XLARGE("m2.2xlarge"), MEMORY_QUAD_XLARGE("m2.4xlarge"), CPU_MEDIUM("c1.medium"), CPU_XLARGE("c1.xlarge");
 
-    @Override
-    public void execute(EmrCluster cluster) throws Exception {
-        if (!cluster.isConnected()) {
-            cluster.connectByName();
-        }
-        cluster.shutdown();
+    private final String _id;
+
+    private InstanceType(String id) {
+        _id = id;
     }
 
+    public String getId() {
+        return _id;
+    }
 }
