@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 import org.jets3t.service.S3Service;
@@ -140,6 +141,12 @@ public class EmrCluster {
         return _s3Service;
     }
 
+    public long getStartTime() throws AmazonElasticMapReduceException {
+        checkConnection(true);
+        String startDateTime = getJobFlowDetail(_jobFlowId).getExecutionStatusDetail().getStartDateTime();
+        return TimeUnit.SECONDS.toMillis((long) Double.parseDouble(startDateTime));
+    }
+
     public void startup(int instanceCount, String privateKeyName) throws InterruptedException, AmazonElasticMapReduceException {
         checkConnection(false);
         if (privateKeyName == null) {
@@ -165,6 +172,12 @@ public class EmrCluster {
         LOG.info("elastic cluster '" + _clusterName + "/" + _jobFlowId + "' started");
     }
 
+    /**
+     * Connect by cluster name.
+     * 
+     * @throws InterruptedException
+     * @throws AmazonElasticMapReduceException
+     */
     public void connect() throws InterruptedException, AmazonElasticMapReduceException {
         checkConnection(false);
         List<JobFlowDetail> jobFlows = getRunningJobFlowDetailsByName(_clusterName);
@@ -174,12 +187,11 @@ public class EmrCluster {
         if (jobFlows.size() > 1) {
             throw new IllegalStateException("more then one cluster/jobFlow with name '" + _clusterName + "' running");
         }
-        _jobFlowId = jobFlows.get(0).getJobFlowId();
-        waitUntilClusterStarted(_jobFlowId);
+        connectById(jobFlows.get(0).getJobFlowId());
     }
 
     /**
-     * Connect to a cluster/jobFlow with the given name.
+     * Connect to a cluster/jobFlow with the given id.
      * 
      * @param jobFlowId
      * @throws InterruptedException
@@ -187,8 +199,12 @@ public class EmrCluster {
      */
     public void connect(String jobFlowId) throws InterruptedException, AmazonElasticMapReduceException {
         checkConnection(false);
+        connectById(jobFlowId);
+    }
+
+    private void connectById(String jobFlowId) throws AmazonElasticMapReduceException, InterruptedException {
         _jobFlowId = jobFlowId;
-        waitUntilClusterStarted(_jobFlowId);
+        waitUntilClusterStarted(jobFlowId);
     }
 
     public void shutdown() throws InterruptedException, AmazonElasticMapReduceException {
