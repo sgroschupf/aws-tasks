@@ -16,6 +16,7 @@
 package datameer.awstasks.ant.emr.model;
 
 import datameer.awstasks.aws.emr.EmrCluster;
+import datameer.awstasks.aws.emr.EmrSettings;
 
 public class EmrStartCommand implements EmrCommand {
 
@@ -53,11 +54,13 @@ public class EmrStartCommand implements EmrCommand {
             parameterStrings = new String[] { _customParameters };
 
         }
+        EmrSettings settings = cluster.getSettings();
         for (String parameterString : parameterStrings) {
             String[] key_value = parameterString.split("=");
-            cluster.getSettings().getCustomStartParameter().put(key_value[0], key_value[1]);
+            settings.getCustomStartParameter().put(key_value[0], key_value[1]);
         }
-        cluster.getSettings().setInstanceCount(_instanceCount);
+        settings.setInstanceCount(_instanceCount);
+        settings.setPrivateKeyName(_privateKeyName);
         cluster.startup();
     }
 
