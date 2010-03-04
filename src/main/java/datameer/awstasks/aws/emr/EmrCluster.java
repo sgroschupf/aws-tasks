@@ -161,6 +161,7 @@ public class EmrCluster {
     public void disconnect() {
         checkConnection(true);
         _jobFlowId = null;
+        _startTime = 0;
         shutdownS3Service();
     }
 

@@ -111,7 +111,7 @@ public class Ec2Configuration {
     }
 
     public EmrCluster createEmrCluster(String name, String s3Bucket, int instanceCount) {
-        return new EmrCluster(new EmrSettings(name, _accessKeyId, s3Bucket, _privateKeyName, instanceCount), _accessKeySecret);
+        return new EmrCluster(new EmrSettings(name, _accessKeyId, _privateKeyName, s3Bucket, instanceCount), _accessKeySecret);
     }
 
     public InstanceGroup createInstanceGroup() {
