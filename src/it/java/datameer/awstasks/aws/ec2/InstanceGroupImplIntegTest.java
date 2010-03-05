@@ -26,8 +26,6 @@ import com.xerox.amazonws.ec2.Jec2;
 import com.xerox.amazonws.ec2.ReservationDescription;
 import com.xerox.amazonws.ec2.ReservationDescription.Instance;
 
-import datameer.awstasks.aws.ec2.InstanceGroup;
-import datameer.awstasks.aws.ec2.InstanceGroupImpl;
 import datameer.awstasks.util.Ec2Util;
 
 public class InstanceGroupImplIntegTest extends AbstractEc2IntegrationTest {
@@ -58,7 +56,7 @@ public class InstanceGroupImplIntegTest extends AbstractEc2IntegrationTest {
         InstanceGroup instanceGroup = new InstanceGroupImpl(ec2);
 
         // startup
-        ReservationDescription reservationDescription = instanceGroup.startup(createLaunchConfiguration(1), TimeUnit.MINUTES, 1);
+        ReservationDescription reservationDescription = instanceGroup.startup(createLaunchConfiguration(1), TimeUnit.MINUTES, 10);
         assertTrue(instanceGroup.isAssociated());
         assertEquals(1, reservationDescription.getInstances().size());
         checkInstanceMode(reservationDescription, "running");
@@ -77,7 +75,7 @@ public class InstanceGroupImplIntegTest extends AbstractEc2IntegrationTest {
         InstanceGroup instanceGroup2 = new InstanceGroupImpl(ec2);
 
         // startup
-        ReservationDescription reservationDescription = instanceGroup1.startup(createLaunchConfiguration(1), TimeUnit.MINUTES, 1);
+        ReservationDescription reservationDescription = instanceGroup1.startup(createLaunchConfiguration(1), TimeUnit.MINUTES, 10);
         assertTrue(instanceGroup1.isAssociated());
 
         // connect
@@ -98,7 +96,7 @@ public class InstanceGroupImplIntegTest extends AbstractEc2IntegrationTest {
         InstanceGroup instanceGroup2 = new InstanceGroupImpl(ec2);
 
         // startup
-        ReservationDescription reservationDescription = instanceGroup1.startup(createLaunchConfiguration(1), TimeUnit.MINUTES, 1);
+        ReservationDescription reservationDescription = instanceGroup1.startup(createLaunchConfiguration(1), TimeUnit.MINUTES, 10);
         assertTrue(instanceGroup1.isAssociated());
 
         // connect

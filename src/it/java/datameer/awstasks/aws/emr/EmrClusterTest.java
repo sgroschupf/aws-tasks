@@ -42,7 +42,7 @@ public class EmrClusterTest extends AbstractAwsIntegrationTest {
     @Before
     public void before() throws S3ServiceException {
         _s3Service = _ec2Conf.createS3Service();
-        _s3Bucket = _s3Service.getOrCreateBucket(S3BucketTest.AWS_TEST_BUCKET);
+        _s3Bucket = _s3Service.createBucket(S3BucketTest.AWS_TEST_BUCKET);
         S3Object[] s3Objects = _s3Service.listObjects(_s3Bucket);
         for (S3Object s3Object : s3Objects) {
             _s3Service.deleteObject(_s3Bucket, s3Object.getKey());

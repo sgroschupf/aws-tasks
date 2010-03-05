@@ -162,7 +162,7 @@ public class EmrCluster {
         checkConnection(true);
         _jobFlowId = null;
         _startTime = 0;
-        shutdownS3Service();
+        // shutdownS3Service();
     }
 
     public void shutdown() throws InterruptedException, AmazonElasticMapReduceException {
@@ -172,15 +172,16 @@ public class EmrCluster {
         disconnect();
     }
 
-    private void shutdownS3Service() {
-        if (_s3Service != null) {
-            try {
-                _s3Service.shutdown();
-            } catch (S3ServiceException e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
+    // private void shutdownS3Service() {
+    // jz: not in verion 0.6
+    // if (_s3Service != null) {
+    // try {
+    // _s3Service.shutdown();
+    // } catch (S3ServiceException e) {
+    // throw new RuntimeException(e);
+    // }
+    // }
+    // }
 
     public boolean isConnected() {
         return _jobFlowId != null;

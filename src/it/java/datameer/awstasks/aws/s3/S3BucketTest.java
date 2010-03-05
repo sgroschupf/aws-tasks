@@ -58,7 +58,7 @@ public class S3BucketTest extends AbstractAwsIntegrationTest {
     @Test
     public void testUploadFile_ExistsFile() throws Exception {
         S3Service s3Service = _ec2Conf.createS3Service();
-        s3Service.getOrCreateBucket(AWS_TEST_BUCKET);
+        s3Service.createBucket(AWS_TEST_BUCKET);
         String remotePath = "/tmp/build.xml";
         IoUtil.uploadFile(s3Service, AWS_TEST_BUCKET, new File("build.xml"), remotePath);
         assertTrue(IoUtil.existsFile(s3Service, AWS_TEST_BUCKET, remotePath));
