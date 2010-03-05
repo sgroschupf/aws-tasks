@@ -66,6 +66,7 @@ public class EmrCluster {
     protected ThrottleSafeWebServiceClient _emrService;
     private S3Service _s3Service;
     protected long _startTime;
+    protected String _masterHost;
 
     protected String _jobFlowId;
 
@@ -101,6 +102,11 @@ public class EmrCluster {
     public long getStartTime() {
         checkConnection(true);
         return _startTime;
+    }
+
+    public String getMasterHost() {
+        checkConnection(true);
+        return _masterHost;
     }
 
     public void startup() throws InterruptedException, AmazonElasticMapReduceException {
@@ -241,6 +247,7 @@ public class EmrCluster {
                 LOG.info("elastic cluster '" + jobFlowDetail.getName() + "/" + jobFlowId + "' in state '" + state + "'");
                 boolean finished = state != JobFlowState.STARTING;
                 if (finished) {
+                    _masterHost = jobFlowDetail.getInstances().getMasterPublicDnsName();
                     String startDateTime = jobFlowDetail.getExecutionStatusDetail().getStartDateTime();
                     try {
                         _startTime = FORMAT.parse(startDateTime).getTime();
