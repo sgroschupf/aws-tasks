@@ -26,6 +26,7 @@ import com.xerox.amazonws.ec2.LaunchConfiguration;
 
 import datameer.awstasks.aws.ec2.InstanceGroup;
 import datameer.awstasks.aws.ec2.InstanceGroupImpl;
+import datameer.awstasks.util.Ec2Util;
 
 public class Ec2StartTask extends AbstractEc2Task {
 
@@ -107,8 +108,11 @@ public class Ec2StartTask extends AbstractEc2Task {
     public void execute() throws BuildException {
         System.out.println("executing " + getClass().getSimpleName() + " with groupName '" + _groupName + "'");
         Jec2 ec2 = new Jec2(_accessKey, _accessSecret);
-        InstanceGroup instanceGroup = new InstanceGroupImpl(ec2);
         try {
+            if (Ec2Util.findByGroup(ec2, _groupName, "running") != null) {
+                throw new IllegalStateException("found already running instances for group " + _groupName);
+            }
+            InstanceGroup instanceGroup = new InstanceGroupImpl(ec2);
             LaunchConfiguration launchConfiguration = new LaunchConfiguration(_ami, _instanceCount, _instanceCount);
             if (_kernelId != null) {
                 launchConfiguration.setKernelId(_kernelId);
