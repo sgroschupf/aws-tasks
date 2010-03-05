@@ -22,6 +22,7 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.concurrent.Callable;
 
 import org.apache.log4j.Logger;
@@ -74,6 +75,7 @@ public class EmrCluster {
         _accessSecret = accessSecret;
         _settings = settings;
         _emrService = new ThrottleSafeWebServiceClient(new AmazonElasticMapReduceCustomClient(settings.getAccessKey(), _accessSecret, getSettings().getCustomStartParameter()));
+        FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
     public String getName() {
