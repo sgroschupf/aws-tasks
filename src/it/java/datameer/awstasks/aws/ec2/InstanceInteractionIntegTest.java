@@ -24,6 +24,7 @@ import java.io.OutputStream;
 import org.junit.Test;
 
 import datameer.awstasks.aws.ec2.ssh.SshClient;
+import datameer.awstasks.util.Ec2Util;
 import datameer.awstasks.util.IoUtil;
 
 public class InstanceInteractionIntegTest extends AbstractEc2IntegrationInteractionTest {
@@ -109,6 +110,12 @@ public class InstanceInteractionIntegTest extends AbstractEc2IntegrationInteract
         fileWriter.write("rm " + noneExistingFile + "\n");
         fileWriter.close();
         sshClient.executeCommandFile(commandFile, _sysOutStream, new int[] { 0 });
+    }
+
+    @Test
+    public void testGroupExists() throws Exception {
+        assertTrue(Ec2Util.groupExists(_ec2, TEST_SECURITY_GROUP));
+        assertFalse(Ec2Util.groupExists(_ec2, "wegszdfsf"));
     }
 
 }

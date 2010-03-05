@@ -19,7 +19,7 @@
 	<!-- START EC2 TASK	                       			                     -->
 	<!-- ================================================================== -->
 	<target name="start-ec2" description="--> start ec2 instance groups">
-		<ec2-start groupName="aws-tasks.test"
+		<ec2-start groupName="aws-tasks.test" groupDescription="test group fow aws-tasks"
 			ami="ami-5059be39"
 			instanceCount="2"
 			accessKey="${ec2.accessKey}"

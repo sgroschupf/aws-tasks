@@ -15,7 +15,9 @@ plicable law or agreed to in writing, software
  */
 package datameer.awstasks.util;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -63,6 +65,20 @@ public class Ec2Util {
             instanceIds.add(instance.getInstanceId());
         }
         return instanceIds;
+    }
+
+    public static void main(String[] args) throws IOException, EC2Exception {
+        Jec2 ec2 = new Ec2Configuration().createJEc2();
+        ec2.describeSecurityGroups(Arrays.asList("asda"));
+    }
+
+    public static boolean groupExists(Jec2 ec2, String groupName) {
+        try {
+            ec2.describeSecurityGroups(Arrays.asList(groupName));
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public static List<IpPermission> getPermissions(Jec2 ec2, List<String> groupNames) throws EC2Exception {

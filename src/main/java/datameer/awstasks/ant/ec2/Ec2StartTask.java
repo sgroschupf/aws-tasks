@@ -43,6 +43,7 @@ public class Ec2StartTask extends AbstractEc2Task {
     private String _availabilityZone;
     private String _kernelId;
     private String _ramDiskId;
+    private String _groupDescription;
 
     private List<GroupPermission> _groupPermissions = new ArrayList<GroupPermission>();
 
@@ -110,6 +111,14 @@ public class Ec2StartTask extends AbstractEc2Task {
         return _ramDiskId;
     }
 
+    public void setGroupDescription(String groupDescription) {
+        _groupDescription = groupDescription;
+    }
+
+    public String getGroupDescription() {
+        return _groupDescription;
+    }
+
     public void addGroupPermission(GroupPermission groupPermission) {
         _groupPermissions.add(groupPermission);
     }
@@ -120,8 +129,17 @@ public class Ec2StartTask extends AbstractEc2Task {
         Jec2 ec2 = new Jec2(_accessKey, _accessSecret);
         try {
             if (Ec2Util.findByGroup(ec2, _groupName, "running") != null) {
-                throw new IllegalStateException("found already running instances for group " + _groupName);
+                throw new IllegalStateException("found already running instances for group '" + _groupName + "'");
             }
+            if (!Ec2Util.groupExists(ec2, _groupName)) {
+                System.out.println("group '" + _groupName + " does not exists - creating it");
+                String groupDescription = getGroupDescription();
+                if (groupDescription == null) {
+                    throw new BuildException("must specify groupDescription");
+                }
+                ec2.createSecurityGroup(_groupName, groupDescription);
+            }
+
             List<String> securityGroups = Arrays.asList("default", _groupName);
             List<IpPermission> existingPermissions = Ec2Util.getPermissions(ec2, securityGroups);
             for (GroupPermission groupPermission : _groupPermissions) {
