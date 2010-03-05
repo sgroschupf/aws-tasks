@@ -28,6 +28,8 @@
 			instanceType="default" 
 			userData="a | b | c"
 			availabilityZone="us-east-1a">
+			<groupPermission protocol="tcp" fromPort="22" toPort="22" sourceIpOrGroup="0.0.0.0/0"/>
+			<groupPermission protocol="tcp" fromPort="10023" sourceIpOrGroup="0.0.0.0/0"/>
 		</ec2-start>
 	</target>
 	

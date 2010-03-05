@@ -15,12 +15,18 @@
  */
 package datameer.awstasks.aws.ec2;
 
-class GroupPermission {
+import com.xerox.amazonws.ec2.GroupDescription.IpPermission;
 
-    private final String _protocol;
-    private final int _fromPort;
-    private final int _toPort;
+public class GroupPermission {
+
+    private String _protocol;
+    private int _fromPort;
+    private int _toPort = -1;
     private String _sourceIpOrGroup;
+
+    public GroupPermission() {
+        // default constructor for ant
+    }
 
     public GroupPermission(String protocol, int fromPort, int toPort) {
         this(protocol, fromPort, toPort, null);
@@ -33,12 +39,24 @@ class GroupPermission {
         _sourceIpOrGroup = sourceIpOrGroup;
     }
 
+    public void setProtocol(String protocol) {
+        _protocol = protocol;
+    }
+
     public String getProtocol() {
         return _protocol;
     }
 
+    public void setFromPort(int fromPort) {
+        _fromPort = fromPort;
+    }
+
     public int getFromPort() {
         return _fromPort;
+    }
+
+    public void setToPort(int toPort) {
+        _toPort = toPort;
     }
 
     public int getToPort() {
@@ -66,4 +84,8 @@ class GroupPermission {
         return new GroupPermission("tcp", 22, 22);
     }
 
+    public boolean matches(IpPermission ipPermission) {
+        return ipPermission.getFromPort() == getFromPort() && ipPermission.getToPort() == getToPort() && getProtocol().equalsIgnoreCase(ipPermission.getProtocol());
+
+    }
 }

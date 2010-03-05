@@ -20,8 +20,10 @@ import java.util.Collections;
 import java.util.List;
 
 import com.xerox.amazonws.ec2.EC2Exception;
+import com.xerox.amazonws.ec2.GroupDescription;
 import com.xerox.amazonws.ec2.Jec2;
 import com.xerox.amazonws.ec2.ReservationDescription;
+import com.xerox.amazonws.ec2.GroupDescription.IpPermission;
 import com.xerox.amazonws.ec2.ReservationDescription.Instance;
 
 public class Ec2Util {
@@ -61,6 +63,18 @@ public class Ec2Util {
             instanceIds.add(instance.getInstanceId());
         }
         return instanceIds;
+    }
+
+    public static List<IpPermission> getPermissions(Jec2 ec2, List<String> groupNames) throws EC2Exception {
+        List<GroupDescription> securityGroups = ec2.describeSecurityGroups(groupNames);
+        List<IpPermission> ipPermissions = new ArrayList<IpPermission>(3);
+        for (GroupDescription groupDescription : securityGroups) {
+            List<IpPermission> permissions = groupDescription.getPermissions();
+            for (IpPermission ipPermission : permissions) {
+                ipPermissions.add(ipPermission);
+            }
+        }
+        return ipPermissions;
     }
 
 }

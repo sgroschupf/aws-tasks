@@ -15,7 +15,9 @@
  */
 package datameer.awstasks.ant.ec2;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.tools.ant.BuildException;
@@ -23,7 +25,9 @@ import org.apache.tools.ant.BuildException;
 import com.xerox.amazonws.ec2.InstanceType;
 import com.xerox.amazonws.ec2.Jec2;
 import com.xerox.amazonws.ec2.LaunchConfiguration;
+import com.xerox.amazonws.ec2.GroupDescription.IpPermission;
 
+import datameer.awstasks.aws.ec2.GroupPermission;
 import datameer.awstasks.aws.ec2.InstanceGroup;
 import datameer.awstasks.aws.ec2.InstanceGroupImpl;
 import datameer.awstasks.util.Ec2Util;
@@ -39,6 +43,8 @@ public class Ec2StartTask extends AbstractEc2Task {
     private String _availabilityZone;
     private String _kernelId;
     private String _ramDiskId;
+
+    private List<GroupPermission> _groupPermissions = new ArrayList<GroupPermission>();
 
     public void setAmi(String ami) {
         _ami = ami;
@@ -104,6 +110,10 @@ public class Ec2StartTask extends AbstractEc2Task {
         return _ramDiskId;
     }
 
+    public void addGroupPermission(GroupPermission groupPermission) {
+        _groupPermissions.add(groupPermission);
+    }
+
     @Override
     public void execute() throws BuildException {
         System.out.println("executing " + getClass().getSimpleName() + " with groupName '" + _groupName + "'");
@@ -112,6 +122,18 @@ public class Ec2StartTask extends AbstractEc2Task {
             if (Ec2Util.findByGroup(ec2, _groupName, "running") != null) {
                 throw new IllegalStateException("found already running instances for group " + _groupName);
             }
+            List<String> securityGroups = Arrays.asList("default", _groupName);
+            List<IpPermission> existingPermissions = Ec2Util.getPermissions(ec2, securityGroups);
+            for (GroupPermission groupPermission : _groupPermissions) {
+                if (groupPermission.getToPort() == -1) {
+                    groupPermission.setToPort(groupPermission.getFromPort());
+                }
+                if (!permissionExists(groupPermission, existingPermissions)) {
+                    System.out.println("did not found permission '" + groupPermission + "' - creating it...");
+                    ec2.authorizeSecurityGroupIngress(_groupName, groupPermission.getProtocol(), groupPermission.getFromPort(), groupPermission.getToPort(), groupPermission.getSourceIpOrGroup());
+                }
+            }
+
             InstanceGroup instanceGroup = new InstanceGroupImpl(ec2);
             LaunchConfiguration launchConfiguration = new LaunchConfiguration(_ami, _instanceCount, _instanceCount);
             if (_kernelId != null) {
@@ -121,7 +143,7 @@ public class Ec2StartTask extends AbstractEc2Task {
                 launchConfiguration.setKernelId(_ramDiskId);
             }
             launchConfiguration.setKeyName(_privateKeyName);
-            launchConfiguration.setSecurityGroup(Arrays.asList("default", _groupName));
+            launchConfiguration.setSecurityGroup(securityGroups);
             if (_userData != null) {
                 launchConfiguration.setUserData(_userData.getBytes());
             }
@@ -134,5 +156,14 @@ public class Ec2StartTask extends AbstractEc2Task {
         } catch (Exception e) {
             throw new BuildException(e);
         }
+    }
+
+    private boolean permissionExists(GroupPermission groupPermission, List<IpPermission> existingPermissions) {
+        for (IpPermission ipPermission : existingPermissions) {
+            if (groupPermission.matches(ipPermission)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

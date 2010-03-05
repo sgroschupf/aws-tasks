@@ -13,6 +13,7 @@ Java/Ant API for:
 	+ start/stop instances
 	+ scp upload/download  
 	+ ssh command execution
+	+ group permission setup
 + [S3](https://aws.amazon.com/s3/) 
 	+ create, delete, list bucket
 + [EMR](http://aws.amazon.com/elasticmapreduce/) 

@@ -211,8 +211,9 @@ public class InstanceGroupImpl implements InstanceGroup {
         }
         boolean foundMatching = false;
         for (IpPermission ipPermission : tcpPermissions) {
-            if (ipPermission.getFromPort() == sshPermission.getFromPort() && ipPermission.getToPort() == sshPermission.getToPort()) {
+            if (sshPermission.matches(ipPermission)) {
                 foundMatching = true;
+                break;
             }
         }
         if (!foundMatching) {
