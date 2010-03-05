@@ -20,6 +20,9 @@ import java.util.List;
 
 import org.apache.tools.ant.BuildException;
 import org.jets3t.service.S3Service;
+import org.jets3t.service.S3ServiceException;
+import org.jets3t.service.impl.rest.httpclient.RestS3Service;
+import org.jets3t.service.security.AWSCredentials;
 
 import datameer.awstasks.ant.AbstractAwsTask;
 import datameer.awstasks.ant.s3.model.CreateBucketCommand;
@@ -59,6 +62,11 @@ public class S3Task extends AbstractAwsTask {
 
     public void addListBuckets(ListBucketsCommand command) {
         _s3Commands.add(command);
+    }
+
+    public S3Service createS3Service() throws S3ServiceException {
+        AWSCredentials awsCredentials = new AWSCredentials(_accessKey, _accessSecret);
+        return new RestS3Service(awsCredentials);
     }
 
 }

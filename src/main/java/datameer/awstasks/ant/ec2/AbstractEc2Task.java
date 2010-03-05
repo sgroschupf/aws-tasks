@@ -15,6 +15,8 @@
  */
 package datameer.awstasks.ant.ec2;
 
+import com.xerox.amazonws.ec2.Jec2;
+
 import datameer.awstasks.ant.AbstractAwsTask;
 
 public class AbstractEc2Task extends AbstractAwsTask {
@@ -27,6 +29,10 @@ public class AbstractEc2Task extends AbstractAwsTask {
 
     public String getName() {
         return _groupName;
+    }
+
+    public Jec2 createJec2() {
+        return new Jec2(_accessKey, _accessSecret);
     }
 
 }
