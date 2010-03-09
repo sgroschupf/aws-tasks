@@ -13,6 +13,7 @@
 	<taskdef name="ec2-start" classname="datameer.awstasks.ant.ec2.Ec2StartTask" classpathref="task.classpath"/>
 	<taskdef name="ec2-stop" classname="datameer.awstasks.ant.ec2.Ec2StopTask" classpathref="task.classpath"/>
 	<taskdef name="ec2-ssh" classname="datameer.awstasks.ant.ec2.Ec2SshTask" classpathref="task.classpath"/>
+	<taskdef name="ec2-info" classname="datameer.awstasks.ant.ec2.Ec2InfoTask" classpathref="task.classpath"/>
 
 	
 	<!-- ================================================================== -->
@@ -54,6 +55,18 @@
 			<exec command="curl -s http://169.254.169.254/1.0/user-data"/>
 		</ec2-ssh>
 		<echo message="${instances.hostnames}"/>
+	</target>
+	
+	
+	<target name="info-ec2" description="--> print information about ec2 instance groups">
+		<ec2-info groupName="aws-tasks.test"
+			accessKey="${ec2.accessKey}"
+			accessSecret="${ec2.accessSecret}">
+		</ec2-info>
+		<property name="tab" value="	"/>
+		<echo message="printing some stats:"/>
+		<echo message="instanceCount: ${instances.count}"/>
+		<echo message="master: ${instance.host.1} ${tab} ${instance.state.1} ${tab} ${instance.type.1}"/>
 	</target>
 	
 	<!-- ================================================================== -->
