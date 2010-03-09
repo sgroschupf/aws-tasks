@@ -132,7 +132,7 @@ public class Ec2StartTask extends AbstractEc2Task {
                 throw new IllegalStateException("found already running instances for group '" + _groupName + "'");
             }
             if (!Ec2Util.groupExists(ec2, _groupName)) {
-                System.out.println("group '" + _groupName + " does not exists - creating it");
+                System.out.println("group '" + _groupName + "' does not exists - creating it");
                 String groupDescription = getGroupDescription();
                 if (groupDescription == null) {
                     throw new BuildException("must specify groupDescription");

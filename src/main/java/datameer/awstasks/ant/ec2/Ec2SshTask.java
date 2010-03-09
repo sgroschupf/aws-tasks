@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.tools.ant.BuildException;
+import org.apache.tools.ant.Task;
+import org.apache.tools.ant.taskdefs.Echo;
 
 import com.xerox.amazonws.ec2.Jec2;
 
@@ -41,7 +43,7 @@ public class Ec2SshTask extends AbstractEc2Task {
 
     private String _username;
     private File _keyFile;
-    private List<SshCommand> _sshCommands = new ArrayList<SshCommand>();
+    private List<Object> _commands = new ArrayList<Object>();
     private Map<String, String> _propertyMap = new HashMap<String, String>();
     private InstanceGroup _instanceGroup;
 
@@ -69,16 +71,20 @@ public class Ec2SshTask extends AbstractEc2Task {
         _keyFile = keyFile;
     }
 
+    public void addEcho(Echo task) {
+        _commands.add(task);
+    }
+
     public void addUpload(ScpUpload upload) {
-        _sshCommands.add(upload);
+        _commands.add(upload);
     }
 
     public void addDownload(ScpDownload download) {
-        _sshCommands.add(download);
+        _commands.add(download);
     }
 
     public void addExec(SshExec sshExec) {
-        _sshCommands.add(sshExec);
+        _commands.add(sshExec);
     }
 
     @Override
@@ -92,24 +98,30 @@ public class Ec2SshTask extends AbstractEc2Task {
         try {
             _instanceGroup.connectTo(_groupName);
             int instanceCount = _instanceGroup.instanceCount();
+
             // verify targetIndexes specifications
-            for (SshCommand sshCommand : _sshCommands) {
-                if (!sshCommand.isToAllInstances()) {
-                    sshCommand.compileTargetInstances(instanceCount);
+            for (Object command : _commands) {
+                if (command instanceof SshCommand) {
+                    SshCommand sshCommand = (SshCommand) command;
+                    if (!sshCommand.isToAllInstances()) {
+                        sshCommand.compileTargetInstances(instanceCount);
+                    }
                 }
             }
 
             // execute the commands
             SshClient sshClient = _instanceGroup.createSshClient(_username, _keyFile);
-            for (SshCommand sshCommand : _sshCommands) {
-                if (sshCommand instanceof SshExec) {
-                    doSshExec(sshClient, (SshExec) sshCommand, instanceCount);
-                } else if (sshCommand instanceof ScpDownload) {
-                    doDownload(sshClient, (ScpDownload) sshCommand, instanceCount);
-                } else if (sshCommand instanceof ScpUpload) {
-                    doUpload(sshClient, (ScpUpload) sshCommand, instanceCount);
+            for (Object command : _commands) {
+                if (command instanceof SshExec) {
+                    doSshExec(sshClient, (SshExec) command, instanceCount);
+                } else if (command instanceof ScpDownload) {
+                    doDownload(sshClient, (ScpDownload) command, instanceCount);
+                } else if (command instanceof ScpUpload) {
+                    doUpload(sshClient, (ScpUpload) command, instanceCount);
+                } else if (command instanceof Task) {
+                    ((Task) command).execute();
                 } else {
-                    throw new IllegalStateException("type '" + sshCommand.getClass().getName() + "' not supported here");
+                    throw new IllegalStateException("type '" + command.getClass().getName() + "' not supported here");
                 }
             }
 
