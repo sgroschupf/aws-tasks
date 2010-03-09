@@ -26,8 +26,10 @@ public class Ec2InfoTask extends AbstractEc2ConnectTask {
         getProject().setProperty("instances.count", instances.size() + "");
         for (int i = 0; i < instances.size(); i++) {
             getProject().setProperty("instance.host." + i, instances.get(i).getDnsName());
-            getProject().setProperty("instance.state." + i, instances.get(i).getState());
+            getProject().setProperty("instance.aim." + i, instances.get(i).getImageId());
+            getProject().setProperty("instance.id." + i, instances.get(i).getInstanceId());
             getProject().setProperty("instance.type." + i, instances.get(i).getInstanceType().name());
+            getProject().setProperty("instance.state." + i, instances.get(i).getState());
         }
 
         for (Task task : _commands) {
