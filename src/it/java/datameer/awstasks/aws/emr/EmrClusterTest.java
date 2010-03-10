@@ -29,6 +29,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import datameer.awstasks.aws.AbstractAwsIntegrationTest;
+import datameer.awstasks.aws.emr.EmrCluster.StepFuture;
 import datameer.awstasks.aws.s3.S3BucketTest;
 import datameer.awstasks.util.IoUtil;
 
@@ -95,7 +96,9 @@ public class EmrClusterTest extends AbstractAwsIntegrationTest {
         // execute job
         String inputUri = "s3n://" + _s3Bucket.getName() + remoteInputPath;
         String outputUri = "s3n://" + _s3Bucket.getName() + remoteOutputPath;
-        _emrCluster.executeJobStep("testStep" + System.currentTimeMillis(), jobJar, "wordcount", inputUri, outputUri);
+        StepFuture stepFuture = _emrCluster.executeJobStep("testStep" + System.currentTimeMillis(), jobJar, "wordcount", inputUri, outputUri);
+        assertEquals(1, stepFuture.getStepIndex());// 0 is debug step
+        stepFuture.join();
 
         // check output
         BufferedReader reader = new BufferedReader(new InputStreamReader(_s3Service.getObject(_s3Bucket, remoteOutputPath.substring(1) + "/part-00000").getDataInputStream()));

@@ -208,21 +208,20 @@ public class EmrCluster {
         }
     }
 
-    public void executeJobStep(String name, File jobJar, String... args) throws InterruptedException, IOException, AmazonElasticMapReduceException, S3ServiceException {
-        executeJobStep(name, jobJar, null, args);
+    public StepFuture executeJobStep(String name, File jobJar, String... args) throws IOException, AmazonElasticMapReduceException, S3ServiceException {
+        return executeJobStep(name, jobJar, null, args);
     }
 
-    public void executeJobStep(String name, File jobJar, Class<?> mainClass, String... args) throws InterruptedException, IOException, AmazonElasticMapReduceException, S3ServiceException {
-        executeJobStep(name, jobJar, jobJar.getName(), mainClass, args);
+    public StepFuture executeJobStep(String name, File jobJar, Class<?> mainClass, String... args) throws IOException, AmazonElasticMapReduceException, S3ServiceException {
+        return executeJobStep(name, jobJar, jobJar.getName(), mainClass, args);
     }
 
-    public void executeJobStep(String name, File jobJar, String s3JobJarName, Class<?> mainClass, String... args) throws InterruptedException, IOException, AmazonElasticMapReduceException,
-            S3ServiceException {
+    public StepFuture executeJobStep(String name, File jobJar, String s3JobJarName, Class<?> mainClass, String... args) throws IOException, AmazonElasticMapReduceException, S3ServiceException {
         String s3JobJarUri = uploadingJobJar(jobJar, s3JobJarName);
         HadoopJarStepConfig jarConfig = new HadoopJarStepConfig(null, s3JobJarUri, mainClass == null ? null : mainClass.getName(), Arrays.asList(args));
         StepConfig stepConfig = new StepConfig(name, "CONTINUE", jarConfig);
         _emrService.addJobFlowSteps(new AddJobFlowStepsRequest().withJobFlowId(_jobFlowId).withSteps(stepConfig));
-        waitUntilStepFinished(_jobFlowId, stepConfig);
+        return new StepFuture(stepConfig.getName(), getStepIndex(getJobFlowDetail(_jobFlowId), name));
     }
 
     private String uploadingJobJar(File jobJar, String s3JobJarName) throws S3ServiceException, IOException {
@@ -234,6 +233,8 @@ public class EmrCluster {
         if (!IoUtil.existsFile(_s3Service, s3Bucket, s3JobJarPath)) {
             LOG.info("uploading " + jobJar + " to " + s3JobJarPath);
             IoUtil.uploadFile(_s3Service, s3Bucket, jobJar, s3JobJarPath);
+        } else {
+            LOG.info("using cached job-jar: " + s3JobJarPath);
         }
         return "s3n://" + getSettings().getAccessKey() + "@" + s3Bucket + s3JobJarPath;
     }
@@ -280,22 +281,23 @@ public class EmrCluster {
         }, getRequestInterval());
     }
 
-    private void waitUntilStepFinished(final String jobFlowId, final StepConfig stepConfig) throws InterruptedException, AmazonElasticMapReduceException {
+    protected void waitUntilStepFinished(final String jobFlowId, final String stepName) throws InterruptedException, AmazonElasticMapReduceException {
         doThrottleSafeWhile(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
                 JobFlowDetail flowDetail = getJobFlowDetail(jobFlowId);
-                StepDetail stepDetail = getStepDetail(stepConfig, flowDetail);
+                StepDetail stepDetail = getStepDetail(flowDetail, stepName);
                 StepState stepState = StepState.valueOf(stepDetail.getExecutionStatusDetail().getState());
-                LOG.info("job step '" + stepConfig.getName() + "' in state '" + stepState + "'");
+                LOG.info("job step '" + stepName + "' in state '" + stepState + "'");
                 boolean finished = stepState.isFinished();
                 if (finished) {
                     if (!stepState.isSuccessful()) {
-                        throw new RuntimeException("job step '" + stepConfig.getName() + "' failed (state: " + stepState + ")");
+                        throw new RuntimeException("job step '" + stepName + "' failed (state: " + stepState + ")");
                     }
                 }
                 return finished;
             }
+
         }, getRequestInterval());
     }
 
@@ -331,13 +333,22 @@ public class EmrCluster {
         return jobFlows;
     }
 
-    protected StepDetail getStepDetail(StepConfig stepConfig, JobFlowDetail flowDetail) {
+    protected StepDetail getStepDetail(JobFlowDetail flowDetail, String stepName) {
         for (StepDetail stepDetail : flowDetail.getSteps()) {
-            if (stepConfig.getName().equals(stepDetail.getStepConfig().getName())) {
+            if (stepName.equals(stepDetail.getStepConfig().getName())) {
                 return stepDetail;
             }
         }
-        throw new IllegalStateException("no step detail with name '" + stepConfig.getName() + "' found in " + flowDetail.getJobFlowId());
+        throw new IllegalStateException("no step detail with name '" + stepName + "' found in " + flowDetail.getJobFlowId());
+    }
+
+    protected int getStepIndex(JobFlowDetail flowDetail, String stepName) {
+        for (int i = 0; i < flowDetail.getSteps().size(); i++) {
+            if (stepName.equals(flowDetail.getSteps().get(i).getStepConfig().getName())) {
+                return i;
+            }
+        }
+        throw new IllegalStateException("no step detail with name '" + stepName + "' found in " + flowDetail.getJobFlowId());
     }
 
     /**
@@ -439,6 +450,34 @@ public class EmrCluster {
             super(cause);
         }
 
+        @Override
+        public InterruptedException getCause() {
+            return (InterruptedException) super.getCause();
+        }
+
+    }
+
+    public class StepFuture {
+
+        private final String _stepName;
+        private final int _stepIndex;
+
+        public StepFuture(String stepName, int stepIndex) {
+            _stepName = stepName;
+            _stepIndex = stepIndex;
+        }
+
+        public int getStepIndex() {
+            return _stepIndex;
+        }
+
+        public void join() throws InterruptedException, AmazonElasticMapReduceException {
+            try {
+                waitUntilStepFinished(_jobFlowId, _stepName);
+            } catch (InterruptedRuntimeException e) {
+                throw e.getCause();
+            }
+        }
     }
 
 }
