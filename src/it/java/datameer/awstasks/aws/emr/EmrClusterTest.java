@@ -97,7 +97,7 @@ public class EmrClusterTest extends AbstractAwsIntegrationTest {
         String inputUri = "s3n://" + _s3Bucket.getName() + remoteInputPath;
         String outputUri = "s3n://" + _s3Bucket.getName() + remoteOutputPath;
         StepFuture stepFuture = _emrCluster.executeJobStep("testStep" + System.currentTimeMillis(), jobJar, "wordcount", inputUri, outputUri);
-        assertEquals(1, stepFuture.getStepIndex());// 0 is debug step
+        assertEquals(2, stepFuture.getStepIndex());// 1 is debug step
         stepFuture.join();
 
         // check output

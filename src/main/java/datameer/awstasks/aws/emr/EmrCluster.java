@@ -346,7 +346,7 @@ public class EmrCluster {
     protected int getStepIndex(JobFlowDetail flowDetail, String stepName) {
         for (int i = 0; i < flowDetail.getSteps().size(); i++) {
             if (stepName.equals(flowDetail.getSteps().get(i).getStepConfig().getName())) {
-                return i;
+                return i + 1;// starting from 1
             }
         }
         throw new IllegalStateException("no step detail with name '" + stepName + "' found in " + flowDetail.getJobFlowId());
