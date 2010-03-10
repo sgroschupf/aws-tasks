@@ -164,6 +164,7 @@ public class EmrCluster {
         checkConnection(false);
         _jobFlowId = jobFlowId;
         waitUntilClusterStarted(jobFlowId);
+        LOG.info("connected to elastic cluster '" + getName() + "/" + _jobFlowId + "', master-host is " + getJobFlowDetail(_jobFlowId).getInstances().getMasterPublicDnsName());
     }
 
     public void disconnect() {
