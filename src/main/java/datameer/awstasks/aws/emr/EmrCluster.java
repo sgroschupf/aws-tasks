@@ -67,7 +67,7 @@ public class EmrCluster {
     private S3Service _s3Service;
     protected long _startTime;
     protected String _masterHost;
-    protected long _instanceCount;
+    protected int _instanceCount;
 
     protected String _jobFlowId;
 
@@ -110,7 +110,7 @@ public class EmrCluster {
         return _masterHost;
     }
 
-    public long getInstanceCount() {
+    public int getInstanceCount() {
         checkConnection(true);
         return _instanceCount;
     }
