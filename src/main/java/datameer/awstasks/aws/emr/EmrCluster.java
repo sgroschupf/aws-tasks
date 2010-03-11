@@ -67,6 +67,7 @@ public class EmrCluster {
     private S3Service _s3Service;
     protected long _startTime;
     protected String _masterHost;
+    protected long _instanceCount;
 
     protected String _jobFlowId;
 
@@ -107,6 +108,11 @@ public class EmrCluster {
     public String getMasterHost() {
         checkConnection(true);
         return _masterHost;
+    }
+
+    public long getInstanceCount() {
+        checkConnection(true);
+        return _instanceCount;
     }
 
     public void startup() throws InterruptedException, AmazonElasticMapReduceException {
@@ -250,6 +256,7 @@ public class EmrCluster {
                 boolean finished = state != JobFlowState.STARTING;
                 if (finished) {
                     _masterHost = jobFlowDetail.getInstances().getMasterPublicDnsName();
+                    _instanceCount = jobFlowDetail.getInstances().getInstanceCount();
                     String startDateTime = jobFlowDetail.getExecutionStatusDetail().getStartDateTime();
                     try {
                         _startTime = FORMAT.parse(startDateTime).getTime();
