@@ -257,6 +257,9 @@ public class EmrCluster {
                 if (finished) {
                     _masterHost = jobFlowDetail.getInstances().getMasterPublicDnsName();
                     _instanceCount = jobFlowDetail.getInstances().getInstanceCount();
+                    if (!state.isOperational()) {
+                        throw new IllegalStateException("starting of job flow '" + jobFlowId + "' failed with state '" + state + "'");
+                    }
                     String startDateTime = jobFlowDetail.getExecutionStatusDetail().getStartDateTime();
                     try {
                         _startTime = FORMAT.parse(startDateTime).getTime();
@@ -264,9 +267,6 @@ public class EmrCluster {
                         throw new RuntimeException("could not parse '" + startDateTime + "' with '" + FORMAT.toPattern() + "'", e);
                     }
 
-                    if (!state.isOperational()) {
-                        throw new IllegalStateException("starting of job flow '" + jobFlowId + "' failed with state '" + state + "'");
-                    }
                 }
                 return finished;
             }
@@ -331,6 +331,8 @@ public class EmrCluster {
     protected List<JobFlowDetail> getRunningJobFlowDetailsByName(String name) throws AmazonElasticMapReduceException {
         DescribeJobFlowsResponse describeJobFlows = _emrService.describeJobFlows(new DescribeJobFlowsRequest().withJobFlowStates(JobFlowState.STARTING.name(), JobFlowState.WAITING.name(),
                 JobFlowState.RUNNING.name()));
+        System.out.println(describeJobFlows.getDescribeJobFlowsResult().getJobFlows());
+        // describeJobFlows = _emrService.describeJobFlows(new DescribeJobFlowsRequest());
         List<JobFlowDetail> jobFlows = describeJobFlows.getDescribeJobFlowsResult().getJobFlows();
         for (Iterator iterator = jobFlows.iterator(); iterator.hasNext();) {
             JobFlowDetail jobFlowDetail = (JobFlowDetail) iterator.next();
@@ -428,6 +430,7 @@ public class EmrCluster {
                 if (errorCode == null || !errorCode.equals("Throttling")) {
                     throw e;
                 }
+                LOG.warn("throttle exception: " + e.getMessage());
                 try {
                     Thread.sleep(requestInterval);
                 } catch (InterruptedException e2) {
