@@ -331,8 +331,6 @@ public class EmrCluster {
     protected List<JobFlowDetail> getRunningJobFlowDetailsByName(String name) throws AmazonElasticMapReduceException {
         DescribeJobFlowsResponse describeJobFlows = _emrService.describeJobFlows(new DescribeJobFlowsRequest().withJobFlowStates(JobFlowState.STARTING.name(), JobFlowState.WAITING.name(),
                 JobFlowState.RUNNING.name()));
-        System.out.println(describeJobFlows.getDescribeJobFlowsResult().getJobFlows());
-        // describeJobFlows = _emrService.describeJobFlows(new DescribeJobFlowsRequest());
         List<JobFlowDetail> jobFlows = describeJobFlows.getDescribeJobFlowsResult().getJobFlows();
         for (Iterator iterator = jobFlows.iterator(); iterator.hasNext();) {
             JobFlowDetail jobFlowDetail = (JobFlowDetail) iterator.next();
