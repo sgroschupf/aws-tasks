@@ -30,6 +30,7 @@ import org.junit.Test;
 
 import datameer.awstasks.aws.AbstractAwsIntegrationTest;
 import datameer.awstasks.aws.emr.EmrCluster.StepFuture;
+import datameer.awstasks.aws.emr.EmrCluster.StepMetadata;
 import datameer.awstasks.aws.s3.S3BucketTest;
 import datameer.awstasks.util.IoUtil;
 
@@ -99,6 +100,12 @@ public class EmrClusterTest extends AbstractAwsIntegrationTest {
         StepFuture stepFuture = _emrCluster.executeJobStep("testStep" + System.currentTimeMillis(), jobJar, "wordcount", inputUri, outputUri);
         assertEquals(2, stepFuture.getStepIndex());// 1 is debug step
         stepFuture.join();
+
+        // check simpledb debuggin information
+        StepMetadata stepMetaData = stepFuture.getStepMetaData();
+        assertNotNull(stepMetaData);
+        assertEquals(_emrCluster.getJobFlowId(), stepMetaData.get(StepMetadata.JOB_FLOW_ID));
+        // System.out.println(stepMetaData);
 
         // check output
         BufferedReader reader = new BufferedReader(new InputStreamReader(_s3Service.getObject(_s3Bucket, remoteOutputPath.substring(1) + "/part-00000").getDataInputStream()));

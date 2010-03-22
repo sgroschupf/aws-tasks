@@ -20,8 +20,12 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
 import java.util.concurrent.Callable;
 
@@ -47,6 +51,10 @@ import com.amazonaws.elasticmapreduce.model.StepConfig;
 import com.amazonaws.elasticmapreduce.model.StepDetail;
 import com.amazonaws.elasticmapreduce.model.TerminateJobFlowsRequest;
 import com.amazonaws.elasticmapreduce.model.TerminateJobFlowsResponse;
+import com.xerox.amazonws.sdb.Domain;
+import com.xerox.amazonws.sdb.ItemAttribute;
+import com.xerox.amazonws.sdb.SDBException;
+import com.xerox.amazonws.sdb.SimpleDB;
 
 import datameer.awstasks.util.IoUtil;
 
@@ -65,6 +73,7 @@ public class EmrCluster {
     private final String _accessSecret;
     protected ThrottleSafeWebServiceClient _emrService;
     private S3Service _s3Service;
+    protected SimpleDB _simpleDB;
     protected long _startTime;
     protected String _masterHost;
     protected int _instanceCount;
@@ -78,6 +87,9 @@ public class EmrCluster {
         _settings = settings;
         _emrService = new ThrottleSafeWebServiceClient(new AmazonElasticMapReduceCustomClient(settings.getAccessKey(), _accessSecret, getSettings().getCustomStartParameter()));
         FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
+        if (settings.isDebugEnabled()) {
+            _simpleDB = new SimpleDB(settings.getAccessKey(), accessSecret);
+        }
     }
 
     public String getName() {
@@ -228,6 +240,7 @@ public class EmrCluster {
         HadoopJarStepConfig jarConfig = new HadoopJarStepConfig(null, s3JobJarUri, mainClass == null ? null : mainClass.getName(), Arrays.asList(args));
         StepConfig stepConfig = new StepConfig(name, "CONTINUE", jarConfig);
         _emrService.addJobFlowSteps(new AddJobFlowStepsRequest().withJobFlowId(_jobFlowId).withSteps(stepConfig));
+
         return new StepFuture(stepConfig.getName(), getStepIndex(getJobFlowDetail(_jobFlowId), name));
     }
 
@@ -470,6 +483,7 @@ public class EmrCluster {
 
         private final String _stepName;
         private final int _stepIndex;
+        private Domain _domain;
 
         public StepFuture(String stepName, int stepIndex) {
             _stepName = stepName;
@@ -478,6 +492,52 @@ public class EmrCluster {
 
         public int getStepIndex() {
             return _stepIndex;
+        }
+
+        public StepMetadata getStepMetaData() throws SDBException {
+            if (_simpleDB == null) {
+                throw new IllegalStateException("can retrieve step metadata only when hadoop debugging enabled");
+            }
+            if (_domain == null) {
+                _domain = getDomain();
+            }
+            String query = "SELECT * FROM `" + _domain.getName() + "` WHERE " + StepMetadata.JOB_FLOW_ID + " = '" + _jobFlowId + "' AND " + StepMetadata.STEP_ID + " = '" + _stepIndex + "' AND "
+                    + StepMetadata.TYPE + " = 'job'";
+            Map<String, List<ItemAttribute>> items = _domain.selectItems(query, null).getItems();
+            if (items.isEmpty()) {
+                throw new IllegalStateException("found no items for query '" + query + "'");
+            }
+            if (items.size() > 1) {
+                throw new IllegalStateException("found more then one (" + items.size() + ") item for query '" + query + "'");
+            }
+
+            StepMetadata stepMetadata = new StepMetadata();
+            List<ItemAttribute> attributes = items.values().iterator().next();
+            for (ItemAttribute itemAttribute : attributes) {
+                stepMetadata.add(itemAttribute.getName(), itemAttribute.getValue());
+            }
+
+            return stepMetadata;
+        }
+
+        private Domain getDomain() throws SDBException {
+            List<Domain> domains = _simpleDB.listDomains().getDomainList();
+            for (Iterator iterator = domains.iterator(); iterator.hasNext();) {
+                Domain domain = (Domain) iterator.next();
+                if (!domain.getName().startsWith("ElasticMapReduce-")) {
+                    iterator.remove();
+                }
+            }
+            Collections.sort(domains, new Comparator<Domain>() {
+                @Override
+                public int compare(Domain o1, Domain o2) {
+                    return o1.getName().compareTo(o2.getName());
+                }
+            });
+            if (domains.isEmpty()) {
+                throw new IllegalStateException("found no hadoop-debugging domains");
+            }
+            return domains.get(0);
         }
 
         public void join() throws InterruptedException, AmazonElasticMapReduceException {
@@ -489,4 +549,44 @@ public class EmrCluster {
         }
     }
 
+    public class StepMetadata {
+
+        public final static String JOB_ID = "jobId";
+        public final static String JOB_FLOW_ID = "jobFlowId";
+        public final static String JOB_INDEX = "jobIndex";
+        public final static String JOB_STATE = "jobState";
+        public final static String TYPE = "type";
+        public final static String STEP_ID = "stepId";
+        public final static String USERNAME = "username";
+        public final static String START_TIME = "startTime";
+        public final static String NUM_TASKS = "numTasks";
+        public final static String NUM_PENDING_TASKS = "numPendingTasks";
+        public final static String NUM_FAILED_TASKS = "numFailedTasks";
+        public final static String NUM_RUNNING_TASKS = "numRunningTasks";
+        public final static String NUM_CANCELLED_TASKS = "numCancelledTasks";
+        public final static String NUM_COMPLETED_TASKS = "numCompletedTasks";
+
+        private Map<String, String> _mdMap = new HashMap<String, String>();
+
+        public void add(String key, String value) {
+            _mdMap.put(key, value);
+        }
+
+        public String get(String key) {
+            return _mdMap.get(key);
+        }
+
+        public Long getAsLong(String key) {
+            String value = get(key);
+            if (value == null) {
+                return null;
+            }
+            return Long.parseLong(value);
+        }
+
+        @Override
+        public String toString() {
+            return _mdMap.toString();
+        }
+    }
 }
