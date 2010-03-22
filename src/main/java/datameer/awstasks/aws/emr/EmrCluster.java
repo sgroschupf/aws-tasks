@@ -504,14 +504,16 @@ public class EmrCluster {
             String query = "SELECT * FROM `" + _domain.getName() + "` WHERE " + StepMetadata.JOB_FLOW_ID + " = '" + _jobFlowId + "' AND " + StepMetadata.STEP_ID + " = '" + _stepIndex + "' AND "
                     + StepMetadata.TYPE + " = 'job'";
             Map<String, List<ItemAttribute>> items = _domain.selectItems(query, null).getItems();
-            if (items.isEmpty()) {
-                throw new IllegalStateException("found no items for query '" + query + "'");
-            }
             if (items.size() > 1) {
                 throw new IllegalStateException("found more then one (" + items.size() + ") item for query '" + query + "'");
             }
-
             StepMetadata stepMetadata = new StepMetadata();
+            if (items.isEmpty()) {
+                LOG.debug("found no items for query '" + query + "' yet...");
+                return stepMetadata;
+                // throw new IllegalStateException("found no items for query '" + query + "'");
+            }
+
             List<ItemAttribute> attributes = items.values().iterator().next();
             for (ItemAttribute itemAttribute : attributes) {
                 stepMetadata.add(itemAttribute.getName(), itemAttribute.getValue());
