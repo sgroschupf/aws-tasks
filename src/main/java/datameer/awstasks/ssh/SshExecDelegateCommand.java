@@ -49,21 +49,25 @@ public class SshExecDelegateCommand<R> extends JschCommand {
     private void executeCommand(Session session, String command) throws IOException {
         final Channel channel = openExecChannel(session, command);
         ToLineOutputStream outputStream = new ToLineOutputStream(_outputHandler);
-        // OutputStream outputStream = IoUtil.closeProtectedStream(System.out);
-        channel.setOutputStream(outputStream);
-        channel.setExtOutputStream(outputStream);
         try {
-            do {
-                Thread.sleep(250);
-            } while (!channel.isClosed());// jz: should we also build in a timeout mechanism ?
-        } catch (InterruptedException e) {
-            Thread.interrupted();
+            // OutputStream outputStream = IoUtil.closeProtectedStream(System.out);
+            channel.setOutputStream(outputStream);
+            channel.setExtOutputStream(outputStream);
+            try {
+                do {
+                    Thread.sleep(250);
+                } while (!channel.isClosed());// jz: should we also build in a timeout mechanism ?
+            } catch (InterruptedException e) {
+                Thread.interrupted();
+            }
+            int exitCode = channel.getExitStatus();
+            if (exitCode != 0 && _command.failOnError()) {
+                throw new IOException("could not execute command '" + command + "', got exit code " + exitCode);
+            }
+            _result = _outputHandler.getResult(exitCode);
+        } finally {
+            outputStream.close();
         }
-        int exitCode = channel.getExitStatus();
-        if (exitCode != 0 && _command.failOnError()) {
-            throw new IOException("could not execute command '" + command + "', got exit code " + exitCode);
-        }
-        _result = _outputHandler.getResult(exitCode);
     }
 
     public R getResult() {
@@ -87,7 +91,7 @@ public class SshExecDelegateCommand<R> extends JschCommand {
         private void fireText(byte[] b, int off, int len) {
             // System.err.println("'" + new String(b, off, len - 1) + "'");
             int lastStart = off;
-            for (int i = off; i < len; i++) {
+            for (int i = off; i < len + off; i++) {
                 char c = (char) b[i];
                 if (c == '\n' || c == '\r') {
                     String line = createLine(b, lastStart, i - lastStart);
