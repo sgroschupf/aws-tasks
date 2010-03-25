@@ -73,6 +73,7 @@ public class SshExecDelegateCommand<R> extends JschCommand {
     static class ToLineOutputStream extends OutputStream {
 
         private final ExecOutputHandler<?> _outputHandler;
+        private String _previousString;
 
         public ToLineOutputStream(ExecOutputHandler<?> outputHandler) {
             _outputHandler = outputHandler;
@@ -89,22 +90,23 @@ public class SshExecDelegateCommand<R> extends JschCommand {
             for (int i = off; i < len; i++) {
                 char c = (char) b[i];
                 if (c == '\n' || c == '\r') {
-                    fireLine(b, lastStart, i - lastStart);
+                    String line = createLine(b, lastStart, i - lastStart);
+                    _outputHandler.handleLine(line);
                     lastStart = i + 1;
                 }
             }
             if (lastStart < len) {
-                int lenOfLast = len - lastStart + off;
-                if (b[lastStart + lenOfLast - 1] == '\n') {
-                    lenOfLast--;
-                }
-                fireLine(b, lastStart, lenOfLast);
+                _previousString = createLine(b, lastStart, len + off - lastStart);
             }
         }
 
-        private void fireLine(byte[] b, int off, int len) {
-            // System.err.println(new String(b, off, len));
-            _outputHandler.handleLine(new String(b, off, len));
+        private String createLine(byte[] b, int lastStart, int len) {
+            String line = new String(b, lastStart, len);
+            if (_previousString != null) {
+                line = _previousString + line;
+                _previousString = null;
+            }
+            return line;
         }
 
         @Override
@@ -117,6 +119,13 @@ public class SshExecDelegateCommand<R> extends JschCommand {
             throw new UnsupportedOperationException();
         }
 
+        @Override
+        public void close() throws IOException {
+            if (_previousString != null) {
+                _outputHandler.handleLine(_previousString);
+                _previousString = null;
+            }
+            super.close();
+        }
     }
-
 }

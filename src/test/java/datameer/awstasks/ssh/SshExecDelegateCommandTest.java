@@ -24,25 +24,48 @@ import datameer.awstasks.ssh.SshExecDelegateCommand.ToLineOutputStream;
 
 public class SshExecDelegateCommandTest {
 
+    @SuppressWarnings("unchecked")
     @Test
-    public void testOutputStream_NoEof() throws Exception {
+    public void testOutputStream_noEof1() throws Exception {
         ExecOutputHandler handler = mock(ExecOutputHandler.class);
         ToLineOutputStream stream = new ToLineOutputStream(handler);
 
         stream.write("hello handler".getBytes());
+        stream.close();
         verify(handler, times(1)).handleLine("hello handler");
         verifyNoMoreInteractions(handler);
+    }
 
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testOutputStream_eof() throws Exception {
+        ExecOutputHandler handler = mock(ExecOutputHandler.class);
+        ToLineOutputStream stream = new ToLineOutputStream(handler);
         stream.write("hello handler\n".getBytes());
-        verify(handler, times(2)).handleLine("hello handler");
+        stream.close();
+        verify(handler, times(1)).handleLine("hello handler");
         verifyNoMoreInteractions(handler);
+    }
 
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testOutputStream_emptyLine() throws Exception {
+        ExecOutputHandler handler = mock(ExecOutputHandler.class);
+        ToLineOutputStream stream = new ToLineOutputStream(handler);
         stream.write("\nhello handler".getBytes());
+        stream.close();
         verify(handler, times(1)).handleLine("");
-        verify(handler, times(3)).handleLine("hello handler");
+        verify(handler, times(1)).handleLine("hello handler");
         verifyNoMoreInteractions(handler);
-
+    }
+    
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testOutputStream_NoEof4() throws Exception {
+        ExecOutputHandler handler = mock(ExecOutputHandler.class);
+        ToLineOutputStream stream = new ToLineOutputStream(handler);
         stream.write("1\n2".getBytes());
+        stream.close();
         verify(handler, times(1)).handleLine("1");
         verify(handler, times(1)).handleLine("2");
         verifyNoMoreInteractions(handler);
@@ -53,6 +76,7 @@ public class SshExecDelegateCommandTest {
         verifyNoMoreInteractions(handler);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void testOutputStream_WithOff() throws Exception {
         byte[] bytes = new byte[4096];
@@ -63,6 +87,23 @@ public class SshExecDelegateCommandTest {
         ExecOutputHandler handler = mock(ExecOutputHandler.class);
         ToLineOutputStream stream = new ToLineOutputStream(handler);
         stream.write(bytes, off, textBytes.length);
+        stream.close();
+
+        verify(handler, times(1)).handleLine("drwxr-xr-x   7 jz  staff     238 Jan 26 20:13 src");
+        verify(handler, times(1)).handleLine("drwxr-xr-x   2 jz  staff      68 Feb  4 22:09 trash");
+        verifyNoMoreInteractions(handler);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testOutputStream_twoWriteCalls() throws Exception {
+        String text1 = "drwxr-xr-x   7 jz  staff     238 Jan 26 20:13 src\ndrwxr-xr-x   2 jz  st";
+        String text2 = "aff      68 Feb  4 22:09 trash";
+        ExecOutputHandler handler = mock(ExecOutputHandler.class);
+        ToLineOutputStream stream = new ToLineOutputStream(handler);
+        stream.write(text1.getBytes(), 0, text1.getBytes().length);
+        stream.write(text2.getBytes(), 0, text2.getBytes().length);
+        stream.close();
 
         verify(handler, times(1)).handleLine("drwxr-xr-x   7 jz  staff     238 Jan 26 20:13 src");
         verify(handler, times(1)).handleLine("drwxr-xr-x   2 jz  staff      68 Feb  4 22:09 trash");
