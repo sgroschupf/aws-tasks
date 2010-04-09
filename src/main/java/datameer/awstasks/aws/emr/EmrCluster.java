@@ -533,7 +533,7 @@ public class EmrCluster {
             Collections.sort(domains, new Comparator<Domain>() {
                 @Override
                 public int compare(Domain o1, Domain o2) {
-                    return o1.getName().compareTo(o2.getName());
+                    return o2.getName().compareTo(o1.getName());
                 }
             });
             if (domains.isEmpty()) {
