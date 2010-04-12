@@ -313,11 +313,7 @@ public class EmrCluster {
                 JobFlowDetail jobFlowDetail = getJobFlowDetail(jobFlowId);
                 JobFlowState state = JobFlowState.valueOf(jobFlowDetail.getExecutionStatusDetail().getState());
                 LOG.info("elastic cluster '" + jobFlowId + "' in state '" + state + "'");
-                boolean finished = state != JobFlowState.SHUTTING_DOWN;
-                if (finished && state.isOperational()) {
-                    throw new IllegalStateException("stopping of job flow '" + jobFlowId + "' failed with state '" + state + "'");
-                }
-                return finished;
+                return !state.isOperational();
             }
         }, getRequestInterval());
     }
