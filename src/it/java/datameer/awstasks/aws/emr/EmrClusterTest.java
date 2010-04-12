@@ -20,6 +20,8 @@ import static org.junit.Assert.*;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.jets3t.service.S3Service;
 import org.jets3t.service.S3ServiceException;
@@ -29,6 +31,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import datameer.awstasks.aws.AbstractAwsIntegrationTest;
+import datameer.awstasks.aws.emr.EmrCluster.ClusterState;
 import datameer.awstasks.aws.emr.EmrCluster.StepFuture;
 import datameer.awstasks.aws.emr.EmrCluster.StepMetadata;
 import datameer.awstasks.aws.s3.S3BucketTest;
@@ -37,7 +40,7 @@ import datameer.awstasks.util.IoUtil;
 public class EmrClusterTest extends AbstractAwsIntegrationTest {
 
     private S3Bucket _s3Bucket;
-    private EmrCluster _emrCluster;
+    protected EmrCluster _emrCluster;
     private S3Service _s3Service;
     private static String _jobFlowId;
 
@@ -56,29 +59,50 @@ public class EmrClusterTest extends AbstractAwsIntegrationTest {
     @Test
     public void testStart() throws Exception {
         assertNull(_emrCluster.getJobFlowId());
+        final Set<ClusterState> clusterStates = new HashSet<ClusterState>();
+        Thread thread = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    // nothing todo
+                }
+                clusterStates.add(_emrCluster.getState());
+            }
+        };
+        thread.start();
         _emrCluster.startup();
-        assertTrue(_emrCluster.isConnected());
+        assertTrue(clusterStates.toString(), clusterStates.contains(ClusterState.STARTING));
+        assertEquals(ClusterState.CONNECTED, _emrCluster.getState());
         _jobFlowId = _emrCluster.getJobFlowId();
         assertNotNull(_jobFlowId);
     }
 
-    @Test(expected = Exception.class)
+    @Test
     public void testStart2nClusterWithSameName() throws Exception {
-        _emrCluster.startup();
+        try {
+            _emrCluster.startup();
+            fail("should throw exception");
+        } catch (Exception e) {
+            // expected
+        }
+        assertEquals(ClusterState.UNCONNECTED, _emrCluster.getState());
+
     }
 
     @Test
     public void testConnectById() throws Exception {
         assertNull(_emrCluster.getJobFlowId());
         _emrCluster.connectById(_jobFlowId);
-        assertTrue(_emrCluster.isConnected());
+        assertEquals(ClusterState.CONNECTED, _emrCluster.getState());
         assertNotNull(_emrCluster.getJobFlowId());
     }
 
     @Test
     public void testConnectByName() throws Exception {
         _emrCluster.connectByName();
-        assertTrue(_emrCluster.isConnected());
+        assertEquals(ClusterState.CONNECTED, _emrCluster.getState());
         assertNotNull(_emrCluster.getJobFlowId());
     }
 
@@ -121,9 +145,9 @@ public class EmrClusterTest extends AbstractAwsIntegrationTest {
     @Test
     public void testShutdown() throws Exception {
         _emrCluster.connectByName();
-        assertTrue(_emrCluster.isConnected());
+        assertEquals(ClusterState.CONNECTED, _emrCluster.getState());
         _emrCluster.shutdown();
-        assertFalse(_emrCluster.isConnected());
+        assertEquals(ClusterState.UNCONNECTED, _emrCluster.getState());
         assertNull(_emrCluster.getJobFlowId());
 
     }

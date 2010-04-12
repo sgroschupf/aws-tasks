@@ -16,12 +16,13 @@
 package datameer.awstasks.ant.emr.model;
 
 import datameer.awstasks.aws.emr.EmrCluster;
+import datameer.awstasks.aws.emr.EmrCluster.ClusterState;
 
 public class EmrStopCommand implements EmrCommand {
 
     @Override
     public void execute(EmrCluster cluster) throws Exception {
-        if (!cluster.isConnected()) {
+        if (cluster.getState() == ClusterState.UNCONNECTED) {
             cluster.connectByName();
         }
         cluster.shutdown();

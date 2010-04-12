@@ -79,6 +79,7 @@ public class EmrCluster {
     protected int _instanceCount;
 
     protected String _jobFlowId;
+    protected ClusterState _clusterState = ClusterState.UNCONNECTED;
 
     // TODO jz: rethrow interrupted exceptions
 
@@ -127,30 +128,61 @@ public class EmrCluster {
         return _instanceCount;
     }
 
-    public void startup() throws InterruptedException, AmazonElasticMapReduceException {
+    public synchronized void startup() throws InterruptedException, AmazonElasticMapReduceException {
         checkConnection(false);
-        EmrSettings settings = getSettings();
-        if (settings.getPrivateKeyName() == null) {
-            throw new NullPointerException("privateKeyName must not be null please configure settings properly");
+        _clusterState = ClusterState.STARTING;
+        boolean successful = false;
+        try {
+            EmrSettings settings = getSettings();
+            if (settings.getPrivateKeyName() == null) {
+                throw new NullPointerException("privateKeyName must not be null please configure settings properly");
+            }
+            LOG.info("starting elastic cluster (job flow) '" + getName() + "' ...");
+            if (!getRunningJobFlowDetailsByName(getName()).isEmpty()) {
+                throw new IllegalStateException("cluster/jobFlow with name '" + getName() + "' already running");
+            }
+            boolean keepAlive = true;
+            JobFlowInstancesConfig jobConfig = new JobFlowInstancesConfig(settings.getMasterInstanceType().getId(), settings.getNodeInstanceType().getId(), settings.getInstanceCount(), settings
+                    .getPrivateKeyName(), new PlacementType(), keepAlive);
+            final RunJobFlowRequest startRequest = new RunJobFlowRequest();
+            startRequest.setLogUri("s3n://" + settings.getS3Bucket() + settings.getS3LogPath());
+            startRequest.setInstances(jobConfig);
+            startRequest.setName(getName());
+            if (settings.isDebugEnabled()) {
+                startRequest.withSteps(DEBUG_STEP);
+            }
+            RunJobFlowResponse startResponse = _emrService.runJobFlow(startRequest);
+            _jobFlowId = startResponse.getRunJobFlowResult().getJobFlowId();
+            waitUntilClusterStarted(_jobFlowId);
+            LOG.info("elastic cluster '" + getName() + "/" + _jobFlowId + "' started, master-host is " + getJobFlowDetail(_jobFlowId).getInstances().getMasterPublicDnsName());
+            successful = true;
+        } finally {
+            if (successful) {
+                _clusterState = ClusterState.CONNECTED;
+            } else {
+                _clusterState = ClusterState.UNCONNECTED;
+                _jobFlowId = null;
+            }
         }
-        LOG.info("starting elastic cluster (job flow) '" + getName() + "' ...");
-        if (!getRunningJobFlowDetailsByName(getName()).isEmpty()) {
-            throw new IllegalStateException("cluster/jobFlow with name '" + getName() + "' already running");
-        }
-        boolean keepAlive = true;
-        JobFlowInstancesConfig jobConfig = new JobFlowInstancesConfig(settings.getMasterInstanceType().getId(), settings.getNodeInstanceType().getId(), settings.getInstanceCount(), settings
-                .getPrivateKeyName(), new PlacementType(), keepAlive);
-        final RunJobFlowRequest startRequest = new RunJobFlowRequest();
-        startRequest.setLogUri("s3n://" + settings.getS3Bucket() + settings.getS3LogPath());
-        startRequest.setInstances(jobConfig);
-        startRequest.setName(getName());
-        if (settings.isDebugEnabled()) {
-            startRequest.withSteps(DEBUG_STEP);
-        }
-        RunJobFlowResponse startResponse = _emrService.runJobFlow(startRequest);
-        _jobFlowId = startResponse.getRunJobFlowResult().getJobFlowId();
-        waitUntilClusterStarted(_jobFlowId);
-        LOG.info("elastic cluster '" + getName() + "/" + _jobFlowId + "' started, master-host is " + getJobFlowDetail(_jobFlowId).getInstances().getMasterPublicDnsName());
+    }
+
+    /**
+     * Disconnect this class instance from the cluster without shutting it down.
+     */
+    public void disconnect() {
+        checkConnection(true);
+        _jobFlowId = null;
+        _startTime = 0;
+        _clusterState = ClusterState.UNCONNECTED;
+        // shutdownS3Service();
+    }
+
+    public synchronized void shutdown() throws InterruptedException, AmazonElasticMapReduceException {
+        checkConnection(true);
+        _clusterState = ClusterState.STOPPING;
+        _emrService.terminateJobFlows(new TerminateJobFlowsRequest().withJobFlowIds(_jobFlowId));
+        waitUntilClusterShutdown(_jobFlowId);
+        disconnect();
     }
 
     /**
@@ -183,20 +215,7 @@ public class EmrCluster {
         _jobFlowId = jobFlowId;
         waitUntilClusterStarted(jobFlowId);
         LOG.info("connected to elastic cluster '" + getName() + "/" + _jobFlowId + "', master-host is " + getJobFlowDetail(_jobFlowId).getInstances().getMasterPublicDnsName());
-    }
-
-    public void disconnect() {
-        checkConnection(true);
-        _jobFlowId = null;
-        _startTime = 0;
-        // shutdownS3Service();
-    }
-
-    public void shutdown() throws InterruptedException, AmazonElasticMapReduceException {
-        checkConnection(true);
-        _emrService.terminateJobFlows(new TerminateJobFlowsRequest().withJobFlowIds(_jobFlowId));
-        waitUntilClusterShutdown(_jobFlowId);
-        disconnect();
+        _clusterState = ClusterState.CONNECTED;
     }
 
     // private void shutdownS3Service() {
@@ -210,8 +229,8 @@ public class EmrCluster {
     // }
     // }
 
-    public boolean isConnected() {
-        return _jobFlowId != null;
+    public ClusterState getState() {
+        return _clusterState;
     }
 
     public String getJobFlowId() {
@@ -219,10 +238,10 @@ public class EmrCluster {
     }
 
     protected void checkConnection(boolean shouldRun) {
-        if (shouldRun && !isConnected()) {
+        if (shouldRun && _clusterState == ClusterState.UNCONNECTED) {
             throw new IllegalStateException("not connected to cluster/jobFlow");
         }
-        if (!shouldRun && isConnected()) {
+        if (!shouldRun && _clusterState == ClusterState.CONNECTED) {
             throw new IllegalStateException("already connected to cluster/jobFlow");
         }
     }
@@ -590,5 +609,9 @@ public class EmrCluster {
         public String toString() {
             return _mdMap.toString();
         }
+    }
+
+    public static enum ClusterState {
+        CONNECTED, UNCONNECTED, STARTING, STOPPING;
     }
 }
