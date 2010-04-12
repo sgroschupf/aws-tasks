@@ -143,6 +143,28 @@ public class EmrClusterTest extends AbstractAwsIntegrationTest {
     }
 
     @Test
+    public void testExecuteJobStep_ThrottleSafeness() throws Exception {
+        int oldRequestInterval = _emrCluster.getRequestInterval();
+        _emrCluster.setRequestInterval(1000);// this should produce throttle exceptions
+        _emrCluster.connectByName();
+        File jobJar = new File("lib/test/hadoop-0.18.3-examples.jar");
+
+        // prepare input
+        File localInputFile = _tempFolder.newFile("inputFile");
+        String remoteInputPath = "/emr/input";
+        String remoteOutputPath = "/emr/output";
+        IoUtil.writeFile(localInputFile, "K O H L", "K O P F");
+        IoUtil.uploadFile(_s3Service, _s3Bucket.getName(), localInputFile, remoteInputPath);
+
+        // execute job
+        String inputUri = "s3n://" + _s3Bucket.getName() + remoteInputPath;
+        String outputUri = "s3n://" + _s3Bucket.getName() + remoteOutputPath;
+        StepFuture stepFuture = _emrCluster.executeJobStep("testStep" + System.currentTimeMillis(), jobJar, "wordcount", inputUri, outputUri);
+        stepFuture.join();
+        _emrCluster.setRequestInterval(oldRequestInterval);
+    }
+
+    @Test
     public void testShutdown() throws Exception {
         _emrCluster.connectByName();
         assertEquals(ClusterState.CONNECTED, _emrCluster.getState());

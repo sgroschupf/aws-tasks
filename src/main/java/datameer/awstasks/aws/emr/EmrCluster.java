@@ -38,7 +38,6 @@ import org.jets3t.service.security.AWSCredentials;
 import com.amazonaws.elasticmapreduce.AmazonElasticMapReduce;
 import com.amazonaws.elasticmapreduce.AmazonElasticMapReduceException;
 import com.amazonaws.elasticmapreduce.model.AddJobFlowStepsRequest;
-import com.amazonaws.elasticmapreduce.model.AddJobFlowStepsResponse;
 import com.amazonaws.elasticmapreduce.model.DescribeJobFlowsRequest;
 import com.amazonaws.elasticmapreduce.model.DescribeJobFlowsResponse;
 import com.amazonaws.elasticmapreduce.model.HadoopJarStepConfig;
@@ -50,7 +49,6 @@ import com.amazonaws.elasticmapreduce.model.RunJobFlowResponse;
 import com.amazonaws.elasticmapreduce.model.StepConfig;
 import com.amazonaws.elasticmapreduce.model.StepDetail;
 import com.amazonaws.elasticmapreduce.model.TerminateJobFlowsRequest;
-import com.amazonaws.elasticmapreduce.model.TerminateJobFlowsResponse;
 import com.xerox.amazonws.sdb.Domain;
 import com.xerox.amazonws.sdb.ItemAttribute;
 import com.xerox.amazonws.sdb.SDBException;
@@ -71,7 +69,7 @@ public class EmrCluster {
 
     private final EmrSettings _settings;
     private final String _accessSecret;
-    protected ThrottleSafeWebServiceClient _emrService;
+    protected AmazonElasticMapReduceCustomClient _emrWebService;
     private S3Service _s3Service;
     protected SimpleDB _simpleDB;
     protected long _startTime;
@@ -86,7 +84,7 @@ public class EmrCluster {
     public EmrCluster(EmrSettings settings, String accessSecret) {
         _accessSecret = accessSecret;
         _settings = settings;
-        _emrService = new ThrottleSafeWebServiceClient(new AmazonElasticMapReduceCustomClient(settings.getAccessKey(), _accessSecret, getSettings().getCustomStartParameter()));
+        _emrWebService = new AmazonElasticMapReduceCustomClient(settings.getAccessKey(), _accessSecret, getSettings().getCustomStartParameter());
         FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
         if (settings.isDebugEnabled()) {
             _simpleDB = new SimpleDB(settings.getAccessKey(), accessSecret);
@@ -102,15 +100,15 @@ public class EmrCluster {
     }
 
     public AmazonElasticMapReduce getEmrService() {
-        return _emrService;
+        return _emrWebService;
     }
 
     public void setRequestInterval(int requestInterval) {
-        _emrService.setRequestInterval(requestInterval);
+        _emrWebService.setRequestInterval(requestInterval);
     }
 
     public int getRequestInterval() {
-        return _emrService.getRequestInterval();
+        return _emrWebService.getRequestInterval();
     }
 
     public long getStartTime() {
@@ -151,7 +149,7 @@ public class EmrCluster {
             if (settings.isDebugEnabled()) {
                 startRequest.withSteps(DEBUG_STEP);
             }
-            RunJobFlowResponse startResponse = _emrService.runJobFlow(startRequest);
+            RunJobFlowResponse startResponse = _emrWebService.runJobFlow(startRequest);
             _jobFlowId = startResponse.getRunJobFlowResult().getJobFlowId();
             waitUntilClusterStarted(_jobFlowId);
             LOG.info("elastic cluster '" + getName() + "/" + _jobFlowId + "' started, master-host is " + getJobFlowDetail(_jobFlowId).getInstances().getMasterPublicDnsName());
@@ -180,7 +178,7 @@ public class EmrCluster {
     public synchronized void shutdown() throws InterruptedException, AmazonElasticMapReduceException {
         checkConnection(true);
         _clusterState = ClusterState.STOPPING;
-        _emrService.terminateJobFlows(new TerminateJobFlowsRequest().withJobFlowIds(_jobFlowId));
+        _emrWebService.terminateJobFlows(new TerminateJobFlowsRequest().withJobFlowIds(_jobFlowId));
         waitUntilClusterShutdown(_jobFlowId);
         disconnect();
     }
@@ -258,7 +256,7 @@ public class EmrCluster {
         String s3JobJarUri = uploadingJobJar(jobJar, s3JobJarName);
         HadoopJarStepConfig jarConfig = new HadoopJarStepConfig(null, s3JobJarUri, mainClass == null ? null : mainClass.getName(), Arrays.asList(args));
         StepConfig stepConfig = new StepConfig(name, "CONTINUE", jarConfig);
-        _emrService.addJobFlowSteps(new AddJobFlowStepsRequest().withJobFlowId(_jobFlowId).withSteps(stepConfig));
+        _emrWebService.addJobFlowSteps(new AddJobFlowStepsRequest().withJobFlowId(_jobFlowId).withSteps(stepConfig));
 
         return new StepFuture(stepConfig.getName(), getStepIndex(getJobFlowDetail(_jobFlowId), name));
     }
@@ -279,7 +277,7 @@ public class EmrCluster {
     }
 
     private void waitUntilClusterStarted(final String jobFlowId) throws AmazonElasticMapReduceException, InterruptedException {
-        doThrottleSafeWhile(new Callable<Boolean>() {
+        doWhile(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
                 JobFlowDetail jobFlowDetail = getJobFlowDetail(jobFlowId);
@@ -306,7 +304,7 @@ public class EmrCluster {
     }
 
     private void waitUntilClusterShutdown(final String jobFlowId) throws InterruptedException, AmazonElasticMapReduceException {
-        doThrottleSafeWhile(new Callable<Boolean>() {
+        doWhile(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
                 JobFlowDetail jobFlowDetail = getJobFlowDetail(jobFlowId);
@@ -322,7 +320,7 @@ public class EmrCluster {
     }
 
     protected void waitUntilStepFinished(final String jobFlowId, final String stepName) throws InterruptedException, AmazonElasticMapReduceException {
-        doThrottleSafeWhile(new Callable<Boolean>() {
+        doWhile(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
                 JobFlowDetail flowDetail = getJobFlowDetail(jobFlowId);
@@ -341,10 +339,18 @@ public class EmrCluster {
         }, getRequestInterval());
     }
 
-    protected static void doThrottleSafeWhile(Callable<Boolean> callable, int requestInterval) throws AmazonElasticMapReduceException, InterruptedException {
+    protected static void doWhile(Callable<Boolean> callable, int requestInterval) throws AmazonElasticMapReduceException, InterruptedException {
         boolean finished = false;
         do {
-            finished = ThrottleSafeWebServiceClient.doThrottleSafe(callable, requestInterval);
+            try {
+                finished = callable.call();
+            } catch (InterruptedException e) {
+                throw e;
+            } catch (AmazonElasticMapReduceException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
             if (!finished) {
                 Thread.sleep(requestInterval);
             }
@@ -352,7 +358,7 @@ public class EmrCluster {
     }
 
     protected JobFlowDetail getJobFlowDetail(String jobFlowId) throws AmazonElasticMapReduceException {
-        DescribeJobFlowsResponse describeJobFlows = _emrService.describeJobFlows(new DescribeJobFlowsRequest().withJobFlowIds(jobFlowId));
+        DescribeJobFlowsResponse describeJobFlows = _emrWebService.describeJobFlows(new DescribeJobFlowsRequest().withJobFlowIds(jobFlowId));
         List<JobFlowDetail> jobFlows = describeJobFlows.getDescribeJobFlowsResult().getJobFlows();
         if (jobFlows.isEmpty()) {
             throw new IllegalArgumentException("no job flow with id '" + _jobFlowId + "' found");
@@ -361,7 +367,7 @@ public class EmrCluster {
     }
 
     protected List<JobFlowDetail> getRunningJobFlowDetailsByName(String name) throws AmazonElasticMapReduceException {
-        DescribeJobFlowsResponse describeJobFlows = _emrService.describeJobFlows(new DescribeJobFlowsRequest().withJobFlowStates(JobFlowState.STARTING.name(), JobFlowState.WAITING.name(),
+        DescribeJobFlowsResponse describeJobFlows = _emrWebService.describeJobFlows(new DescribeJobFlowsRequest().withJobFlowStates(JobFlowState.STARTING.name(), JobFlowState.WAITING.name(),
                 JobFlowState.RUNNING.name()));
         List<JobFlowDetail> jobFlows = describeJobFlows.getDescribeJobFlowsResult().getJobFlows();
         for (Iterator iterator = jobFlows.iterator(); iterator.hasNext();) {
@@ -389,94 +395,6 @@ public class EmrCluster {
             }
         }
         throw new IllegalStateException("no step detail with name '" + stepName + "' found in " + flowDetail.getJobFlowId());
-    }
-
-    /**
-     * TODO move to {@link AmazonElasticMapReduceCustomClient} ??
-     */
-    static class ThrottleSafeWebServiceClient implements AmazonElasticMapReduce {
-
-        private int _requestInterval = 10000;
-        protected final AmazonElasticMapReduce _delegateClient;
-
-        public ThrottleSafeWebServiceClient(AmazonElasticMapReduce delegateClient) {
-            _delegateClient = delegateClient;
-        }
-
-        public void setRequestInterval(int requestInterval) {
-            _requestInterval = requestInterval;
-        }
-
-        public int getRequestInterval() {
-            return _requestInterval;
-        }
-
-        @Override
-        public AddJobFlowStepsResponse addJobFlowSteps(final AddJobFlowStepsRequest request) throws AmazonElasticMapReduceException {
-            return doThrottleSafe(new Callable<AddJobFlowStepsResponse>() {
-                @Override
-                public AddJobFlowStepsResponse call() throws Exception {
-                    return _delegateClient.addJobFlowSteps(request);
-                }
-            }, getRequestInterval());
-        }
-
-        @Override
-        public DescribeJobFlowsResponse describeJobFlows(final DescribeJobFlowsRequest request) throws AmazonElasticMapReduceException {
-            return doThrottleSafe(new Callable<DescribeJobFlowsResponse>() {
-                @Override
-                public DescribeJobFlowsResponse call() throws Exception {
-                    return _delegateClient.describeJobFlows(request);
-                }
-            }, getRequestInterval());
-        }
-
-        @Override
-        public RunJobFlowResponse runJobFlow(final RunJobFlowRequest request) throws AmazonElasticMapReduceException {
-            return doThrottleSafe(new Callable<RunJobFlowResponse>() {
-                @Override
-                public RunJobFlowResponse call() throws Exception {
-                    return _delegateClient.runJobFlow(request);
-                }
-            }, getRequestInterval());
-        }
-
-        @Override
-        public TerminateJobFlowsResponse terminateJobFlows(final TerminateJobFlowsRequest request) throws AmazonElasticMapReduceException {
-            return doThrottleSafe(new Callable<TerminateJobFlowsResponse>() {
-                @Override
-                public TerminateJobFlowsResponse call() throws Exception {
-                    return _delegateClient.terminateJobFlows(request);
-                }
-            }, getRequestInterval());
-        }
-
-        protected static <T> T doThrottleSafe(Callable<T> callable, int requestInterval) throws AmazonElasticMapReduceException, InterruptedRuntimeException {
-            T result;
-            try {
-                result = callable.call();
-            } catch (AmazonElasticMapReduceException e) {
-                String errorCode = e.getErrorCode();
-                if (errorCode == null || !errorCode.equals("Throttling")) {
-                    throw e;
-                }
-                LOG.warn("throttle exception: " + e.getMessage());
-                try {
-                    Thread.sleep(requestInterval);
-                } catch (InterruptedException e2) {
-                    throw new InterruptedRuntimeException(e2);
-                }
-                return doThrottleSafe(callable, requestInterval);
-            } catch (InterruptedException e) {
-                throw new InterruptedRuntimeException(e);
-            } catch (RuntimeException e) {
-                throw e;
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-            return result;
-        }
-
     }
 
     static class InterruptedRuntimeException extends RuntimeException {
