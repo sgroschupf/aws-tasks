@@ -351,6 +351,8 @@ public class EmrCluster {
                 throw e;
             } catch (AmazonElasticMapReduceException e) {
                 throw e;
+            } catch (RuntimeException e) {
+                throw e;
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
