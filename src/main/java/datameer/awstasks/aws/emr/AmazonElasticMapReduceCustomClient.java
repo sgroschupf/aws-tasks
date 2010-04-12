@@ -94,19 +94,27 @@ public class AmazonElasticMapReduceCustomClient extends AmazonElasticMapReduceCl
     }
 
     @Override
-    public synchronized DescribeJobFlowsResponse describeJobFlows(final DescribeJobFlowsRequest request) throws AmazonElasticMapReduceException {
-        DescribeJobFlowsResponse cachedResponse = _flowDescriptionCache.getResponse(request);
-        if (cachedResponse != null) {
-            return cachedResponse;
-        }
-        return doThrottleSafe(new Callable<DescribeJobFlowsResponse>() {
-            @Override
-            public DescribeJobFlowsResponse call() throws Exception {
-                DescribeJobFlowsResponse response = AmazonElasticMapReduceCustomClient.super.describeJobFlows(request);
-                _flowDescriptionCache.addResponse(request, response);
-                return response;
+    public DescribeJobFlowsResponse describeJobFlows(final DescribeJobFlowsRequest request) throws AmazonElasticMapReduceException {
+        synchronized (_flowDescriptionCache) {
+            DescribeJobFlowsResponse cachedResponse = _flowDescriptionCache.getResponse(request);
+            if (cachedResponse != null) {
+                return cachedResponse;
             }
-        }, getRequestInterval());
+            return doThrottleSafe(new Callable<DescribeJobFlowsResponse>() {
+                @Override
+                public DescribeJobFlowsResponse call() throws Exception {
+                    DescribeJobFlowsResponse response = AmazonElasticMapReduceCustomClient.super.describeJobFlows(request);
+                    _flowDescriptionCache.addResponse(request, response);
+                    return response;
+                }
+            }, getRequestInterval());
+        }
+    }
+
+    public void clearDescribeJobFlowCache() {
+        synchronized (_flowDescriptionCache) {
+            _flowDescriptionCache.clear();
+        }
     }
 
     @Override
@@ -181,6 +189,11 @@ public class AmazonElasticMapReduceCustomClient extends AmazonElasticMapReduceCl
             int hashCode = calculateHashCode(request);
             cleanupOutdatedResponses();
             return _cachedJobFlowsDescriptionsByRequestHash.get(hashCode);
+        }
+
+        public void clear() {
+            _cachedJobFlowsDescriptionsByRequestHash.clear();
+            _lastRetrievalTimeByRequestHash.clear();
         }
 
         private void cleanupOutdatedResponses() {

@@ -258,6 +258,7 @@ public class EmrCluster {
         StepConfig stepConfig = new StepConfig(name, "CONTINUE", jarConfig);
         _emrWebService.addJobFlowSteps(new AddJobFlowStepsRequest().withJobFlowId(_jobFlowId).withSteps(stepConfig));
 
+        _emrWebService.clearDescribeJobFlowCache();
         return new StepFuture(stepConfig.getName(), getStepIndex(getJobFlowDetail(_jobFlowId), name));
     }
 
