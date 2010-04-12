@@ -265,15 +265,17 @@ public class EmrCluster {
         if (_s3Service == null) {
             _s3Service = new RestS3Service(new AWSCredentials(getSettings().getAccessKey(), _accessSecret));
         }
-        String s3JobJarPath = new File(getSettings().getS3JobJarBasePath(), s3JobJarName).getPath();
-        String s3Bucket = getSettings().getS3Bucket();
-        if (!IoUtil.existsFile(_s3Service, s3Bucket, s3JobJarPath)) {
-            LOG.info("uploading " + jobJar + " to " + s3JobJarPath);
-            IoUtil.uploadFile(_s3Service, s3Bucket, jobJar, s3JobJarPath);
-        } else {
-            LOG.info("using cached job-jar: " + s3JobJarPath);
+        synchronized (jobJar.getAbsolutePath().intern()) {
+            String s3JobJarPath = new File(getSettings().getS3JobJarBasePath(), s3JobJarName).getPath();
+            String s3Bucket = getSettings().getS3Bucket();
+            if (!IoUtil.existsFile(_s3Service, s3Bucket, s3JobJarPath)) {
+                LOG.info("uploading " + jobJar + " to " + s3JobJarPath);
+                IoUtil.uploadFile(_s3Service, s3Bucket, jobJar, s3JobJarPath);
+            } else {
+                LOG.info("using cached job-jar: " + s3JobJarPath);
+            }
+            return "s3n://" + getSettings().getAccessKey() + "@" + s3Bucket + s3JobJarPath;
         }
-        return "s3n://" + getSettings().getAccessKey() + "@" + s3Bucket + s3JobJarPath;
     }
 
     private void waitUntilClusterStarted(final String jobFlowId) throws AmazonElasticMapReduceException, InterruptedException {
