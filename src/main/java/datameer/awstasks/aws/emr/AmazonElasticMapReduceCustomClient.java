@@ -15,6 +15,7 @@
  */
 package datameer.awstasks.aws.emr;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,6 +38,7 @@ import com.amazonaws.elasticmapreduce.model.TerminateJobFlowsRequest;
 import com.amazonaws.elasticmapreduce.model.TerminateJobFlowsResponse;
 
 import datameer.awstasks.aws.emr.EmrCluster.InterruptedRuntimeException;
+import datameer.awstasks.util.ExceptionUtil;
 
 /**
  * 
@@ -70,7 +72,7 @@ public class AmazonElasticMapReduceCustomClient extends AmazonElasticMapReduceCl
             method.setAccessible(true);
             return method;
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw ExceptionUtil.convertToRuntimeException(e);
         }
     }
 
@@ -124,7 +126,13 @@ public class AmazonElasticMapReduceCustomClient extends AmazonElasticMapReduceCl
             public RunJobFlowResponse call() throws Exception {
                 Map<String, String> parameters = (Map<String, String>) _converRunJobFlowMethod.invoke(AmazonElasticMapReduceCustomClient.this, request);
                 parameters.putAll(_customRunFlowParameters);
-                return (RunJobFlowResponse) _invokeMethod.invoke(AmazonElasticMapReduceCustomClient.this, RunJobFlowResponse.class, parameters);
+                try {
+                    return (RunJobFlowResponse) _invokeMethod.invoke(AmazonElasticMapReduceCustomClient.this, RunJobFlowResponse.class, parameters);
+                } catch (InvocationTargetException e) {
+                    ExceptionUtil.throwIfInstance(e.getCause(), RuntimeException.class);
+                    ExceptionUtil.throwIfInstance(e.getCause(), AmazonElasticMapReduceException.class);
+                    throw e;
+                }
             }
         }, getRequestInterval());
     }
