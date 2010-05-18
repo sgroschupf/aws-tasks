@@ -58,7 +58,7 @@ public class SshExecDelegateCommandTest {
         verify(handler, times(1)).handleLine("hello handler");
         verifyNoMoreInteractions(handler);
     }
-    
+
     @SuppressWarnings("unchecked")
     @Test
     public void testOutputStream_NoEof4() throws Exception {
@@ -108,5 +108,27 @@ public class SshExecDelegateCommandTest {
         verify(handler, times(1)).handleLine("drwxr-xr-x   7 jz  staff     238 Jan 26 20:13 src");
         verify(handler, times(1)).handleLine("drwxr-xr-x   2 jz  staff      68 Feb  4 22:09 trash");
         verifyNoMoreInteractions(handler);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testOutputStream_twoWriteCalls_withOffset() throws Exception {
+        String text1 = "drwxr-xr-x   7 jz  staff     238 Jan 26 20:13 src\ndrwxr-xr-x";
+        String text2 = "   2 jz  staff      68 Feb  4 22:09 trash";
+        ExecOutputHandler handler = mock(ExecOutputHandler.class);
+        ToLineOutputStream stream = new ToLineOutputStream(handler);
+        stream.write(prependBytes(20, text1.getBytes()), 20, text1.getBytes().length);
+        stream.write(prependBytes(20, text2.getBytes()), 20, text2.getBytes().length);
+        stream.close();
+
+        verify(handler, times(1)).handleLine("drwxr-xr-x   7 jz  staff     238 Jan 26 20:13 src");
+        verify(handler, times(1)).handleLine("drwxr-xr-x   2 jz  staff      68 Feb  4 22:09 trash");
+        verifyNoMoreInteractions(handler);
+    }
+
+    private byte[] prependBytes(int number, byte[] source) {
+        byte[] data = new byte[number + source.length];
+        System.arraycopy(source, 0, data, number, source.length);
+        return data;
     }
 }
