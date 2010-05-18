@@ -99,7 +99,7 @@ public class SshExecDelegateCommand<R> extends JschCommand {
                     lastStart = i + 1;
                 }
             }
-            if (lastStart < len) {
+            if (lastStart < len + off) {
                 _previousString = createLine(b, lastStart, len + off - lastStart);
             }
         }
