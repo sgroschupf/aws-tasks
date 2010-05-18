@@ -17,7 +17,7 @@ package datameer.awstasks.aws.emr;
 
 public enum JobFlowState {
 
-    COMPLETED(false), FAILED(false), TERMINATED(false), RUNNING(true), SHUTTING_DOWN(false), STARTING(false), WAITING(true);
+    COMPLETED(false), FAILED(false), TERMINATED(false), RUNNING(true), SHUTTING_DOWN(false), STARTING(false), WAITING(true), BOOTSTRAPPING(true);
 
     private final boolean _operational;
 

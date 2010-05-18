@@ -18,12 +18,12 @@ package datameer.awstasks.aws.s3;
 import static org.junit.Assert.*;
 
 import java.io.File;
+import java.util.List;
 
-import org.jets3t.service.S3Service;
-import org.jets3t.service.S3ServiceException;
-import org.jets3t.service.model.S3Bucket;
-import org.jets3t.service.model.S3Object;
 import org.junit.Test;
+
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 
 import datameer.awstasks.aws.AbstractAwsIntegrationTest;
 import datameer.awstasks.util.IoUtil;
@@ -34,33 +34,37 @@ public class S3BucketTest extends AbstractAwsIntegrationTest {
 
     @Test
     public void testCreateDeleteBucket() throws Exception {
-        S3Service s3Service = _ec2Conf.createS3Service();
+        AmazonS3 s3Service = _ec2Conf.createS3Service();
         String bucketName = AWS_TEST_BUCKET;
-        cleanBucket(s3Service, bucketName);
-        s3Service.deleteBucket(bucketName);
-        assertNull(s3Service.getBucket(bucketName));
+        removeBucket(s3Service, bucketName);
+        assertFalse(s3Service.doesBucketExist(bucketName));
 
         s3Service.createBucket(bucketName);
-        assertNotNull(s3Service.getBucket(bucketName));
+        assertTrue(s3Service.doesBucketExist(bucketName));
 
         s3Service.deleteBucket(bucketName);
-        assertNull(s3Service.getBucket(bucketName));
+        assertFalse(s3Service.doesBucketExist(bucketName));
     }
 
-    private void cleanBucket(S3Service s3Service, String bucketName) throws S3ServiceException {
-        S3Bucket bucket = s3Service.getBucket(bucketName);
-        S3Object[] s3Objects = s3Service.listObjects(bucket);
-        for (S3Object s3Object : s3Objects) {
-            s3Service.deleteObject(bucket, s3Object.getKey());
+    private void removeBucket(AmazonS3 s3Service, String bucketName) {
+        boolean bucketExists = s3Service.doesBucketExist(bucketName);
+        if (bucketExists) {
+            List<S3ObjectSummary> objectSummaries = s3Service.listObjects(bucketName).getObjectSummaries();
+            for (S3ObjectSummary objectSummary : objectSummaries) {
+                s3Service.deleteObject(bucketName, objectSummary.getKey());
+            }
+            s3Service.deleteBucket(bucketName);
         }
     }
 
     @Test
     public void testUploadFile_ExistsFile() throws Exception {
-        S3Service s3Service = _ec2Conf.createS3Service();
+        AmazonS3 s3Service = _ec2Conf.createS3Service();
         s3Service.createBucket(AWS_TEST_BUCKET);
         String remotePath = "/tmp/build.xml";
         IoUtil.uploadFile(s3Service, AWS_TEST_BUCKET, new File("build.xml"), remotePath);
         assertTrue(IoUtil.existsFile(s3Service, AWS_TEST_BUCKET, remotePath));
+        assertFalse(IoUtil.existsFile(s3Service, AWS_TEST_BUCKET, remotePath + "/dwefwfe"));
+        assertTrue(IoUtil.existsFile(s3Service, AWS_TEST_BUCKET, ".p4tickets"));
     }
 }

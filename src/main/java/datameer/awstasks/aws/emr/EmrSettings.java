@@ -15,8 +15,10 @@
  */
 package datameer.awstasks.aws.emr;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.Collection;
+
+import com.amazonaws.services.elasticmapreduce.model.BootstrapActionConfig;
 
 import datameer.awstasks.aws.InstanceType;
 
@@ -27,8 +29,10 @@ public class EmrSettings {
     private String _privateKeyName;
     private final String _s3Bucket;
     private int _instanceCount;
-    private final Map<String, String> _customStartParameter = new HashMap<String, String>();
 
+    private String _hadoopVersion;
+    private String _additionalStartInfo;
+    private final Collection<BootstrapActionConfig> _bootstrapActions = new ArrayList<BootstrapActionConfig>(3);
     private InstanceType _masterInstanceType = InstanceType.SMALL;
     private InstanceType _nodeInstanceType = InstanceType.SMALL;
     private String _s3LogPath = "/emr/logs";
@@ -135,8 +139,24 @@ public class EmrSettings {
         _debugEnabled = debugEnabled;
     }
 
-    public Map<String, String> getCustomStartParameter() {
-        return _customStartParameter;
+    public String getHadoopVersion() {
+        return _hadoopVersion;
+    }
+
+    public void setHadoopVersion(String hadoopVersion) {
+        _hadoopVersion = hadoopVersion;
+    }
+
+    public String getAdditionalStartInfo() {
+        return _additionalStartInfo;
+    }
+
+    public void setAdditionalStartInfo(String additionalStartInfo) {
+        _additionalStartInfo = additionalStartInfo;
+    }
+
+    public Collection<BootstrapActionConfig> getBootstrapActions() {
+        return _bootstrapActions;
     }
 
 }

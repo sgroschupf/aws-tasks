@@ -15,6 +15,9 @@
  */
 package datameer.awstasks.ant.emr.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import datameer.awstasks.aws.emr.EmrCluster;
 import datameer.awstasks.aws.emr.EmrSettings;
 
@@ -22,7 +25,8 @@ public class EmrStartCommand implements EmrCommand {
 
     private String _privateKeyName;
     private int _instanceCount;
-    private String _customParameters;
+    private String _hadoopVersion;
+    private List<BootstrapConfig> _bootstrapConfigs = new ArrayList<BootstrapConfig>();
 
     public String getPrivateKeyName() {
         return _privateKeyName;
@@ -40,28 +44,27 @@ public class EmrStartCommand implements EmrCommand {
         _instanceCount = instanceCount;
     }
 
-    public void setCustomParameters(String customParameter) {
-        _customParameters = customParameter;
+    public String getHadoopVersion() {
+        return _hadoopVersion;
+    }
 
+    public void setHadoopVersion(String hadoopVersion) {
+        _hadoopVersion = hadoopVersion;
+    }
+
+    public void addBootstrapConfig(BootstrapConfig bootstrapConfig) {
+        _bootstrapConfigs.add(bootstrapConfig);
     }
 
     @Override
     public void execute(EmrCluster cluster) throws Exception {
-        String[] parameterStrings;
-        if (_customParameters.contains("|")) {
-            parameterStrings = _customParameters.split("|");
-        } else {
-            parameterStrings = new String[] { _customParameters };
-
-        }
         EmrSettings settings = cluster.getSettings();
-        for (String parameterString : parameterStrings) {
-            String[] key_value = parameterString.split("=");
-            settings.getCustomStartParameter().put(key_value[0], key_value[1]);
-        }
+        settings.setHadoopVersion(_hadoopVersion);
         settings.setInstanceCount(_instanceCount);
         settings.setPrivateKeyName(_privateKeyName);
+        for (BootstrapConfig bootstrapConfig : _bootstrapConfigs) {
+            settings.getBootstrapActions().add(bootstrapConfig.createBootstrapActionConfig());
+        }
         cluster.startup();
     }
-
 }

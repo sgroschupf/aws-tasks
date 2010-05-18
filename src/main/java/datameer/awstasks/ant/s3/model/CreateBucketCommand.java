@@ -15,10 +15,12 @@
  */
 package datameer.awstasks.ant.s3.model;
 
-import org.jets3t.service.S3Service;
+import java.util.List;
+
 import org.jets3t.service.S3ServiceException;
-import org.jets3t.service.model.S3Bucket;
-import org.jets3t.service.model.S3Object;
+
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 
 public class CreateBucketCommand extends S3Command {
 
@@ -51,17 +53,18 @@ public class CreateBucketCommand extends S3Command {
     }
 
     @Override
-    public void execute(S3Service s3Service) throws S3ServiceException {
+    public void execute(AmazonS3 s3Service) throws S3ServiceException {
         // S3Bucket s3Bucket = new S3Bucket(_name, _location);
-        S3Bucket bucket = s3Service.getBucket(_name);
-        if (isEmptyIfExistent() && bucket != null) {
-            S3Object[] s3Objects = s3Service.listObjects(bucket);
-            for (S3Object s3Object : s3Objects) {
-                s3Service.deleteObject(bucket, s3Object.getKey());
+        boolean doesBucketExist = s3Service.doesBucketExist(_name);
+
+        if (isEmptyIfExistent() && doesBucketExist) {
+            List<S3ObjectSummary> s3Objects = s3Service.listObjects(_name).getObjectSummaries();
+            for (S3ObjectSummary s3Object : s3Objects) {
+                s3Service.deleteObject(_name, s3Object.getKey());
             }
-            bucket = null;
+            doesBucketExist = false;
         }
-        if (bucket == null) {
+        if (!doesBucketExist) {
             s3Service.createBucket(_name, _location);
         }
     }

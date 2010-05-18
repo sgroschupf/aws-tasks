@@ -17,16 +17,13 @@ package datameer.awstasks.util;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.jets3t.service.S3Service;
-import org.jets3t.service.S3ServiceException;
-import org.jets3t.service.model.S3Bucket;
-import org.jets3t.service.model.S3Object;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
 
 /**
  * Util class providing some file-/stream operations and some units of measurement.
@@ -91,29 +88,26 @@ public class IoUtil {
         writer.close();
     }
 
-    public static void uploadFile(S3Service s3Service, String bucket, File file, String remotePath) throws IOException, S3ServiceException {
+    public static void uploadFile(AmazonS3 s3Service, String bucket, File file, String remotePath) {
         if (remotePath.startsWith("/")) {
             remotePath = remotePath.substring(1);
         }
-        S3Object object = new S3Object(remotePath);
-        object.setDataInputStream(new FileInputStream(file));
-        object.setContentType("binary/octet-stream");
-        object.setContentLength(file.length());
-        s3Service.putObject(bucket, object);
+        s3Service.putObject(bucket, remotePath, file);
     }
 
-    public static boolean existsFile(S3Service s3Service, String bucketName, String remotePath) throws S3ServiceException {
+    public static boolean existsFile(AmazonS3 s3Service, String bucketName, String remotePath) {
         if (remotePath.startsWith("/")) {
             remotePath = remotePath.substring(1);
         }
-        S3Bucket bucket = s3Service.getBucket(bucketName);
-        S3Object[] s3Objects = s3Service.listObjects(bucket, remotePath, null);
-        for (S3Object s3Object : s3Objects) {
-            if (s3Object.getKey().equals(remotePath)) {
-                return true;
+        try {
+            s3Service.getObject(bucketName, remotePath);
+            return true;
+        } catch (AmazonS3Exception e) {
+            if ("NoSuchKey".equals(e.getErrorCode())) {
+                return false;
             }
+            throw e;
         }
-        return false;
     }
 
     public static OutputStream closeProtectedStream(final OutputStream outputStream) {

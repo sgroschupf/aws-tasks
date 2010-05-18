@@ -15,11 +15,12 @@
  */
 package datameer.awstasks.ant.s3.model;
 
-import org.jets3t.service.S3Service;
 import org.jets3t.service.S3ServiceException;
+
+import com.amazonaws.services.s3.AmazonS3;
 
 public abstract class S3Command {
 
-    public abstract void execute(S3Service s3Service) throws S3ServiceException;
+    public abstract void execute(AmazonS3 s3Service) throws S3ServiceException;
 
 }

@@ -63,7 +63,7 @@ public class InstanceGroupImplIntegTest extends AbstractEc2IntegrationTest {
 
         // shutdown
         instanceGroup.shutdown();
-        Thread.sleep(500);
+        Thread.sleep(1000);
         checkInstanceMode(Ec2Util.reloadReservationDescription(ec2, reservationDescription), "shutting-down|terminated");
         assertFalse(instanceGroup.isAssociated());
     }
@@ -121,7 +121,7 @@ public class InstanceGroupImplIntegTest extends AbstractEc2IntegrationTest {
                 }
             }
             if (!inOneOfDesiredStates) {
-                fail("instance is in mode '" + instance.getState() + "' but should be (onn of) '" + modesString + "'");
+                fail("instance is in mode '" + instance.getState() + "' but should be (one of) '" + modesString + "'");
             }
         }
 

@@ -15,8 +15,10 @@
  */
 package datameer.awstasks;
 
-import org.jets3t.service.S3Service;
-import org.jets3t.service.model.S3Bucket;
+import java.util.List;
+
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.Bucket;
 
 import datameer.awstasks.util.Ec2Configuration;
 
@@ -27,17 +29,17 @@ public class S3Example {
         // String accessKeyId = null;
         // String accessKeySecret = null;
         //        
-        // AWSCredentials awsCredentials = new AWSCredentials(accessKeyId, accessKeySecret);
-        // S3Service s3Service = new RestS3Service(awsCredentials);
+        // AWSCredentials awsCredentials = new BasicAWSCredentials(accessKeyId, accessKeySecret);
+        // AmazonS3 s3Service = new AmazonS3Client(awsCredentials);
 
         // or alternatively use the Ec2Configuration
         Ec2Configuration ec2Configuration = new Ec2Configuration(); // searches for ec2.properties
-        S3Service s3Service = ec2Configuration.createS3Service();
-        S3Bucket s3Bucket = s3Service.createBucket("aExampleBucket");
-        S3Bucket[] buckets = s3Service.listAllBuckets();
-        for (S3Bucket bucket : buckets) {
+        AmazonS3 s3Service = ec2Configuration.createS3Service();
+        Bucket s3Bucket = s3Service.createBucket("aExampleBucket");
+        List<Bucket> buckets = s3Service.listBuckets();
+        for (Bucket bucket : buckets) {
             System.out.println(bucket.getName());
         }
-        s3Service.deleteBucket(s3Bucket);
+        s3Service.deleteBucket(s3Bucket.getName());
     }
 }

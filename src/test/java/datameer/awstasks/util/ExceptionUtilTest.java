@@ -66,7 +66,7 @@ public class ExceptionUtilTest {
         }
     }
 
-    @Test
+    @Test(expected = FileNotFoundException.class)
     public void testThrowIfInstanceII() throws IOException {
         try {
             new BufferedReader(new InputStreamReader(new FileInputStream(new File("dwefsf"))));

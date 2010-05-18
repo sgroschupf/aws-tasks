@@ -15,8 +15,6 @@
  */
 package datameer.awstasks.aws.emr;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,24 +24,21 @@ import java.util.concurrent.Callable;
 
 import org.apache.log4j.Logger;
 
-import com.amazonaws.elasticmapreduce.AmazonElasticMapReduceClient;
-import com.amazonaws.elasticmapreduce.AmazonElasticMapReduceException;
-import com.amazonaws.elasticmapreduce.model.AddJobFlowStepsRequest;
-import com.amazonaws.elasticmapreduce.model.AddJobFlowStepsResponse;
-import com.amazonaws.elasticmapreduce.model.DescribeJobFlowsRequest;
-import com.amazonaws.elasticmapreduce.model.DescribeJobFlowsResponse;
-import com.amazonaws.elasticmapreduce.model.RunJobFlowRequest;
-import com.amazonaws.elasticmapreduce.model.RunJobFlowResponse;
-import com.amazonaws.elasticmapreduce.model.TerminateJobFlowsRequest;
-import com.amazonaws.elasticmapreduce.model.TerminateJobFlowsResponse;
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduceClient;
+import com.amazonaws.services.elasticmapreduce.model.AddJobFlowStepsRequest;
+import com.amazonaws.services.elasticmapreduce.model.DescribeJobFlowsRequest;
+import com.amazonaws.services.elasticmapreduce.model.DescribeJobFlowsResult;
+import com.amazonaws.services.elasticmapreduce.model.RunJobFlowRequest;
+import com.amazonaws.services.elasticmapreduce.model.RunJobFlowResult;
+import com.amazonaws.services.elasticmapreduce.model.TerminateJobFlowsRequest;
 
 import datameer.awstasks.aws.emr.EmrCluster.InterruptedRuntimeException;
-import datameer.awstasks.util.ExceptionUtil;
 
 /**
  * 
  * A custom {@link AmazonElasticMapReduceClient} which adds following features:<br>
- * - custom flow run parameters<br>
  * - throttle safe invocation of web service methods<br>
  * - caching of flow descriptions (to avoid throttle exception flood with multiple running flow
  * steps)<br>
@@ -53,27 +48,11 @@ import datameer.awstasks.util.ExceptionUtil;
 public class AmazonElasticMapReduceCustomClient extends AmazonElasticMapReduceClient {
 
     protected static final Logger LOG = Logger.getLogger(AmazonElasticMapReduceCustomClient.class);
-    private final Method _converRunJobFlowMethod;
-    private final Method _invokeMethod;
-    private final Map<String, String> _customRunFlowParameters;
     private int _requestInterval = 10000;
     private JobFlowDescriptionCache _flowDescriptionCache = new JobFlowDescriptionCache(_requestInterval);
 
-    public AmazonElasticMapReduceCustomClient(String awsAccessKeyId, String awsSecretAccessKey, Map<String, String> customRunFlowParameters) {
-        super(awsAccessKeyId, awsSecretAccessKey);
-        _customRunFlowParameters = customRunFlowParameters;
-        _converRunJobFlowMethod = getMethod("convertRunJobFlow", RunJobFlowRequest.class);
-        _invokeMethod = getMethod("invoke", Class.class, Map.class);
-    }
-
-    private Method getMethod(String name, Class<?>... paramClasses) {
-        try {
-            Method method = getClass().getSuperclass().getDeclaredMethod(name, paramClasses);
-            method.setAccessible(true);
-            return method;
-        } catch (Exception e) {
-            throw ExceptionUtil.convertToRuntimeException(e);
-        }
+    public AmazonElasticMapReduceCustomClient(String awsAccessKeyId, String awsSecretAccessKey) {
+        super(new BasicAWSCredentials(awsAccessKeyId, awsSecretAccessKey));
     }
 
     public void setRequestInterval(int requestInterval) {
@@ -86,26 +65,27 @@ public class AmazonElasticMapReduceCustomClient extends AmazonElasticMapReduceCl
     }
 
     @Override
-    public AddJobFlowStepsResponse addJobFlowSteps(final AddJobFlowStepsRequest request) throws AmazonElasticMapReduceException {
-        return doThrottleSafe(new Callable<AddJobFlowStepsResponse>() {
+    public void addJobFlowSteps(final AddJobFlowStepsRequest request) throws AmazonServiceException {
+        doThrottleSafe(new Callable<Void>() {
             @Override
-            public AddJobFlowStepsResponse call() throws Exception {
-                return AmazonElasticMapReduceCustomClient.super.addJobFlowSteps(request);
+            public Void call() throws Exception {
+                AmazonElasticMapReduceCustomClient.super.addJobFlowSteps(request);
+                return null;
             }
         }, getRequestInterval());
     }
 
     @Override
-    public DescribeJobFlowsResponse describeJobFlows(final DescribeJobFlowsRequest request) throws AmazonElasticMapReduceException {
+    public DescribeJobFlowsResult describeJobFlows(final DescribeJobFlowsRequest request) throws AmazonServiceException {
         synchronized (_flowDescriptionCache) {
-            DescribeJobFlowsResponse cachedResponse = _flowDescriptionCache.getResponse(request);
+            DescribeJobFlowsResult cachedResponse = _flowDescriptionCache.getResponse(request);
             if (cachedResponse != null) {
                 return cachedResponse;
             }
-            return doThrottleSafe(new Callable<DescribeJobFlowsResponse>() {
+            return doThrottleSafe(new Callable<DescribeJobFlowsResult>() {
                 @Override
-                public DescribeJobFlowsResponse call() throws Exception {
-                    DescribeJobFlowsResponse response = AmazonElasticMapReduceCustomClient.super.describeJobFlows(request);
+                public DescribeJobFlowsResult call() throws Exception {
+                    DescribeJobFlowsResult response = AmazonElasticMapReduceCustomClient.super.describeJobFlows(request);
                     _flowDescriptionCache.addResponse(request, response);
                     return response;
                 }
@@ -120,38 +100,31 @@ public class AmazonElasticMapReduceCustomClient extends AmazonElasticMapReduceCl
     }
 
     @Override
-    public RunJobFlowResponse runJobFlow(final RunJobFlowRequest request) throws AmazonElasticMapReduceException {
-        return doThrottleSafe(new Callable<RunJobFlowResponse>() {
+    public RunJobFlowResult runJobFlow(final RunJobFlowRequest request) throws AmazonServiceException {
+        return doThrottleSafe(new Callable<RunJobFlowResult>() {
             @Override
-            public RunJobFlowResponse call() throws Exception {
-                Map<String, String> parameters = (Map<String, String>) _converRunJobFlowMethod.invoke(AmazonElasticMapReduceCustomClient.this, request);
-                parameters.putAll(_customRunFlowParameters);
-                try {
-                    return (RunJobFlowResponse) _invokeMethod.invoke(AmazonElasticMapReduceCustomClient.this, RunJobFlowResponse.class, parameters);
-                } catch (InvocationTargetException e) {
-                    ExceptionUtil.throwIfInstance(e.getCause(), RuntimeException.class);
-                    ExceptionUtil.throwIfInstance(e.getCause(), AmazonElasticMapReduceException.class);
-                    throw e;
-                }
+            public RunJobFlowResult call() throws Exception {
+                return AmazonElasticMapReduceCustomClient.super.runJobFlow(request);
             }
         }, getRequestInterval());
     }
 
     @Override
-    public TerminateJobFlowsResponse terminateJobFlows(final TerminateJobFlowsRequest request) throws AmazonElasticMapReduceException {
-        return doThrottleSafe(new Callable<TerminateJobFlowsResponse>() {
+    public void terminateJobFlows(final TerminateJobFlowsRequest request) throws AmazonServiceException {
+        doThrottleSafe(new Callable<Void>() {
             @Override
-            public TerminateJobFlowsResponse call() throws Exception {
-                return AmazonElasticMapReduceCustomClient.super.terminateJobFlows(request);
+            public Void call() throws Exception {
+                AmazonElasticMapReduceCustomClient.super.terminateJobFlows(request);
+                return null;
             }
         }, getRequestInterval());
     }
 
-    protected static <T> T doThrottleSafe(Callable<T> callable, int requestInterval) throws AmazonElasticMapReduceException, InterruptedRuntimeException {
+    protected static <T> T doThrottleSafe(Callable<T> callable, int requestInterval) throws AmazonServiceException, InterruptedRuntimeException {
         T result;
         try {
             result = callable.call();
-        } catch (AmazonElasticMapReduceException e) {
+        } catch (AmazonServiceException e) {
             String errorCode = e.getErrorCode();
             if (errorCode == null || !errorCode.equals("Throttling")) {
                 throw e;
@@ -175,7 +148,7 @@ public class AmazonElasticMapReduceCustomClient extends AmazonElasticMapReduceCl
 
     static class JobFlowDescriptionCache {
 
-        private final Map<Integer, DescribeJobFlowsResponse> _cachedJobFlowsDescriptionsByRequestHash = new HashMap<Integer, DescribeJobFlowsResponse>();
+        private final Map<Integer, DescribeJobFlowsResult> _cachedJobFlowsDescriptionsByRequestHash = new HashMap<Integer, DescribeJobFlowsResult>();
         private final Map<Integer, Long> _lastRetrievalTimeByRequestHash = new HashMap<Integer, Long>();
         private int _maxCacheTime;
 
@@ -187,13 +160,13 @@ public class AmazonElasticMapReduceCustomClient extends AmazonElasticMapReduceCl
             _maxCacheTime = maxCacheTime;
         }
 
-        public void addResponse(DescribeJobFlowsRequest request, DescribeJobFlowsResponse response) {
+        public void addResponse(DescribeJobFlowsRequest request, DescribeJobFlowsResult response) {
             int hashCode = calculateHashCode(request);
             _cachedJobFlowsDescriptionsByRequestHash.put(hashCode, response);
             _lastRetrievalTimeByRequestHash.put(hashCode, System.currentTimeMillis());
         }
 
-        public DescribeJobFlowsResponse getResponse(DescribeJobFlowsRequest request) {
+        public DescribeJobFlowsResult getResponse(DescribeJobFlowsRequest request) {
             int hashCode = calculateHashCode(request);
             cleanupOutdatedResponses();
             return _cachedJobFlowsDescriptionsByRequestHash.get(hashCode);
@@ -222,14 +195,14 @@ public class AmazonElasticMapReduceCustomClient extends AmazonElasticMapReduceCl
             StringBuilder hashBuilder = new StringBuilder();
             addIfNotNull(hashBuilder, request.getCreatedAfter());
             addIfNotNull(hashBuilder, request.getCreatedBefore());
-            addIfNotNull(hashBuilder, request.getJobFlowIds().toString());
-            addIfNotNull(hashBuilder, request.getJobFlowStates().toString());
+            addIfNotNull(hashBuilder, request.getJobFlowIds());
+            addIfNotNull(hashBuilder, request.getJobFlowStates());
             return hashBuilder.toString().hashCode();
         }
 
-        private void addIfNotNull(StringBuilder hashBuilder, String string) {
-            if (string != null) {
-                hashBuilder.append(string);
+        private void addIfNotNull(StringBuilder hashBuilder, Object object) {
+            if (object != null) {
+                hashBuilder.append(object.toString());
             }
         }
     }

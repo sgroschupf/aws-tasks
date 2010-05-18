@@ -15,17 +15,20 @@
  */
 package datameer.awstasks.ant.s3.model;
 
-import org.jets3t.service.S3Service;
+import java.util.List;
+
 import org.jets3t.service.S3ServiceException;
-import org.jets3t.service.model.S3Bucket;
+
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.Bucket;
 
 public class ListBucketsCommand extends S3Command {
 
     @Override
-    public void execute(S3Service s3Service) throws S3ServiceException {
-        S3Bucket[] buckets = s3Service.listAllBuckets();
-        for (S3Bucket s3Bucket : buckets) {
-            System.out.println(s3Bucket);
+    public void execute(AmazonS3 s3Service) throws S3ServiceException {
+        List<Bucket> buckets = s3Service.listBuckets();
+        for (Bucket s3Bucket : buckets) {
+            System.out.println(s3Bucket.getName());
         }
     }
 

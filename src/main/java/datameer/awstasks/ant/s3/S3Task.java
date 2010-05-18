@@ -19,10 +19,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.tools.ant.BuildException;
-import org.jets3t.service.S3Service;
-import org.jets3t.service.S3ServiceException;
-import org.jets3t.service.impl.rest.httpclient.RestS3Service;
-import org.jets3t.service.security.AWSCredentials;
+
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.s3.AmazonS3Client;
 
 import datameer.awstasks.ant.AbstractAwsTask;
 import datameer.awstasks.ant.s3.model.CreateBucketCommand;
@@ -42,7 +41,7 @@ public class S3Task extends AbstractAwsTask {
     public void execute() throws BuildException {
         System.out.println("executing " + getClass().getSimpleName());
         try {
-            S3Service s3Service = createS3Service();
+            AmazonS3Client s3Service = createS3Service();
             for (S3Command s3Command : _s3Commands) {
                 System.out.println("executing " + s3Command);
                 s3Command.execute(s3Service);
@@ -64,9 +63,9 @@ public class S3Task extends AbstractAwsTask {
         _s3Commands.add(command);
     }
 
-    public S3Service createS3Service() throws S3ServiceException {
-        AWSCredentials awsCredentials = new AWSCredentials(_accessKey, _accessSecret);
-        return new RestS3Service(awsCredentials);
+    public AmazonS3Client createS3Service() {
+        BasicAWSCredentials awsCredentials = new BasicAWSCredentials(_accessKey, _accessSecret);
+        return new AmazonS3Client(awsCredentials);
     }
 
 }

@@ -19,8 +19,8 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import com.amazonaws.elasticmapreduce.model.DescribeJobFlowsRequest;
-import com.amazonaws.elasticmapreduce.model.DescribeJobFlowsResponse;
+import com.amazonaws.services.elasticmapreduce.model.DescribeJobFlowsRequest;
+import com.amazonaws.services.elasticmapreduce.model.DescribeJobFlowsResult;
 
 import datameer.awstasks.aws.emr.AmazonElasticMapReduceCustomClient.JobFlowDescriptionCache;
 
@@ -38,7 +38,7 @@ public class AmazonElasticMapReduceCustomClientTest {
         assertNull(cache.getResponse(request1));
         assertNull(cache.getResponse(request2));
 
-        cache.addResponse(request1, new DescribeJobFlowsResponse());
+        cache.addResponse(request1, new DescribeJobFlowsResult());
         assertNotNull(cache.getResponse(request1));
         assertNull(cache.getResponse(request2));
 
