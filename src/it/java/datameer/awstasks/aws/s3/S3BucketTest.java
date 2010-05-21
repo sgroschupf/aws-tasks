@@ -26,7 +26,7 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 
 import datameer.awstasks.aws.AbstractAwsIntegrationTest;
-import datameer.awstasks.util.IoUtil;
+import datameer.awstasks.util.S3Util;
 
 public class S3BucketTest extends AbstractAwsIntegrationTest {
 
@@ -62,9 +62,9 @@ public class S3BucketTest extends AbstractAwsIntegrationTest {
         AmazonS3 s3Service = _ec2Conf.createS3Service();
         s3Service.createBucket(AWS_TEST_BUCKET);
         String remotePath = "/tmp/build.xml";
-        IoUtil.uploadFile(s3Service, AWS_TEST_BUCKET, new File("build.xml"), remotePath);
-        assertTrue(IoUtil.existsFile(s3Service, AWS_TEST_BUCKET, remotePath));
-        assertFalse(IoUtil.existsFile(s3Service, AWS_TEST_BUCKET, remotePath + "/dwefwfe"));
-        assertTrue(IoUtil.existsFile(s3Service, AWS_TEST_BUCKET, ".p4tickets"));
+        S3Util.uploadFile(s3Service, AWS_TEST_BUCKET, new File("build.xml"), remotePath);
+        assertTrue(S3Util.existsFile(s3Service, AWS_TEST_BUCKET, remotePath));
+        assertFalse(S3Util.existsFile(s3Service, AWS_TEST_BUCKET, remotePath + "/dwefwfe"));
+        assertTrue(S3Util.existsFile(s3Service, AWS_TEST_BUCKET, ".p4tickets"));
     }
 }

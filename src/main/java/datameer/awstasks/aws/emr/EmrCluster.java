@@ -48,7 +48,7 @@ import com.xerox.amazonws.sdb.ItemAttribute;
 import com.xerox.amazonws.sdb.SDBException;
 import com.xerox.amazonws.sdb.SimpleDB;
 
-import datameer.awstasks.util.IoUtil;
+import datameer.awstasks.util.S3Util;
 
 /**
  * Allows access and management of amazons elastic map-reduce. One emr cluster maps to one job flow.
@@ -294,9 +294,9 @@ public class EmrCluster {
             if (!_s3Service.doesBucketExist(s3Bucket)) {
                 throw new IllegalStateException("s3 bucket '" + s3Bucket + "' does not exists");
             }
-            if (!IoUtil.existsFile(_s3Service, s3Bucket, s3JobJarPath)) {
+            if (!S3Util.existsFile(_s3Service, s3Bucket, s3JobJarPath)) {
                 LOG.info("uploading " + jobJar + " to " + s3JobJarPath);
-                IoUtil.uploadFile(_s3Service, s3Bucket, jobJar, s3JobJarPath);
+                S3Util.uploadFile(_s3Service, s3Bucket, jobJar, s3JobJarPath);
             } else {
                 LOG.info("using cached job-jar: " + s3JobJarPath);
             }

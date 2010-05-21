@@ -37,6 +37,7 @@ import datameer.awstasks.aws.emr.EmrCluster.StepFuture;
 import datameer.awstasks.aws.emr.EmrCluster.StepMetadata;
 import datameer.awstasks.aws.s3.S3BucketTest;
 import datameer.awstasks.util.IoUtil;
+import datameer.awstasks.util.S3Util;
 
 public class EmrClusterTest extends AbstractAwsIntegrationTest {
 
@@ -117,7 +118,7 @@ public class EmrClusterTest extends AbstractAwsIntegrationTest {
         String remoteInputPath = "/emr/input";
         String remoteOutputPath = "/emr/output";
         IoUtil.writeFile(localInputFile, "K O H L", "K O P F");
-        IoUtil.uploadFile(_s3Service, _s3Bucket.getName(), localInputFile, remoteInputPath);
+        S3Util.uploadFile(_s3Service, _s3Bucket.getName(), localInputFile, remoteInputPath);
 
         // execute job
         String inputUri = "s3n://" + _s3Bucket.getName() + remoteInputPath;
@@ -156,7 +157,7 @@ public class EmrClusterTest extends AbstractAwsIntegrationTest {
         String remoteOutputPath = "/emr/output";
         _s3Service.deleteObject(_s3Bucket.getName(), remoteOutputPath);
         IoUtil.writeFile(localInputFile, "K O H L", "K O P F");
-        IoUtil.uploadFile(_s3Service, _s3Bucket.getName(), localInputFile, remoteInputPath);
+        S3Util.uploadFile(_s3Service, _s3Bucket.getName(), localInputFile, remoteInputPath);
 
         // execute job
         String inputUri = "s3n://" + _s3Bucket.getName() + remoteInputPath;
