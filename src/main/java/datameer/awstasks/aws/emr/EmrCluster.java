@@ -455,6 +455,14 @@ public class EmrCluster {
             return _stepIndex;
         }
 
+        public String getStepName() {
+            return _stepName;
+        }
+
+        public StepState getStepState() {
+            return EmrCluster.this.getStepState(_jobFlowId, _stepName);
+        }
+
         public StepMetadata getStepMetaData() throws SDBException {
             if (_simpleDB == null) {
                 throw new IllegalStateException("can retrieve step metadata only when hadoop debugging enabled");
@@ -468,7 +476,7 @@ public class EmrCluster {
             if (items.size() > 1) {
                 throw new IllegalStateException("found more then one (" + items.size() + ") item for query '" + query + "'");
             }
-            StepMetadata stepMetadata = new StepMetadata(getStepState(_jobFlowId, _stepName));
+            StepMetadata stepMetadata = new StepMetadata();
             if (items.isEmpty()) {
                 LOG.debug("found no items for query '" + query + "' yet...");
                 return stepMetadata;
@@ -529,16 +537,7 @@ public class EmrCluster {
         public final static String NUM_CANCELLED_TASKS = "numCancelledTasks";
         public final static String NUM_COMPLETED_TASKS = "numCompletedTasks";
 
-        private final StepState _stepState;
         private Map<String, String> _mdMap = new HashMap<String, String>();
-
-        public StepMetadata(StepState stepState) {
-            _stepState = stepState;
-        }
-
-        public StepState getStepState() {
-            return _stepState;
-        }
 
         public void add(String key, String value) {
             _mdMap.put(key, value);
