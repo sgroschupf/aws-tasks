@@ -18,14 +18,12 @@ package datameer.awstasks;
 import java.io.File;
 import java.io.IOException;
 
-import org.jets3t.service.S3ServiceException;
-
 import datameer.awstasks.aws.emr.EmrCluster;
 import datameer.awstasks.util.Ec2Configuration;
 
 public class EmrExample {
 
-    public static void main(String[] args) throws IOException, S3ServiceException, InterruptedException {
+    public static void main(String[] args) throws IOException, InterruptedException {
         String clusterName = "my-cluster";
         String s3Bucket = "testbucket";
         // have your aws access data

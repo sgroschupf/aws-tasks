@@ -267,9 +267,11 @@ public class EmrCluster {
 
     public StepFuture executeJobStep(String name, File jobJar, String s3JobJarName, Class<?> mainClass, String... args) {
         checkConnection(true);
-        String s3JobJarUri = uploadingJobJar(jobJar, s3JobJarName);
         HadoopJarStepConfig jarConfig = new HadoopJarStepConfig();
-        jarConfig.setJar(s3JobJarUri);
+        if (jobJar != null) {
+            String s3JobJarUri = uploadingJobJar(jobJar, s3JobJarName);
+            jarConfig.setJar(s3JobJarUri);
+        }
         if (mainClass != null) {
             jarConfig.setMainClass(mainClass.getName());
         }
@@ -279,7 +281,6 @@ public class EmrCluster {
         stepConfig.setActionOnFailure("CONTINUE");
         stepConfig.setHadoopJarStep(jarConfig);
         _emrWebService.addJobFlowSteps(new AddJobFlowStepsRequest().withJobFlowId(_jobFlowId).withSteps(stepConfig));
-
         _emrWebService.clearDescribeJobFlowCache();
         return new StepFuture(stepConfig.getName(), getStepIndex(getJobFlowDetail(_jobFlowId), name));
     }
@@ -341,9 +342,7 @@ public class EmrCluster {
         doWhile(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
-                JobFlowDetail flowDetail = getJobFlowDetail(jobFlowId);
-                StepDetail stepDetail = getStepDetail(flowDetail, stepName);
-                StepState stepState = StepState.valueOf(stepDetail.getExecutionStatusDetail().getState());
+                StepState stepState = getStepState(jobFlowId, stepName);
                 LOG.info("job step '" + stepName + "' in state '" + stepState + "'");
                 boolean finished = stepState.isFinished();
                 if (finished) {
@@ -355,6 +354,13 @@ public class EmrCluster {
             }
 
         }, getRequestInterval());
+    }
+
+    protected StepState getStepState(final String jobFlowId, final String stepName) {
+        JobFlowDetail flowDetail = getJobFlowDetail(jobFlowId);
+        StepDetail stepDetail = getStepDetail(flowDetail, stepName);
+        StepState stepState = StepState.valueOf(stepDetail.getExecutionStatusDetail().getState());
+        return stepState;
     }
 
     protected static void doWhile(Callable<Boolean> callable, int requestInterval) throws InterruptedException {
@@ -462,7 +468,7 @@ public class EmrCluster {
             if (items.size() > 1) {
                 throw new IllegalStateException("found more then one (" + items.size() + ") item for query '" + query + "'");
             }
-            StepMetadata stepMetadata = new StepMetadata();
+            StepMetadata stepMetadata = new StepMetadata(getStepState(_jobFlowId, _stepName));
             if (items.isEmpty()) {
                 LOG.debug("found no items for query '" + query + "' yet...");
                 return stepMetadata;
@@ -523,7 +529,16 @@ public class EmrCluster {
         public final static String NUM_CANCELLED_TASKS = "numCancelledTasks";
         public final static String NUM_COMPLETED_TASKS = "numCompletedTasks";
 
+        private final StepState _stepState;
         private Map<String, String> _mdMap = new HashMap<String, String>();
+
+        public StepMetadata(StepState stepState) {
+            _stepState = stepState;
+        }
+
+        public StepState getStepState() {
+            return _stepState;
+        }
 
         public void add(String key, String value) {
             _mdMap.put(key, value);
