@@ -197,6 +197,7 @@ public class JschRunner extends ShellExecutor {
         session.setSocketFactory(new SocketFactoryWithConnectTimeout());
         session.setUserInfo(new UserInfoImpl(_password));
         session.setTimeout(_timeout);
+        session.setDaemonThread(true);
         LOG.debug("Connecting to " + _host + ":" + _port);
         session.connect();
         return session;
