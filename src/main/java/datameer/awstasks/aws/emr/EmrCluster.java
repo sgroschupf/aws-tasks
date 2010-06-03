@@ -240,6 +240,28 @@ public class EmrCluster {
     // }
     // }
 
+    /**
+     * Connects to EMR cluster and equilibrate the local state with the remote state.
+     */
+    public void synchronizeState() throws InterruptedException {
+        if (_clusterState == ClusterState.UNCONNECTED) {
+            try {
+                connectByName();
+                return;// we have a new state
+            } catch (InterruptedException e) {
+                throw e;
+            } catch (Exception e) {
+                return; // there is no cluster up
+            }
+        }
+
+        JobFlowDetail jobFlowDetail = getJobFlowDetail(_jobFlowId);
+        JobFlowState state = JobFlowState.valueOf(jobFlowDetail.getExecutionStatusDetail().getState());
+        if (!state.isOperational() && _clusterState == ClusterState.CONNECTED) {
+            disconnect();
+        }
+    }
+
     public ClusterState getState() {
         return _clusterState;
     }

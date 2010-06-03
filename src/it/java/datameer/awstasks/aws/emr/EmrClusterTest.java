@@ -54,8 +54,12 @@ public class EmrClusterTest extends AbstractAwsIntegrationTest {
         for (S3ObjectSummary s3ObjectSummary : s3Objects) {
             _s3Service.deleteObject(_s3Bucket.getName(), s3ObjectSummary.getKey());
         }
+        _emrCluster = createEmrCluster();
+    }
+
+    private EmrCluster createEmrCluster() {
         EmrSettings settings = new EmrSettings(getClass().getName(), _ec2Conf.getAccessKey(), _ec2Conf.getPrivateKeyName(), _s3Bucket.getName(), 1);
-        _emrCluster = new EmrCluster(settings, _ec2Conf.getAccessSecret());
+        return new EmrCluster(settings, _ec2Conf.getAccessSecret());
     }
 
     @Test
@@ -104,6 +108,15 @@ public class EmrClusterTest extends AbstractAwsIntegrationTest {
     @Test
     public void testConnectByName() throws Exception {
         _emrCluster.connectByName();
+        assertEquals(ClusterState.CONNECTED, _emrCluster.getState());
+        assertNotNull(_emrCluster.getJobFlowId());
+    }
+
+    @Test
+    public void testSynchronizeState() throws Exception {
+        _emrCluster.connectByName();
+        _emrCluster.disconnect();
+        _emrCluster.synchronizeState();
         assertEquals(ClusterState.CONNECTED, _emrCluster.getState());
         assertNotNull(_emrCluster.getJobFlowId());
     }
@@ -169,10 +182,19 @@ public class EmrClusterTest extends AbstractAwsIntegrationTest {
 
     @Test
     public void testShutdown() throws Exception {
+        EmrCluster cluster2 = createEmrCluster();
+        cluster2.connectByName();
         _emrCluster.connectByName();
         assertEquals(ClusterState.CONNECTED, _emrCluster.getState());
+        assertEquals(ClusterState.CONNECTED, cluster2.getState());
         _emrCluster.shutdown();
         assertEquals(ClusterState.UNCONNECTED, _emrCluster.getState());
+        assertEquals(ClusterState.CONNECTED, cluster2.getState());
         assertNull(_emrCluster.getJobFlowId());
+        assertNotNull(cluster2.getJobFlowId());
+
+        cluster2.synchronizeState();
+        assertEquals(ClusterState.UNCONNECTED, cluster2.getState());
+        assertNull(cluster2.getJobFlowId());
     }
 }
