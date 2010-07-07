@@ -77,8 +77,8 @@ public class EmrCluster {
     private AmazonS3 _s3Service;
     protected SimpleDB _simpleDB;
     protected long _startTime;
-    protected String _masterHost;
-    protected int _instanceCount;
+    protected volatile String _masterHost;
+    protected volatile int _instanceCount;
 
     protected String _jobFlowId;
     protected ClusterState _clusterState = ClusterState.UNCONNECTED;
@@ -166,7 +166,7 @@ public class EmrCluster {
             RunJobFlowResult startResponse = _emrWebService.runJobFlow(startRequest);
             _jobFlowId = startResponse.getJobFlowId();
             waitUntilClusterStarted(_jobFlowId);
-            LOG.info("elastic cluster '" + getName() + "/" + _jobFlowId + "' started, master-host is " + getJobFlowDetail(_jobFlowId).getInstances().getMasterPublicDnsName());
+            LOG.info("elastic cluster '" + getName() + "/" + _jobFlowId + "' started, master-host is " + _masterHost);
             successful = true;
         } finally {
             if (successful) {
@@ -225,7 +225,7 @@ public class EmrCluster {
         checkConnection(false);
         _jobFlowId = jobFlowId;
         waitUntilClusterStarted(jobFlowId);
-        LOG.info("connected to elastic cluster '" + getName() + "/" + _jobFlowId + "', master-host is " + getJobFlowDetail(_jobFlowId).getInstances().getMasterPublicDnsName());
+        LOG.info("connected to elastic cluster '" + getName() + "/" + _jobFlowId + "', master-host is " + _masterHost);
         _clusterState = ClusterState.CONNECTED;
     }
 
@@ -328,13 +328,13 @@ public class EmrCluster {
     }
 
     private void waitUntilClusterStarted(final String jobFlowId) throws InterruptedException {
-        doWhile(new Callable<Boolean>() {
+        doWhileNot(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
                 JobFlowDetail jobFlowDetail = getJobFlowDetail(jobFlowId);
                 JobFlowState state = JobFlowState.valueOf(jobFlowDetail.getExecutionStatusDetail().getState());
                 LOG.info("elastic cluster '" + jobFlowDetail.getName() + "/" + jobFlowId + "' in state '" + state + "'");
-                boolean finished = state != JobFlowState.STARTING;
+                boolean finished = state != JobFlowState.STARTING && state != JobFlowState.BOOTSTRAPPING;
                 if (finished) {
                     _masterHost = jobFlowDetail.getInstances().getMasterPublicDnsName();
                     _instanceCount = jobFlowDetail.getInstances().getInstanceCount();
@@ -349,7 +349,7 @@ public class EmrCluster {
     }
 
     private void waitUntilClusterShutdown(final String jobFlowId) throws InterruptedException {
-        doWhile(new Callable<Boolean>() {
+        doWhileNot(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
                 JobFlowDetail jobFlowDetail = getJobFlowDetail(jobFlowId);
@@ -361,7 +361,7 @@ public class EmrCluster {
     }
 
     protected void waitUntilStepFinished(final String jobFlowId, final String stepName) throws InterruptedException {
-        doWhile(new Callable<Boolean>() {
+        doWhileNot(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
                 StepState stepState = getStepState(jobFlowId, stepName);
@@ -385,7 +385,7 @@ public class EmrCluster {
         return stepState;
     }
 
-    protected static void doWhile(Callable<Boolean> callable, int requestInterval) throws InterruptedException {
+    protected static void doWhileNot(Callable<Boolean> callable, int requestInterval) throws InterruptedException {
         boolean finished = false;
         do {
             try {
