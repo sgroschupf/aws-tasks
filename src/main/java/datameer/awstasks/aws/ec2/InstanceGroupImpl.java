@@ -117,7 +117,6 @@ public class InstanceGroupImpl implements InstanceGroup {
     private ReservationDescription waitUntilServerUp(TimeUnit timeUnit, long waitTime) throws EC2Exception {
         long end = System.currentTimeMillis() + timeUnit.toMillis(waitTime);
         boolean notAllUp;
-        boolean failure;
         do {
             notAllUp = false;
             try {
