@@ -74,7 +74,7 @@ public class InstanceGroupImpl implements InstanceGroup {
     @Override
     public ReservationDescription startup(LaunchConfiguration launchConfiguration, TimeUnit timeUnit, long time) throws EC2Exception {
         checkEc2Association(false);
-        LOG.info(String.format("starting %d to %d instances with AMI %s in groups %s...", launchConfiguration.getMinCount(), launchConfiguration.getMaxCount(), launchConfiguration.getImageId(),
+        LOG.info(String.format("starting %d to %d instances with %s in groups %s...", launchConfiguration.getMinCount(), launchConfiguration.getMaxCount(), launchConfiguration.getImageId(),
                 launchConfiguration.getSecurityGroup()));
         _reservationDescription = _ec2.runInstances(launchConfiguration);
         List<String> instanceIds = Ec2Util.getInstanceIds(_reservationDescription);
@@ -117,6 +117,7 @@ public class InstanceGroupImpl implements InstanceGroup {
     private ReservationDescription waitUntilServerUp(TimeUnit timeUnit, long waitTime) throws EC2Exception {
         long end = System.currentTimeMillis() + timeUnit.toMillis(waitTime);
         boolean notAllUp;
+        boolean failure;
         do {
             notAllUp = false;
             try {
@@ -130,8 +131,11 @@ public class InstanceGroupImpl implements InstanceGroup {
             updateReservationDescription();
             List<Instance> startingInstances = _reservationDescription.getInstances();
             for (Instance instance : startingInstances) {
-                if (!"running".equals(instance.getState())) {
+                if (!"running".equalsIgnoreCase(instance.getState())) {
                     notAllUp = true;
+                }
+                if ("terminated".equalsIgnoreCase(instance.getState())) {
+                    throw new EC2Exception("instance terminated:" + instance.getReason());
                 }
             }
         } while (notAllUp && System.currentTimeMillis() < end);
