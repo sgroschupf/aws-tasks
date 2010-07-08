@@ -135,7 +135,7 @@ public class InstanceGroupImpl implements InstanceGroup {
                     notAllUp = true;
                 }
                 if ("terminated".equalsIgnoreCase(instance.getState())) {
-                    throw new EC2Exception("instance terminated:" + instance.getReason());
+                    throw new EC2Exception("instance for " + _reservationDescription.getGroups() + " terminated:" + instance.getReason());
                 }
             }
         } while (notAllUp && System.currentTimeMillis() < end);
