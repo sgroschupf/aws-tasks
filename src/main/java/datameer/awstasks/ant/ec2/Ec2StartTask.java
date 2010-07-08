@@ -44,6 +44,7 @@ public class Ec2StartTask extends AbstractEc2Task {
     private String _kernelId;
     private String _ramDiskId;
     private String _groupDescription;
+    private int _maxStartTime = 10;// in minutes
 
     private List<GroupPermission> _groupPermissions = new ArrayList<GroupPermission>();
 
@@ -123,6 +124,14 @@ public class Ec2StartTask extends AbstractEc2Task {
         _groupPermissions.add(groupPermission);
     }
 
+    public int getMaxStartTime() {
+        return _maxStartTime;
+    }
+
+    public void setMaxStartTime(int maxStartTime) {
+        _maxStartTime = maxStartTime;
+    }
+
     @Override
     public void execute() throws BuildException {
         System.out.println("executing " + getClass().getSimpleName() + " with groupName '" + _groupName + "'");
@@ -170,7 +179,7 @@ public class Ec2StartTask extends AbstractEc2Task {
                 launchConfiguration.setInstanceType(instanceType);
             }
             launchConfiguration.setAvailabilityZone(_availabilityZone);
-            instanceGroup.startup(launchConfiguration, TimeUnit.MINUTES, 10);
+            instanceGroup.startup(launchConfiguration, TimeUnit.MINUTES, _maxStartTime);
         } catch (Exception e) {
             throw new BuildException(e);
         }

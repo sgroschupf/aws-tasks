@@ -74,7 +74,8 @@ public class InstanceGroupImpl implements InstanceGroup {
     @Override
     public ReservationDescription startup(LaunchConfiguration launchConfiguration, TimeUnit timeUnit, long time) throws EC2Exception {
         checkEc2Association(false);
-        LOG.info(String.format("starting %d to %d instances in groups %s...", launchConfiguration.getMinCount(), launchConfiguration.getMaxCount(), launchConfiguration.getSecurityGroup()));
+        LOG.info(String.format("starting %d to %d instances with AMI %s in groups %s...", launchConfiguration.getMinCount(), launchConfiguration.getMaxCount(), launchConfiguration.getImageId(),
+                launchConfiguration.getSecurityGroup()));
         _reservationDescription = _ec2.runInstances(launchConfiguration);
         List<String> instanceIds = Ec2Util.getInstanceIds(_reservationDescription);
         LOG.info(String.format("triggered start of %d instances: %s", _reservationDescription.getInstances().size(), instanceIds));
@@ -120,7 +121,7 @@ public class InstanceGroupImpl implements InstanceGroup {
             notAllUp = false;
             try {
                 long sleepTime = 10000;
-                LOG.info(String.format("wait on instances to enter 'running' mode. Sleeping %d ms. zzz...", sleepTime));
+                LOG.info(String.format("wait on instances %s to enter 'running' mode. Sleeping %d ms. zzz...", _reservationDescription.getGroups(), sleepTime));
                 Thread.sleep(sleepTime);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
