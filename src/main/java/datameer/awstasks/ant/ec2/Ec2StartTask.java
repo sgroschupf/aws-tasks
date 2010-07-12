@@ -45,6 +45,7 @@ public class Ec2StartTask extends AbstractEc2Task {
     private String _ramDiskId;
     private String _groupDescription;
     private int _maxStartTime = 10;// in minutes
+    private boolean _reuseRunningInstances = false;
 
     private List<GroupPermission> _groupPermissions = new ArrayList<GroupPermission>();
 
@@ -132,12 +133,21 @@ public class Ec2StartTask extends AbstractEc2Task {
         _maxStartTime = maxStartTime;
     }
 
+    public void setReuseRunningInstances(boolean reuseRunningInstances) {
+        _reuseRunningInstances = reuseRunningInstances;
+    }
+
+    public boolean isReuseRunningInstances() {
+        return _reuseRunningInstances;
+    }
+
     @Override
     public void execute() throws BuildException {
         System.out.println("executing " + getClass().getSimpleName() + " with groupName '" + _groupName + "'");
         Jec2 ec2 = new Jec2(_accessKey, _accessSecret);
         try {
-            if (Ec2Util.findByGroup(ec2, _groupName, "running") != null) {
+            boolean instancesRunning = Ec2Util.findByGroup(ec2, _groupName, "running") != null;
+            if (!isReuseRunningInstances() && instancesRunning) {
                 throw new IllegalStateException("found already running instances for group '" + _groupName + "'");
             }
             if (!Ec2Util.groupExists(ec2, _groupName)) {
@@ -179,7 +189,11 @@ public class Ec2StartTask extends AbstractEc2Task {
                 launchConfiguration.setInstanceType(instanceType);
             }
             launchConfiguration.setAvailabilityZone(_availabilityZone);
-            instanceGroup.startup(launchConfiguration, TimeUnit.MINUTES, _maxStartTime);
+            if (instancesRunning) {
+                instanceGroup.connectTo(_groupName);
+            } else {
+                instanceGroup.startup(launchConfiguration, TimeUnit.MINUTES, _maxStartTime);
+            }
         } catch (Exception e) {
             throw new BuildException(e);
         }
