@@ -139,9 +139,9 @@ public class EmrCluster {
             if (settings.getPrivateKeyName() == null) {
                 throw new NullPointerException("privateKeyName must not be null please configure settings properly");
             }
-            LOG.info("starting elastic cluster (job flow) '" + getName() + "' ...");
+            LOG.info("Starting job flow '" + getName() + "' ...");
             if (!getRunningJobFlowDetailsByName(getName()).isEmpty()) {
-                throw new IllegalStateException("cluster/jobFlow with name '" + getName() + "' already running");
+                throw new IllegalStateException("Job flow with name '" + getName() + "' already running.");
             }
             boolean keepAlive = true;
             JobFlowInstancesConfig jobConfig = new JobFlowInstancesConfig();
@@ -200,16 +200,15 @@ public class EmrCluster {
      * Connect by cluster name.
      * 
      * @throws InterruptedException
-     * @throws AmazonElasticMapReduceException
      */
     public void connectByName() throws InterruptedException {
         checkConnection(false);
         List<JobFlowDetail> jobFlows = getRunningJobFlowDetailsByName(getName());
         if (jobFlows.isEmpty()) {
-            throw new IllegalStateException("no cluster/jobFlow with name '" + getName() + "' running");
+            throw new IllegalStateException("No job flow with name '" + getName() + "' running.");
         }
         if (jobFlows.size() > 1) {
-            throw new IllegalStateException("more then one cluster/jobFlow with name '" + getName() + "' running");
+            throw new IllegalStateException("More than one job flow with name '" + getName() + "' running.");
         }
         connectById(jobFlows.get(0).getJobFlowId());
     }
@@ -219,7 +218,6 @@ public class EmrCluster {
      * 
      * @param jobFlowId
      * @throws InterruptedException
-     * @throws AmazonElasticMapReduceException
      */
     public void connectById(String jobFlowId) throws InterruptedException {
         checkConnection(false);
