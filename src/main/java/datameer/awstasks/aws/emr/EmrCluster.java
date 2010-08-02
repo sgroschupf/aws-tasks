@@ -368,8 +368,10 @@ public class EmrCluster {
                 LOG.info("job step '" + stepName + "' in state '" + stepState + "'");
                 boolean finished = stepState.isFinished();
                 if (finished) {
+
                     if (!stepState.isSuccessful()) {
-                        throw new RuntimeException("job step '" + stepName + "' failed (state: " + stepState + ")");
+                        int stepIndex = getStepIndex(getJobFlowDetail(jobFlowId), stepName);
+                        throw new RuntimeException("job step '" + stepName + "' (" + jobFlowId + "/" + stepIndex + ") failed with state '" + stepState + "'");
                     }
                 }
                 return finished;
