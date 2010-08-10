@@ -128,7 +128,7 @@ public class SshClientImpl implements SshClient {
     protected JschRunner createJschRunner(String host) {
         JschRunner runner = new JschRunner(_username, host);
         if (_privateKey != null) {
-            runner.setKeyfile(_privateKey.getAbsolutePath());
+            runner.setKeyfile(_privateKey);
         } else {
             runner.setPassword(_password);
         }

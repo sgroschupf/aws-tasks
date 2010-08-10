@@ -28,6 +28,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
+import com.jcraft.jsch.Identity;
+import com.jcraft.jsch.IdentityKeyString;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
@@ -46,12 +48,14 @@ public class JschRunner extends ShellExecutor {
     private final String _user;
     private final String _host;
     private int _port = 22;
-    private String _keyFile;
+    private File _keyFile;
+    private String _keyFileContent;
     private String _password;
     private String _knownHosts = System.getProperty("user.home") + "/.ssh/known_hosts";
     private boolean _trust;
     protected int _connectTimeout = (int) TimeUnit.SECONDS.toMillis(80);
     private int _timeout = 0;
+    private boolean _debug;
 
     public JschRunner(String user, String host) {
         _user = user;
@@ -62,22 +66,30 @@ public class JschRunner extends ShellExecutor {
         return _host;
     }
 
-    public void setKeyfile(String keyfile) {
-        if (_password != null) {
+    public void setKeyfile(File keyfile) {
+        if (_password != null || _keyFileContent != null) {
             throwAuthenticationAlreadySetException();
         }
         _keyFile = keyfile;
     }
 
+    public void setKeyfileContent(String keyFileContent) {
+        if (_password != null || _keyFile != null) {
+            throwAuthenticationAlreadySetException();
+        }
+
+        _keyFileContent = keyFileContent;
+    }
+
     public void setPassword(String password) {
-        if (_keyFile != null) {
+        if (_keyFile != null || _keyFileContent != null) {
             throwAuthenticationAlreadySetException();
         }
         _password = password;
     }
 
     private void throwAuthenticationAlreadySetException() {
-        throw new IllegalStateException("set either password or keyfile");
+        throw new IllegalStateException("set either password OR keyfile OR keyfile-content");
     }
 
     public void setKnownHosts(String knownHosts) {
@@ -110,6 +122,14 @@ public class JschRunner extends ShellExecutor {
 
     public int getTimeout() {
         return _timeout;
+    }
+
+    public void setDebug(boolean debug) {
+        _debug = debug;
+    }
+
+    public boolean isDebug() {
+        return _debug;
     }
 
     public void run(JschCommand command) throws IOException {
@@ -183,9 +203,15 @@ public class JschRunner extends ShellExecutor {
 
     private Session openSession() throws JSchException {
         JSch jsch = new JSch();
-        // JSch.setLogger(DEBUG_LOGGER);
+        if (isDebug()) {
+            JSch.setLogger(DEBUG_LOGGER);
+        }
         if (_keyFile != null) {
-            jsch.addIdentity(_keyFile);
+            jsch.addIdentity(_keyFile.getAbsolutePath());
+        }
+        if (_keyFileContent != null) {
+            Identity identity = IdentityKeyString.newInstance(_keyFileContent, jsch);
+            jsch.addIdentity(identity, null);
         }
 
         if (!_trust && _knownHosts != null) {

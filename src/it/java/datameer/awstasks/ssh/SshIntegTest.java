@@ -96,7 +96,7 @@ public class SshIntegTest extends AbstractEc2IntegrationInteractionTest {
 
     private JschRunner createJschRunner() throws EC2Exception, IOException {
         JschRunner jschRunner = new JschRunner("ubuntu", _instanceGroup.getReservationDescription(false).getInstances().get(0).getDnsName());
-        jschRunner.setKeyfile(_ec2Conf.getPrivateKeyFile());
+        jschRunner.setKeyfile(new File(_ec2Conf.getPrivateKeyFile()));
         jschRunner.setTrust(true);
 
         LOG.info("test ssh connections");

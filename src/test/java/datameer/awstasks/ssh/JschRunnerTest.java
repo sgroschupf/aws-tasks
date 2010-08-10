@@ -20,9 +20,13 @@ import static org.hamcrest.Matchers.*;
 
 import static org.junit.Assert.*;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -60,8 +64,32 @@ public class JschRunnerTest extends AbstractTest {
 
     private JschRunner createJschRunner() {
         JschRunner jschRunner = new JschRunner(USER, HOST);
-        jschRunner.setKeyfile(JschRunner.findStandardKeyFile(false).getAbsolutePath());
+        jschRunner.setKeyfile(JschRunner.findStandardKeyFile(false));
         return jschRunner;
+    }
+
+    @Test
+    public void testConnectWithKeyFileContent() throws Exception {
+        File keyFile = JschRunner.findStandardKeyFile(true);
+        String keyFileContent = readKeyFile(keyFile);
+
+        JschRunner jschRunner = new JschRunner(USER, HOST);
+        jschRunner.setKeyfileContent(keyFileContent);
+
+        ShellCommand<?> command = new ShellCommand<List<String>>(new String[] { "ls", "/" }, true);
+        jschRunner.execute(command);
+    }
+
+    private String readKeyFile(File keyFile) throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(keyFile)));
+        StringBuilder builder = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            builder.append(line);
+            builder.append("\n");
+        }
+        return builder.toString();
+
     }
 
     @Test

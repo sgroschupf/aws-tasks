@@ -25,12 +25,12 @@ import org.apache.log4j.Logger;
 
 import com.xerox.amazonws.ec2.EC2Exception;
 import com.xerox.amazonws.ec2.GroupDescription;
+import com.xerox.amazonws.ec2.GroupDescription.IpPermission;
 import com.xerox.amazonws.ec2.Jec2;
 import com.xerox.amazonws.ec2.LaunchConfiguration;
 import com.xerox.amazonws.ec2.ReservationDescription;
-import com.xerox.amazonws.ec2.TerminatingInstanceDescription;
-import com.xerox.amazonws.ec2.GroupDescription.IpPermission;
 import com.xerox.amazonws.ec2.ReservationDescription.Instance;
+import com.xerox.amazonws.ec2.TerminatingInstanceDescription;
 
 import datameer.awstasks.aws.ec2.ssh.SshClient;
 import datameer.awstasks.aws.ec2.ssh.SshClientImpl;
@@ -194,7 +194,7 @@ public class InstanceGroupImpl implements InstanceGroup {
         for (String dns : instanceDns) {
             JschRunner runner = new JschRunner(username, dns);
             if (privateKey != null) {
-                runner.setKeyfile(privateKey.getAbsolutePath());
+                runner.setKeyfile(new File(privateKey.getAbsolutePath()));
             } else {
                 runner.setPassword(password);
             }
