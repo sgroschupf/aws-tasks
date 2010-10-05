@@ -107,11 +107,11 @@ public class EmrCluster {
         return _emrWebService;
     }
 
-    public void setRequestInterval(int requestInterval) {
+    public void setRequestInterval(long requestInterval) {
         _emrWebService.setRequestInterval(requestInterval);
     }
 
-    public int getRequestInterval() {
+    public long getRequestInterval() {
         return _emrWebService.getRequestInterval();
     }
 
@@ -385,7 +385,7 @@ public class EmrCluster {
         return stepState;
     }
 
-    protected static void doWhileNot(Callable<Boolean> callable, int requestInterval) throws InterruptedException {
+    protected static void doWhileNot(Callable<Boolean> callable, long requestInterval) throws InterruptedException {
         boolean finished = false;
         do {
             try {
@@ -416,8 +416,8 @@ public class EmrCluster {
         DescribeJobFlowsResult describeJobFlows = _emrWebService.describeJobFlows(new DescribeJobFlowsRequest().withJobFlowStates(JobFlowState.STARTING.name(), JobFlowState.WAITING.name(),
                 JobFlowState.RUNNING.name()));
         List<JobFlowDetail> jobFlows = describeJobFlows.getJobFlows();
-        for (Iterator iterator = jobFlows.iterator(); iterator.hasNext();) {
-            JobFlowDetail jobFlowDetail = (JobFlowDetail) iterator.next();
+        for (Iterator<JobFlowDetail> iterator = jobFlows.iterator(); iterator.hasNext();) {
+            JobFlowDetail jobFlowDetail = iterator.next();
             if (!name.equals(jobFlowDetail.getName())) {
                 iterator.remove();
             }
@@ -515,8 +515,8 @@ public class EmrCluster {
 
         private Domain getDomain() throws SDBException {
             List<Domain> domains = _simpleDB.listDomains().getDomainList();
-            for (Iterator iterator = domains.iterator(); iterator.hasNext();) {
-                Domain domain = (Domain) iterator.next();
+            for (Iterator<Domain> iterator = domains.iterator(); iterator.hasNext();) {
+                Domain domain = iterator.next();
                 if (!domain.getName().startsWith("ElasticMapReduce-")) {
                     iterator.remove();
                 }

@@ -15,12 +15,21 @@
  */
 package datameer.awstasks.aws.emr;
 
+import static org.hamcrest.Matchers.*;
+
 import static org.junit.Assert.*;
+
+import static org.mockito.Mockito.*;
+
+import java.util.concurrent.Callable;
 
 import org.junit.Test;
 
+import com.amazonaws.AmazonClientException;
+import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.elasticmapreduce.model.DescribeJobFlowsRequest;
 import com.amazonaws.services.elasticmapreduce.model.DescribeJobFlowsResult;
+import com.amazonaws.services.sns.model.AuthorizationErrorException;
 
 import datameer.awstasks.aws.emr.AmazonElasticMapReduceCustomClient.JobFlowDescriptionCache;
 
@@ -45,5 +54,67 @@ public class AmazonElasticMapReduceCustomClientTest {
         Thread.sleep(maxCacheTime * 2);
         assertNull(cache.getResponse(request1));
         assertNull(cache.getResponse(request2));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testDoWithRetry_ThrottleException() throws Exception {
+        AmazonElasticMapReduceCustomClient client = new AmazonElasticMapReduceCustomClient("dummy", "dummy");
+        client.setRequestInterval(100);
+
+        Callable callable = mock(Callable.class);
+        AmazonServiceException exception = new AmazonServiceException("Rate exceeded");
+        exception.setErrorCode("Throttling");
+        exception.setStatusCode(400);
+        when(callable.call()).thenThrow(exception, exception, exception).thenReturn(new Object());
+
+        long startTime = System.currentTimeMillis();
+        Object result = client.doThrottleSafe(callable);
+        assertNotNull(result);
+        assertThat((System.currentTimeMillis() - startTime), greaterThanOrEqualTo(3 * client.getRequestInterval()));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testDoWithRetry_ReadTimeOut() throws Exception {
+        AmazonElasticMapReduceCustomClient client = new AmazonElasticMapReduceCustomClient("dummy", "dummy");
+        client.setRequestInterval(100);
+
+        Callable callable = mock(Callable.class);
+        AmazonClientException exception = new AmazonClientException("Unable to execute HTTP request: Read timed out");
+        when(callable.call()).thenThrow(exception, exception, exception).thenReturn(new Object());
+
+        long startTime = System.currentTimeMillis();
+        Object result = client.doThrottleSafe(callable);
+        assertNotNull(result);
+        assertThat((System.currentTimeMillis() - startTime), greaterThanOrEqualTo(3 * client.getRequestInterval()));
+
+        // now exceed retries
+        client.setMaxRetriesOnConnectionErrors(2);
+        when(callable.call()).thenThrow(exception, exception, exception).thenReturn(new Object());
+        try {
+            client.doThrottleSafe(callable);
+            fail("should throw exception");
+        } catch (Exception e) {
+            assertSame(exception, e);
+        }
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testDoWithRetry_NoRetry() throws Exception {
+        AmazonElasticMapReduceCustomClient client = new AmazonElasticMapReduceCustomClient("dummy", "dummy");
+        client.setRequestInterval(100);
+
+        Callable callable = mock(Callable.class);
+        AmazonClientException exception = new AuthorizationErrorException("auth error");
+        when(callable.call()).thenThrow(exception).thenReturn(new Object());
+
+        try {
+            client.doThrottleSafe(callable);
+            fail("should throw exception");
+        } catch (Exception e) {
+            assertSame(exception, e);
+        }
     }
 }

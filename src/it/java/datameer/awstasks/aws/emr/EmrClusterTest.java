@@ -102,7 +102,7 @@ public class EmrClusterTest extends AbstractAwsIntegrationTest {
         assertNull(_emrCluster.getJobFlowId());
         _emrCluster.connectById(_jobFlowId);
         assertEquals(ClusterState.CONNECTED, _emrCluster.getState());
-        assertNotNull(_emrCluster.getJobFlowId());
+        assertEquals(_jobFlowId, _emrCluster.getJobFlowId());
     }
 
     @Test
@@ -159,7 +159,7 @@ public class EmrClusterTest extends AbstractAwsIntegrationTest {
 
     @Test
     public void testExecuteJobStep_ThrottleSafeness() throws Exception {
-        int oldRequestInterval = _emrCluster.getRequestInterval();
+        long oldRequestInterval = _emrCluster.getRequestInterval();
         _emrCluster.setRequestInterval(1000);// this should produce throttle exceptions
         _emrCluster.connectByName();
         File jobJar = new File("lib/test/hadoop-0.18.3-examples.jar");

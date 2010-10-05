@@ -24,6 +24,7 @@ import java.util.concurrent.Callable;
 
 import org.apache.log4j.Logger;
 
+import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduceClient;
@@ -35,6 +36,7 @@ import com.amazonaws.services.elasticmapreduce.model.RunJobFlowResult;
 import com.amazonaws.services.elasticmapreduce.model.TerminateJobFlowsRequest;
 
 import datameer.awstasks.aws.emr.EmrCluster.InterruptedRuntimeException;
+import datameer.awstasks.util.ExceptionUtil;
 
 /**
  * 
@@ -48,20 +50,29 @@ import datameer.awstasks.aws.emr.EmrCluster.InterruptedRuntimeException;
 public class AmazonElasticMapReduceCustomClient extends AmazonElasticMapReduceClient {
 
     protected static final Logger LOG = Logger.getLogger(AmazonElasticMapReduceCustomClient.class);
-    private int _requestInterval = 10000;
+    private long _requestInterval = 10000;
+    private int _maxRetriesOnConnectionErrors = 25;
     private JobFlowDescriptionCache _flowDescriptionCache = new JobFlowDescriptionCache(_requestInterval);
 
     public AmazonElasticMapReduceCustomClient(String awsAccessKeyId, String awsSecretAccessKey) {
         super(new BasicAWSCredentials(awsAccessKeyId, awsSecretAccessKey));
     }
 
-    public void setRequestInterval(int requestInterval) {
+    public void setRequestInterval(long requestInterval) {
         _requestInterval = requestInterval;
         _flowDescriptionCache.setMaxCacheTime(requestInterval);
     }
 
-    public int getRequestInterval() {
+    public long getRequestInterval() {
         return _requestInterval;
+    }
+
+    public void setMaxRetriesOnConnectionErrors(int maxRetriesOnConnectionErrors) {
+        _maxRetriesOnConnectionErrors = maxRetriesOnConnectionErrors;
+    }
+
+    public int getMaxRetriesOnConnectionErrors() {
+        return _maxRetriesOnConnectionErrors;
     }
 
     @Override
@@ -72,7 +83,7 @@ public class AmazonElasticMapReduceCustomClient extends AmazonElasticMapReduceCl
                 AmazonElasticMapReduceCustomClient.super.addJobFlowSteps(request);
                 return null;
             }
-        }, getRequestInterval());
+        });
     }
 
     @Override
@@ -89,7 +100,7 @@ public class AmazonElasticMapReduceCustomClient extends AmazonElasticMapReduceCl
                     _flowDescriptionCache.addResponse(request, response);
                     return response;
                 }
-            }, getRequestInterval());
+            });
         }
     }
 
@@ -106,7 +117,7 @@ public class AmazonElasticMapReduceCustomClient extends AmazonElasticMapReduceCl
             public RunJobFlowResult call() throws Exception {
                 return AmazonElasticMapReduceCustomClient.super.runJobFlow(request);
             }
-        }, getRequestInterval());
+        });
     }
 
     @Override
@@ -117,46 +128,60 @@ public class AmazonElasticMapReduceCustomClient extends AmazonElasticMapReduceCl
                 AmazonElasticMapReduceCustomClient.super.terminateJobFlows(request);
                 return null;
             }
-        }, getRequestInterval());
+        });
     }
 
-    protected static <T> T doThrottleSafe(Callable<T> callable, int requestInterval) throws AmazonServiceException, InterruptedRuntimeException {
-        T result;
-        try {
-            result = callable.call();
-        } catch (AmazonServiceException e) {
-            String errorCode = e.getErrorCode();
-            if (errorCode == null || !errorCode.equals("Throttling")) {
-                throw e;
-            }
-            LOG.warn("throttle exception: " + e.getMessage());
+    protected <T> T doThrottleSafe(Callable<T> callable) throws AmazonServiceException, InterruptedRuntimeException {
+        int failCount = 0;
+        do {
             try {
-                Thread.sleep(requestInterval);
-            } catch (InterruptedException e2) {
-                throw new InterruptedRuntimeException(e2);
+                return callable.call();
+            } catch (AmazonClientException e) {
+                failCount++;
+                if (!shouldRetryWebServiceCall(e, failCount)) {
+                    throw e;
+                }
+                LOG.warn("retrying after exception: " + e.getMessage());
+                try {
+                    Thread.sleep(getRequestInterval());
+                } catch (InterruptedException e2) {
+                    throw new InterruptedRuntimeException(e2);
+                }
+            } catch (InterruptedException e) {
+                throw new InterruptedRuntimeException(e);
+            } catch (Exception e) {
+                throw ExceptionUtil.convertToRuntimeException(e);
             }
-            return doThrottleSafe(callable, requestInterval);
-        } catch (InterruptedException e) {
-            throw new InterruptedRuntimeException(e);
-        } catch (RuntimeException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+
+        } while (true);
+    }
+
+    private boolean shouldRetryWebServiceCall(AmazonClientException e, int failCount) {
+        if (e instanceof AmazonServiceException) {
+            String errorCode = ((AmazonServiceException) e).getErrorCode();
+            if (errorCode != null && errorCode.equals("Throttling")) {
+                return true;
+            }
         }
-        return result;
+
+        if (e.getMessage() != null && e.getMessage().contains("Unable to execute HTTP request") && failCount < getMaxRetriesOnConnectionErrors()) {
+            return true;
+        }
+
+        return false;
     }
 
     static class JobFlowDescriptionCache {
 
         private final Map<Integer, DescribeJobFlowsResult> _cachedJobFlowsDescriptionsByRequestHash = new HashMap<Integer, DescribeJobFlowsResult>();
         private final Map<Integer, Long> _lastRetrievalTimeByRequestHash = new HashMap<Integer, Long>();
-        private int _maxCacheTime;
+        private long _maxCacheTime;
 
-        public JobFlowDescriptionCache(int maxCacheTime) {
+        public JobFlowDescriptionCache(long maxCacheTime) {
             _maxCacheTime = maxCacheTime;
         }
 
-        public void setMaxCacheTime(int maxCacheTime) {
+        public void setMaxCacheTime(long maxCacheTime) {
             _maxCacheTime = maxCacheTime;
         }
 
