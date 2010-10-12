@@ -20,12 +20,14 @@ import java.util.List;
 
 import datameer.awstasks.aws.emr.EmrCluster;
 import datameer.awstasks.aws.emr.EmrSettings;
+import datameer.awstasks.aws.emr.EmrCluster.ClusterState;
 
 public class EmrStartCommand implements EmrCommand {
 
     private String _privateKeyName;
     private int _instanceCount;
     private String _hadoopVersion;
+    private boolean _reuseRunningCluster;
     private List<BootstrapConfig> _bootstrapConfigs = new ArrayList<BootstrapConfig>();
 
     public String getPrivateKeyName() {
@@ -56,6 +58,14 @@ public class EmrStartCommand implements EmrCommand {
         _bootstrapConfigs.add(bootstrapConfig);
     }
 
+    public void setReuseRunningCluster(boolean reuseRunningCluster) {
+        _reuseRunningCluster = reuseRunningCluster;
+    }
+
+    public boolean isReuseRunningCluster() {
+        return _reuseRunningCluster;
+    }
+
     @Override
     public void execute(EmrCluster cluster) throws Exception {
         EmrSettings settings = cluster.getSettings();
@@ -65,6 +75,15 @@ public class EmrStartCommand implements EmrCommand {
         for (BootstrapConfig bootstrapConfig : _bootstrapConfigs) {
             settings.getBootstrapActions().add(bootstrapConfig.createBootstrapActionConfig());
         }
-        cluster.startup();
+        if (isReuseRunningCluster()) {
+            try {
+                cluster.connectByName();
+            } catch (Exception e) {
+                // might not be running
+            }
+        }
+        if (cluster.getState() == ClusterState.UNCONNECTED) {
+            cluster.startup();
+        }
     }
 }
