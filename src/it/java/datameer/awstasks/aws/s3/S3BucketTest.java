@@ -65,6 +65,5 @@ public class S3BucketTest extends AbstractAwsIntegrationTest {
         S3Util.uploadFile(s3Service, AWS_TEST_BUCKET, new File("build.xml"), remotePath);
         assertTrue(S3Util.existsFile(s3Service, AWS_TEST_BUCKET, remotePath));
         assertFalse(S3Util.existsFile(s3Service, AWS_TEST_BUCKET, remotePath + "/dwefwfe"));
-        assertTrue(S3Util.existsFile(s3Service, AWS_TEST_BUCKET, ".p4tickets"));
     }
 }
