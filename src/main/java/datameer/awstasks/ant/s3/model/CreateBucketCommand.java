@@ -17,8 +17,6 @@ package datameer.awstasks.ant.s3.model;
 
 import java.util.List;
 
-import org.jets3t.service.S3ServiceException;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 
@@ -53,7 +51,7 @@ public class CreateBucketCommand extends S3Command {
     }
 
     @Override
-    public void execute(AmazonS3 s3Service) throws S3ServiceException {
+    public void execute(AmazonS3 s3Service) {
         // S3Bucket s3Bucket = new S3Bucket(_name, _location);
         boolean doesBucketExist = s3Service.doesBucketExist(_name);
 

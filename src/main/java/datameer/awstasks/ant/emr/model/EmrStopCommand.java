@@ -15,6 +15,7 @@
  */
 package datameer.awstasks.ant.emr.model;
 
+import datameer.awstasks.ant.emr.EmrTask;
 import datameer.awstasks.aws.emr.EmrCluster;
 import datameer.awstasks.aws.emr.EmrCluster.ClusterState;
 
@@ -26,6 +27,16 @@ public class EmrStopCommand implements EmrCommand {
             cluster.connectByName();
         }
         cluster.shutdown();
+    }
+
+    public static void main(String[] args) {
+        EmrTask emrTask = new EmrTask();
+        emrTask.setAccessKey("AKIAIUZ4L3YT43JZI6QA");
+        emrTask.setAccessSecret("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");
+        emrTask.setClusterName("dm-bamboo.emr.test.cluster");
+        emrTask.addStopCluster(new EmrStopCommand());
+        emrTask.execute();
+        // emrTask.setS3Bucket(")
     }
 
 }
