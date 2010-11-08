@@ -34,7 +34,7 @@ public class S3Util {
             remotePath = remotePath.substring(1);
         }
         try {
-            s3Service.getObject(bucketName, remotePath);
+            s3Service.getObjectAcl(bucketName, remotePath);
             return true;
         } catch (AmazonS3Exception e) {
             if ("NoSuchKey".equals(e.getErrorCode())) {
