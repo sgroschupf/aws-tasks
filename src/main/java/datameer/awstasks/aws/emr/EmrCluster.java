@@ -413,8 +413,8 @@ public class EmrCluster {
     }
 
     protected List<JobFlowDetail> getRunningJobFlowDetailsByName(String name) {
-        DescribeJobFlowsResult describeJobFlows = _emrWebService.describeJobFlows(new DescribeJobFlowsRequest().withJobFlowStates(JobFlowState.STARTING.name(), JobFlowState.WAITING.name(),
-                JobFlowState.RUNNING.name()));
+        DescribeJobFlowsResult describeJobFlows = _emrWebService.describeJobFlows(new DescribeJobFlowsRequest().withJobFlowStates(JobFlowState.STARTING.name(), JobFlowState.BOOTSTRAPPING.name(),
+                JobFlowState.WAITING.name(), JobFlowState.RUNNING.name()));
         List<JobFlowDetail> jobFlows = describeJobFlows.getJobFlows();
         for (Iterator<JobFlowDetail> iterator = jobFlows.iterator(); iterator.hasNext();) {
             JobFlowDetail jobFlowDetail = iterator.next();
