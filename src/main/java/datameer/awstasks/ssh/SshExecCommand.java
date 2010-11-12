@@ -25,6 +25,8 @@ import java.io.OutputStream;
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.Session;
 
+import datameer.awstasks.util.SshUtil;
+
 public class SshExecCommand extends JschCommand {
 
     private final String _command;
@@ -58,7 +60,7 @@ public class SshExecCommand extends JschCommand {
     }
 
     private void executeCommand(Session session, String command) throws IOException {
-        final Channel channel = openExecChannel(session, command);
+        final Channel channel = SshUtil.openExecChannel(session, command);
         channel.setOutputStream(_outputStream);
         channel.setExtOutputStream(_outputStream);
 

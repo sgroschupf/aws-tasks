@@ -24,9 +24,11 @@ import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -134,6 +136,24 @@ public class JschRunnerTest extends AbstractTest {
         IoUtil.copyBytes(inputStream, byteOutStream);
         assertEquals(available, byteOutStream.size());
         inputStream.close();
+    }
+
+    @Test
+    public void testCreate() throws Exception {
+        File file = _tempFolder.newFile("remoteFile");
+        file.delete();
+        String message = "hello world";
+
+        JschRunner jschRunner = createJschRunner();
+        OutputStream outputStream = jschRunner.createFile(file.getAbsolutePath(), message.getBytes().length);
+        outputStream.write(message.getBytes());
+        outputStream.close();
+
+        BufferedReader reader = new BufferedReader(new FileReader(file));
+        String line = reader.readLine();
+        assertEquals(message, line);
+        assertNull(reader.readLine());
+        reader.close();
     }
 
     @Test

@@ -25,6 +25,7 @@ import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.Session;
 
 import datameer.awstasks.util.IoUtil;
+import datameer.awstasks.util.SshUtil;
 
 public class ScpUploadCommand extends JschCommand {
 
@@ -42,12 +43,12 @@ public class ScpUploadCommand extends JschCommand {
     @Override
     public void execute(Session session) throws IOException {
         String command = constructScpUploadCommand(_localFile.isDirectory(), _targetPath);
-        Channel channel = openExecChannel(session, command);
+        Channel channel = SshUtil.openExecChannel(session, command);
         try {
             OutputStream out = channel.getOutputStream();
             InputStream in = channel.getInputStream();
 
-            checkAcknowledgement(in);
+            SshUtil.checkAcknowledgement(in);
             if (_localFile.isDirectory()) {
                 uploadFolder(_localFile, in, out);
             } else {
@@ -68,10 +69,10 @@ public class ScpUploadCommand extends JschCommand {
     }
 
     private static void uploadFolder(File folder, InputStream in, OutputStream out) throws IOException {
-        writeAcknowledgedMessage("D0755 0 " + folder.getName() + "\n", in, out);
+        SshUtil.writeAcknowledgedMessage("D0755 0 " + folder.getName() + "\n", in, out);
 
         uploadFolderChildren(folder, in, out);
-        writeAcknowledgedMessage("E\n", in, out);
+        SshUtil.writeAcknowledgedMessage("E\n", in, out);
     }
 
     private static void uploadFolderChildren(File localFile, InputStream in, OutputStream out) throws IOException {
@@ -86,7 +87,7 @@ public class ScpUploadCommand extends JschCommand {
     }
 
     private static void uploadFile(File localFile, InputStream in, OutputStream out) throws IOException {
-        writeAcknowledgedMessage("C0644 " + localFile.length() + " " + localFile.getName() + "\n", in, out);
+        SshUtil.writeAcknowledgedMessage("C0644 " + localFile.length() + " " + localFile.getName() + "\n", in, out);
         FileInputStream fileInputStream = new FileInputStream(localFile);
         long startTime = System.currentTimeMillis();
         long totalLength = 0;
@@ -97,8 +98,8 @@ public class ScpUploadCommand extends JschCommand {
             }
             totalLength = IoUtil.copyBytes(fileInputStream, out);
             out.flush();
-            sendAckOk(out);
-            checkAcknowledgement(in);
+            SshUtil.sendAckOk(out);
+            SshUtil.checkAcknowledgement(in);
         } finally {
             if (LOG.isDebugEnabled()) {
                 long endTime = System.currentTimeMillis();
@@ -106,12 +107,6 @@ public class ScpUploadCommand extends JschCommand {
             }
             fileInputStream.close();
         }
-    }
-
-    protected final static void writeAcknowledgedMessage(String message, InputStream in, OutputStream out) throws IOException {
-        out.write((message).getBytes());
-        out.flush();
-        checkAcknowledgement(in);
     }
 
 }

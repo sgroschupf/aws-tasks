@@ -165,6 +165,16 @@ public class JschRunner extends ShellExecutor {
         }
     }
 
+    public OutputStream createFile(String remoteFile, long length) throws IOException {
+        Session session = null;
+        try {
+            session = openSession();
+            return new ScpFileOutputStream(session, remoteFile, length);
+        } catch (JSchException e) {
+            throw new IOException(e);
+        }
+    }
+
     /**
      * Connects to the host and then closes the connection. Throws an execption if connection cannot
      * be established.

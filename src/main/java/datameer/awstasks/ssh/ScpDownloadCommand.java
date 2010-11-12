@@ -27,6 +27,7 @@ import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.Session;
 
 import datameer.awstasks.util.IoUtil;
+import datameer.awstasks.util.SshUtil;
 
 public class ScpDownloadCommand extends JschCommand {
 
@@ -46,12 +47,12 @@ public class ScpDownloadCommand extends JschCommand {
     @Override
     public void execute(Session session) throws IOException {
         String command = constructScpInitCommand(_remoteFile, _recursive);
-        Channel channel = openExecChannel(session, command);
+        Channel channel = SshUtil.openExecChannel(session, command);
         try {
             OutputStream out = channel.getOutputStream();
             InputStream in = channel.getInputStream();
 
-            sendAckOk(out);
+            SshUtil.sendAckOk(out);
             download(in, out, _localFile);
         } finally {
             if (channel != null) {
@@ -83,10 +84,10 @@ public class ScpDownloadCommand extends JschCommand {
                 parseAndDownloadFile(serverResponse, startFile, out, in);
             } else if (serverResponse.charAt(0) == 'D') {
                 startFile = parseAndCreateDirectory(serverResponse, startFile);
-                sendAckOk(out);
+                SshUtil.sendAckOk(out);
             } else if (serverResponse.charAt(0) == 'E') {
                 startFile = startFile.getParentFile();
-                sendAckOk(out);
+                SshUtil.sendAckOk(out);
             } else if (serverResponse.charAt(0) == '\01' || serverResponse.charAt(0) == '\02') {
                 // this indicates an error.
                 throw new IOException(serverResponse.substring(1));
@@ -134,12 +135,12 @@ public class ScpDownloadCommand extends JschCommand {
         LOG.info("Receiving: " + filename + " : " + filesize);
         File transferFile = (localFile.isDirectory()) ? new File(localFile, filename) : localFile;
         downloadFile(transferFile, filesize, out, in);
-        checkAcknowledgement(in);
-        sendAckOk(out);
+        SshUtil.checkAcknowledgement(in);
+        SshUtil.sendAckOk(out);
     }
 
     private final static void downloadFile(File localFile, long filesize, OutputStream out, InputStream in) throws IOException {
-        sendAckOk(out);
+        SshUtil.sendAckOk(out);
 
         // read a content of lfile
         FileOutputStream fos = new FileOutputStream(localFile);

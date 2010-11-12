@@ -24,6 +24,8 @@ import org.apache.log4j.Logger;
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.Session;
 
+import datameer.awstasks.util.SshUtil;
+
 public class ScpFileInputStream extends InputStream {
 
     private static final Logger LOG = Logger.getLogger(ScpFileInputStream.class);
@@ -37,10 +39,10 @@ public class ScpFileInputStream extends InputStream {
     public ScpFileInputStream(Session session, String remoteFile) throws IOException {
         _session = session;
         String command = ScpDownloadCommand.constructScpInitCommand(remoteFile, false);
-        _execChannel = JschCommand.openExecChannel(session, command);
+        _execChannel = SshUtil.openExecChannel(session, command);
         _sshOutputStream = _execChannel.getOutputStream();
         _sshInputStream = _execChannel.getInputStream();
-        JschCommand.sendAckOk(_sshOutputStream);
+        SshUtil.sendAckOk(_sshOutputStream);
         String serverResponse = ScpDownloadCommand.readServerResponse(_sshInputStream);
         if (serverResponse.charAt(0) != 'C') {
             throw new IllegalStateException("unexpected server response: " + serverResponse);
@@ -52,7 +54,7 @@ public class ScpFileInputStream extends InputStream {
         long filesize = Long.parseLong(serverResponse.substring(start, end));
         String filename = serverResponse.substring(end + 1);
         LOG.info("opening file: " + filename + " | " + filesize);
-        JschCommand.sendAckOk(_sshOutputStream);
+        SshUtil.sendAckOk(_sshOutputStream);
         _availible = filesize;
     }
 
@@ -80,8 +82,8 @@ public class ScpFileInputStream extends InputStream {
     @Override
     public void close() throws IOException {
         try {
-            JschCommand.checkAcknowledgement(_sshInputStream);
-            JschCommand.sendAckOk(_sshOutputStream);
+            SshUtil.checkAcknowledgement(_sshInputStream);
+            SshUtil.sendAckOk(_sshOutputStream);
         } catch (IOException e) {
             // happens in the middle of read
         }

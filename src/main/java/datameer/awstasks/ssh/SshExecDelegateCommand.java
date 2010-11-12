@@ -23,6 +23,7 @@ import com.jcraft.jsch.Session;
 
 import datameer.awstasks.exec.ExecOutputHandler;
 import datameer.awstasks.exec.ShellCommand;
+import datameer.awstasks.util.SshUtil;
 
 public class SshExecDelegateCommand<R> extends JschCommand {
 
@@ -47,7 +48,7 @@ public class SshExecDelegateCommand<R> extends JschCommand {
     }
 
     private void executeCommand(Session session, String command) throws IOException {
-        final Channel channel = openExecChannel(session, command);
+        final Channel channel = SshUtil.openExecChannel(session, command);
         ToLineOutputStream outputStream = new ToLineOutputStream(_outputHandler);
         try {
             // OutputStream outputStream = IoUtil.closeProtectedStream(System.out);
