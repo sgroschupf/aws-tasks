@@ -358,15 +358,14 @@ public class EmrCluster {
         }, getRequestInterval());
     }
 
-    protected void waitUntilStepFinished(final String jobFlowId, final String stepName) throws InterruptedException {
+    protected void waitUntilStepFinished(final String jobFlowId, final String stepName, final int stepIndex) throws InterruptedException {
         doWhileNot(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
                 StepState stepState = getStepState(jobFlowId, stepName);
-                LOG.info("job step '" + stepName + "' in state '" + stepState + "'");
+                LOG.info("job step " + stepIndex + "/" + stepName + " in state '" + stepState + "'");
                 boolean finished = stepState.isFinished();
                 if (finished) {
-
                     if (!stepState.isSuccessful()) {
                         int stepIndex = getStepIndex(getJobFlowDetail(jobFlowId), stepName);
                         throw new RuntimeException("job step '" + stepName + "' (" + jobFlowId + "/" + stepIndex + ") failed with state '" + stepState + "'");
@@ -535,7 +534,7 @@ public class EmrCluster {
 
         public void join() throws InterruptedException {
             try {
-                waitUntilStepFinished(_jobFlowId, _stepName);
+                waitUntilStepFinished(_jobFlowId, _stepName, _stepIndex);
             } catch (InterruptedRuntimeException e) {
                 throw e.getCause();
             }
