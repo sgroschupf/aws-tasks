@@ -23,14 +23,15 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
+import com.amazonaws.services.ec2.model.InstanceStateName;
 import com.xerox.amazonws.ec2.EC2Exception;
 import com.xerox.amazonws.ec2.GroupDescription;
-import com.xerox.amazonws.ec2.GroupDescription.IpPermission;
 import com.xerox.amazonws.ec2.Jec2;
 import com.xerox.amazonws.ec2.LaunchConfiguration;
 import com.xerox.amazonws.ec2.ReservationDescription;
-import com.xerox.amazonws.ec2.ReservationDescription.Instance;
 import com.xerox.amazonws.ec2.TerminatingInstanceDescription;
+import com.xerox.amazonws.ec2.GroupDescription.IpPermission;
+import com.xerox.amazonws.ec2.ReservationDescription.Instance;
 
 import datameer.awstasks.aws.ec2.ssh.SshClient;
 import datameer.awstasks.aws.ec2.ssh.SshClientImpl;
@@ -52,7 +53,7 @@ public class InstanceGroupImpl implements InstanceGroup {
     public void connectTo(String groupName) throws EC2Exception {
         checkEc2Association(false);
         LOG.info(String.format("connecting to instances of group '%s'", groupName));
-        _reservationDescription = Ec2Util.findByGroup(_ec2, groupName, "running");
+        _reservationDescription = Ec2Util.findByGroup(_ec2, groupName, InstanceStateName.Pending, InstanceStateName.Running);
         if (_reservationDescription == null) {
             throw new EC2Exception("no instances of group '" + groupName + "' running");
         }

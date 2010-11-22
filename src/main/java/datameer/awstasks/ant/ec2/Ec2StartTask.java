@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.tools.ant.BuildException;
 
+import com.amazonaws.services.ec2.model.InstanceStateName;
 import com.xerox.amazonws.ec2.InstanceType;
 import com.xerox.amazonws.ec2.Jec2;
 import com.xerox.amazonws.ec2.LaunchConfiguration;
@@ -146,7 +147,7 @@ public class Ec2StartTask extends AbstractEc2Task {
         System.out.println("executing " + getClass().getSimpleName() + " with groupName '" + _groupName + "'");
         Jec2 ec2 = new Jec2(_accessKey, _accessSecret);
         try {
-            boolean instancesRunning = Ec2Util.findByGroup(ec2, _groupName, "running") != null;
+            boolean instancesRunning = Ec2Util.findByGroup(ec2, _groupName, InstanceStateName.Pending, InstanceStateName.Running) != null;
             if (!isReuseRunningInstances() && instancesRunning) {
                 throw new IllegalStateException("found already running instances for group '" + _groupName + "'");
             }

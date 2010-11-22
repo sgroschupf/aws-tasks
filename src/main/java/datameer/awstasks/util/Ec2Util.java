@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import com.amazonaws.services.ec2.model.InstanceStateName;
 import com.xerox.amazonws.ec2.EC2Exception;
 import com.xerox.amazonws.ec2.GroupDescription;
 import com.xerox.amazonws.ec2.Jec2;
@@ -30,20 +31,29 @@ import com.xerox.amazonws.ec2.ReservationDescription.Instance;
 
 public class Ec2Util {
 
-    public static ReservationDescription findByGroup(Jec2 ec2, String securityGroup, String mode) throws EC2Exception {
+    public static ReservationDescription findByGroup(Jec2 ec2, String securityGroup, InstanceStateName... instanceStates) throws EC2Exception {
         List<ReservationDescription> reservationDescriptions = ec2.describeInstances(Collections.EMPTY_LIST);
         List<ReservationDescription> matchingReservationDescriptions = new ArrayList<ReservationDescription>(3);
         for (ReservationDescription reservationDescription : reservationDescriptions) {
-            if (reservationDescription.getGroups().contains(securityGroup) && reservationDescription.getInstances().get(0).getState().equals(mode)) {
+            if (reservationDescription.getGroups().contains(securityGroup) && isInOneOfStates(reservationDescription.getInstances().get(0).getState(), instanceStates)) {
                 matchingReservationDescriptions.add(reservationDescription);
             }
         }
         if (matchingReservationDescriptions.size() > 1) {
-            throw new EC2Exception("found more then one instance group for security group '" + securityGroup + "' and with instances in '" + mode + "' mode");
+            throw new EC2Exception("found more then one instance group for security group '" + securityGroup + "' and with instances in '" + Arrays.asList(instanceStates) + "' mode");
         } else if (matchingReservationDescriptions.isEmpty()) {
             return null;
         }
         return matchingReservationDescriptions.get(0);
+    }
+
+    private static boolean isInOneOfStates(String state, InstanceStateName... instanceStates) {
+        for (InstanceStateName instanceStateName : instanceStates) {
+            if (state.equalsIgnoreCase(instanceStateName.name())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static ReservationDescription reloadReservationDescription(Jec2 ec2, ReservationDescription reservationDescription) throws EC2Exception {

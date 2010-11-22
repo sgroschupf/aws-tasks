@@ -20,11 +20,11 @@ import java.util.concurrent.TimeUnit;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
+import com.amazonaws.services.ec2.model.InstanceStateName;
 import com.xerox.amazonws.ec2.EC2Exception;
 import com.xerox.amazonws.ec2.Jec2;
 import com.xerox.amazonws.ec2.ReservationDescription;
 
-import datameer.awstasks.aws.ec2.InstanceGroupImpl;
 import datameer.awstasks.util.Ec2Util;
 
 public class AbstractEc2IntegrationInteractionTest extends AbstractEc2IntegrationTest {
@@ -41,7 +41,7 @@ public class AbstractEc2IntegrationInteractionTest extends AbstractEc2Integratio
 
         if (CLUSTER_ALREADY_RUNNING) {
             LOG.info("try to use existing instance group");
-            ReservationDescription reservationDescription = Ec2Util.findByGroup(_ec2, TEST_SECURITY_GROUP, "running");
+            ReservationDescription reservationDescription = Ec2Util.findByGroup(_ec2, TEST_SECURITY_GROUP, InstanceStateName.Pending, InstanceStateName.Running);
             if (reservationDescription == null) {
                 LOG.warn("reservation description with running instances NOT found - starting instance group");
             } else {
