@@ -1,6 +1,7 @@
 <!-- run with (from project root):
 	ant compile compile-test compile-examples
 	ant -f src/examples/ant/build.junit.xml
+	ant -f src/examples/ant/build.junit.xml -DshowCurrentTest=true -DshowOutput=true
 -->
 <project name="aws-tasks-example-junit" default="test">
 
