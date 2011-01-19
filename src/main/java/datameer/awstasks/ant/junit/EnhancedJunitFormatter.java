@@ -15,18 +15,11 @@
  */
 package datameer.awstasks.ant.junit;
 
-import java.io.BufferedReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.text.NumberFormat;
-import java.util.Hashtable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import junit.framework.AssertionFailedError;
 import junit.framework.Test;
@@ -43,35 +36,22 @@ import org.apache.tools.ant.util.StringUtils;
  * http://shaman-sir.wikidot.com/one-liner-output-formatter.
  */
 public class EnhancedJunitFormatter implements JUnitResultFormatter, TestListener {
-    // BuildListener
-    private final String TAB_STR = "    ";
 
-    private final boolean showCausesLines = true;
-    // (\w+\.)+(\w+)\((\w+).(?:\w+):(\d+)\)
-    private final Pattern traceLinePattern = Pattern.compile("(\\w+\\.)+(\\w+)\\((\\w+).(?:\\w+):(\\d+)\\)");
+    // TODO combine with BuildListener ?
 
-    private OutputStream out;
     private PrintWriter output;
-    // private StringWriter results;
-    // private PrintWriter resultWriter;
-    private NumberFormat numberFormat = NumberFormat.getInstance();
-
     private String _systemOutput = null;
     private String _systemError = null;
 
     private Map<Test, Throwable> failedTests = new LinkedHashMap<Test, Throwable>();
-    private Hashtable testStarts = new Hashtable();
     private final boolean _showOutput;
 
     public EnhancedJunitFormatter() {
-        // results = new StringWriter();
-        // resultWriter = new PrintWriter(results);
         _showOutput = System.getProperty("showOutput", "false").equals("true");
     }
 
     @Override
     public void setOutput(OutputStream out) {
-        this.out = out;
         output = new PrintWriter(out);
     }
 
@@ -87,7 +67,7 @@ public class EnhancedJunitFormatter implements JUnitResultFormatter, TestListene
 
     @Override
     public void startTestSuite(JUnitTest suite) {
-        output.write(fillWithWhiteSpace(String.format("Running %s... ", suite.getName()), 60));
+        output.write(fillWithWhiteSpace(String.format("Running %s... ", suite.getName()), 80));
     }
 
     @Override
@@ -99,7 +79,6 @@ public class EnhancedJunitFormatter implements JUnitResultFormatter, TestListene
         } else {
             output.write("SUCCEED");
         }
-        // output.write(StringUtils.LINE_SEP);
         StringBuilder sb = new StringBuilder("\t- Tests: ");
         sb.append(suite.runCount());
         sb.append(", Failures: ");
@@ -124,11 +103,9 @@ public class EnhancedJunitFormatter implements JUnitResultFormatter, TestListene
         }
 
         output.write(sb.toString());
-        // resultWriter.close();
-        // output.write(results.toString());
         if (!failedTests.isEmpty()) {
             for (Entry<Test, Throwable> entry : failedTests.entrySet()) {
-                output.write("\t" + getTestName(entry.getKey()) + "\t" + entry.getValue().getClass().getSimpleName() + ": " + entry.getValue().getMessage() + "\n");
+                output.write("\t" + getTestName(entry.getKey()) + "() \t- " + entry.getValue().getClass().getSimpleName() + ": " + entry.getValue().getMessage() + "\n");
             }
             failedTests.clear();
         }
@@ -137,27 +114,11 @@ public class EnhancedJunitFormatter implements JUnitResultFormatter, TestListene
 
     @Override
     public void startTest(Test test) {
-        testStarts.put(test, new Long(System.currentTimeMillis()));
     }
 
     @Override
     public void endTest(Test test) {
-        // Fix for bug #5637 - if a junit.extensions.TestSetup is
-        // used and throws an exception during setUp then startTest
-        // would never have been called
-        // if (!testStarts.containsKey(test)) {
-        // startTest(test);
-        // }
-        //
-        // boolean failed = failedTests.containsKey(test);
-        //
-        // Long l = (Long) testStarts.get(test);
-        //
-        // output.write("Ran [");
-        // output.write((formatTimeDuration(System.currentTimeMillis() - l.longValue())) + "] ");
-        // output.write(getTestName(test) + " ... " + (failed ? "FAILED" : "OK"));
-        // output.write(StringUtils.LINE_SEP);
-        // output.flush();
+
     }
 
     /**
@@ -262,56 +223,6 @@ public class EnhancedJunitFormatter implements JUnitResultFormatter, TestListene
      */
     protected synchronized void formatError(String type, Test test, Throwable error) {
         failedTests.put(test, error);
-        // if (test != null) {
-        // endTest(test);
-        // }
-
-        // resultWriter.println(formatTest(test) + type);
-        // resultWriter.println(TAB_STR + "(" + error.getClass().getSimpleName() + "): " +
-        // ((error.getMessage() != null) ? error.getMessage() : error));
-        //
-        // if (showCausesLines) {
-        // resultWriter.append(StringUtils.LINE_SEP);
-        // resultWriter.println(filterErrorTrace(test, error));
-        // }
-        //
-        // resultWriter.println();
-
-        /*
-         * String strace = JUnitTestRunner.getFilteredTrace(error); resultWriter.println(strace);
-         * resultWriter.println();
-         */
-    }
-
-    protected String filterErrorTrace(Test test, Throwable error) {
-        String trace = StringUtils.getStackTrace(error);
-        StringWriter sw = new StringWriter();
-        PrintWriter pw = new PrintWriter(sw);
-        StringReader sr = new StringReader(trace);
-        BufferedReader br = new BufferedReader(sr);
-
-        String line;
-        try {
-            while ((line = br.readLine()) != null) {
-                if (line.indexOf(getTestCaseClassName(test)) != -1) {
-                    Matcher matcher = traceLinePattern.matcher(line);
-                    // pw.println(matcher + ": " + matcher.find());
-                    if (matcher.find()) {
-                        pw.print(TAB_STR);
-                        pw.print("(" + matcher.group(3) + ") ");
-                        pw.print(matcher.group(2) + ": ");
-                        pw.println(matcher.group(4));
-                    } else {
-                        pw.println(line);
-                    }
-
-                }
-            }
-        } catch (Exception e) {
-            return trace; // return the treca unfiltered
-        }
-
-        return sw.toString();
     }
 
     private static String formatTimeDuration(long timeDuration) {
