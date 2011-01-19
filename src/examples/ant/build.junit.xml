@@ -30,34 +30,35 @@
 	<!-- ================================================================== -->
 	<target name="test" description="--> start ec2 instance groups">
 		<delete dir="${build.dir.test-reports}" />
-			<mkdir dir="${build.dir.test-reports}" />
-			<junit showoutput="false" printsummary="false" logfailedtests="false" haltonfailure="no" fork="yes" maxmemory="256m" dir="${root.dir}" errorProperty="tests.failed" failureProperty="tests.failed">
-				<sysproperty key="net.sourceforge.cobertura.datafile" file="${reports.dir}/aws-tasks.ser" />
-				<sysproperty key="showCurrentTest" value="${showCurrentTest}"/>
-				<sysproperty key="showOutput" value="${showOutput}"/>
-				<classpath>
-					<pathelement location="${instrumented.dir}" />
-					<pathelement location="${build.dir.main-classes}" />
-					<pathelement location="${build.dir.examples-classes}" />
-					<pathelement location="${build.dir.test-classes}" />
-					<pathelement location="${test.res.dir}" />
-					<pathelement location="${main.res.dir}" />
-					<path refid="test.classpath" />
-					<path refid="compile.classpath" />
-				</classpath>
-				<formatter type="failure" classname="datameer.awstasks.ant.junit.EnhancedJunitFormatter" usefile="false" />
-				<batchtest fork="yes" todir="${build.dir.test-reports}" unless="testcase">
-					<fileset dir="${root.dir}/src/examples/java">
-						<include name="**/*Test.java" unless="testcase" />
-						<exclude name="**/Abstract*.java" unless="testcase" />
-						<include name="${testcase}" if="testcase" />
-					</fileset>
-				</batchtest>
-				<batchtest fork="yes" todir="${build.dir.test-reports}" if="testcase">
-					<fileset dir="${root.dir}/src/examples/java" includes="**/${testcase}.java" />
-				</batchtest>
-			</junit>
-			<fail if="tests.failed">Tests failed!</fail>
+		<mkdir dir="${build.dir.test-reports}" />
+		<property name="showCurrentTest" value="true"/>
+		<junit showoutput="false" printsummary="false" logfailedtests="false" haltonfailure="no" fork="yes" maxmemory="256m" dir="${root.dir}" errorProperty="tests.failed" failureProperty="tests.failed">
+			<sysproperty key="net.sourceforge.cobertura.datafile" file="${reports.dir}/aws-tasks.ser" />
+			<sysproperty key="showCurrentTest" value="${showCurrentTest}"/>
+			<sysproperty key="showOutput" value="${showOutput}"/>
+			<classpath>
+				<pathelement location="${instrumented.dir}" />
+				<pathelement location="${build.dir.main-classes}" />
+				<pathelement location="${build.dir.examples-classes}" />
+				<pathelement location="${build.dir.test-classes}" />
+				<pathelement location="${test.res.dir}" />
+				<pathelement location="${main.res.dir}" />
+				<path refid="test.classpath" />
+				<path refid="compile.classpath" />
+			</classpath>
+			<formatter type="failure" classname="datameer.awstasks.ant.junit.EnhancedJunitFormatter" usefile="false" />
+			<batchtest fork="yes" todir="${build.dir.test-reports}" unless="testcase">
+				<fileset dir="${root.dir}/src/examples/java">
+					<include name="**/*Test.java" unless="testcase" />
+					<exclude name="**/Abstract*.java" unless="testcase" />
+					<include name="${testcase}" if="testcase" />
+				</fileset>
+			</batchtest>
+			<batchtest fork="yes" todir="${build.dir.test-reports}" if="testcase">
+				<fileset dir="${root.dir}/src/examples/java" includes="**/${testcase}.java" />
+			</batchtest>
+		</junit>
+		<fail if="tests.failed">Tests failed!</fail>
 	</target>
 
 

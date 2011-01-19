@@ -49,7 +49,7 @@ public class EnhancedJunitFormatter implements JUnitResultFormatter, TestListene
 
     public EnhancedJunitFormatter() {
         _showOutput = System.getProperty("showOutput", "false").equals("true");
-        _showCurrentTest = System.getProperty("showCurrentTest", "false").equals("true");
+        _showCurrentTest = System.getProperty("showCurrentTest", "true").equals("true");
     }
 
     @Override
