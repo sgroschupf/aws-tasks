@@ -1,14 +1,14 @@
 <project name="aws-tasks" default="test">
-	
+
 	<!--
 	  Copyright 2010 the original author or authors.
-	 
+
 	  Licensed under the Apache License, Version 2.0 (the "License");
 	  you may not use this file except in compliance with the License.
 	  You may obtain a copy of the License at
-	 
+
 	  http://www.apache.org/licenses/LICENSE-2.0
-	 
+
 	  Unless required by applicable law or agreed to in writing, software
 	  distributed under the License is distributed on an "AS IS" BASIS,
 	  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,12 +19,12 @@
 	<property name="root.dir" value="${basedir}" />
 	<property file="${root.dir}/build.properties" />
 
-	
-	
+
+
 	<!-- ================================================================== -->
 	<!-- Classpath 				                                            -->
 	<!-- ================================================================== -->
-	
+
 	<path id="compile.classpath">
 		<fileset dir="${lib.dir}/compile">
 			<include name="**/*.jar" />
@@ -53,8 +53,8 @@
 			<exclude name="**/*-sources.jar" />
 		</fileset>
 	</path>
-	
-	
+
+
 
 	<!-- ================================================================== -->
 	<!-- General cleaning sources                                           -->
@@ -66,9 +66,9 @@
 			<fileset dir="${build.dir}" excludes="classes-*-eclipse/" />
 		</delete>
 	</target>
-	
 
-	
+
+
 	<!-- ================================================================== -->
 	<!-- Build sources                                                      -->
 	<!-- ================================================================== -->
@@ -83,9 +83,19 @@
 			<fileset dir="${main.res.dir}"/>
 		</copy>
 	</target>
-	
-	
-	
+
+	<target name="compile-examples" description="--> compile example classes">
+		<mkdir dir="${build.dir.examples-classes}" />
+		<javac encoding="${build.encoding}" srcdir="${examples.src.dir}" includes="**/*.java" destdir="${build.dir.examples-classes}" debug="${javac.debug}" optimize="${javac.optimize}" target="${javac.version}" source="${javac.version}" deprecation="${javac.deprecation}">
+			<compilerarg line="${javac.args} ${javac.args.warnings}" />
+			<classpath refid="test.classpath" />
+			<classpath refid="compile.classpath" />
+			<classpath refid="test.path" />
+		</javac>
+	</target>
+
+
+
 	<!-- ================================================================== -->
 	<!-- Build sources                                                      -->
 	<!-- ================================================================== -->
@@ -94,8 +104,8 @@
 		<exec command="sh src/build/ant/checkHeaders.sh ${basedir}" failonerror="true"/>
 	</target>
 
-	
-	
+
+
 	<!-- ================================================================== -->
 	<!-- Unit Tests                                                         -->
 	<!-- ================================================================== -->
@@ -120,7 +130,7 @@
 			<classpath refid="test.path" />
 		</javac>
 	</target>
-	
+
 	<target name="test" depends="unit, it" description="--> run unit &amp; integration tests" />
 
 	<target name="unit" description="--> run unit tests">
@@ -128,7 +138,7 @@
 			<param name="test.batch.dir" value="${test.src.dir}" />
 		</antcall>
 	</target>
-	
+
 	<target name="it" description="--> run integration tests">
 		<property name="ec2.properties" value="${it.res.dir}/ec2.properties"/>
 		<available file="${ec2.properties}" property="ec2.configured" value="true"/>
@@ -142,7 +152,7 @@
         	<param name="test.batch.dir" value="${it.src.dir}" />
         </antcall>
     </target>
-	
+
 	<target name="runTests" depends="compile-test">
 		<delete dir="${build.dir.test-reports}" />
 		<mkdir dir="${build.dir.test-reports}" />
@@ -172,9 +182,9 @@
 		</junit>
 		<fail if="tests.failed">Tests failed!</fail>
 	</target>
-	
-	
-	
+
+
+
 	<!-- ================================================================== -->
 	<!-- Build jar from sources                                             -->
 	<!-- ================================================================== -->
@@ -206,7 +216,7 @@
 	</target>
 
 
-	
+
 	<!-- ================================================================== -->
 	<!-- Java Doc                                                           -->
 	<!-- ================================================================== -->
@@ -222,9 +232,9 @@
 			<group title="${javadoc.title}" packages="${javadoc.package}*" />
 		</javadoc>
 	</target>
-	
 
-	
+
+
 	<!-- ================================================================== -->
 	<!-- Generate a distribution                                            -->
 	<!-- ================================================================== -->
@@ -265,7 +275,7 @@
 			<fileset file="${basedir}/README.markdown" />
 			<fileset file="${it.res.dir}/ec2.properties.template" />
 		</copy>
-	
+
 
 		<tar longfile="gnu" compression="gzip" destfile="${build.release.file}" >
 		    <tarfileset dir="${build.dir.dist}" prefix="${name}-${version}">
@@ -274,7 +284,7 @@
 	</target>
 
 
-	
+
 	<!-- ================================================================== -->
 	<!-- Generating eclipse file                                            -->
 	<!-- ================================================================== -->

@@ -1,0 +1,62 @@
+<!-- run with (from project root):
+	ant compile compile-test compile-examples
+	ant -f src/examples/ant/build.junit.xml
+-->
+<project name="aws-tasks-example-junit" default="test">
+
+	<import file="build-classpath.xml"/>
+
+	<path id="compile.classpath">
+		<fileset dir="${lib.dir}/compile">
+			<include name="**/*.jar" />
+			<exclude name="**/*-sources.jar" />
+		</fileset>
+		<fileset dir="${lib.dir}/provided">
+			<include name="**/*.jar" />
+			<exclude name="**/*-sources.jar" />
+		</fileset>
+	</path>
+	<path id="test.classpath">
+		<fileset dir="${lib.dir}/test">
+			<include name="**/*.jar" />
+			<exclude name="**/*-sources.jar" />
+		</fileset>
+	</path>
+
+
+	<!-- ================================================================== -->
+	<!-- RUN AWS-TASKS TESTS WITH ENHANCED JUNIT FORMATTER                  -->
+	<!-- ================================================================== -->
+	<target name="test" description="--> start ec2 instance groups">
+		<delete dir="${build.dir.test-reports}" />
+			<mkdir dir="${build.dir.test-reports}" />
+			<junit showoutput="false" printsummary="false" logfailedtests="false" haltonfailure="no" fork="yes" maxmemory="256m" dir="${root.dir}" errorProperty="tests.failed" failureProperty="tests.failed">
+				<sysproperty key="net.sourceforge.cobertura.datafile" file="${reports.dir}/aws-tasks.ser" />
+				<classpath>
+					<pathelement location="${instrumented.dir}" />
+					<pathelement location="${build.dir.main-classes}" />
+					<pathelement location="${build.dir.examples-classes}" />
+					<pathelement location="${build.dir.test-classes}" />
+					<pathelement location="${test.res.dir}" />
+					<pathelement location="${main.res.dir}" />
+					<path refid="test.classpath" />
+					<path refid="compile.classpath" />
+				</classpath>
+				<formatter type="failure" classname="datameer.awstasks.ant.junit.EnhancedJunitFormatter" usefile="false" />
+				<batchtest fork="yes" todir="${build.dir.test-reports}" unless="testcase">
+					<fileset dir="${root.dir}/src/examples/java">
+						<include name="**/*Test.java" unless="testcase" />
+						<exclude name="**/Abstract*.java" unless="testcase" />
+						<include name="${testcase}" if="testcase" />
+					</fileset>
+				</batchtest>
+				<batchtest fork="yes" todir="${build.dir.test-reports}" if="testcase">
+					<fileset dir="${root.dir}/src/examples/java" includes="**/${testcase}.java" />
+				</batchtest>
+			</junit>
+			<fail if="tests.failed">Tests failed!</fail>
+	</target>
+
+
+
+</project>
