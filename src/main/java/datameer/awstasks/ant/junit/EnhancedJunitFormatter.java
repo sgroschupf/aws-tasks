@@ -39,20 +39,22 @@ public class EnhancedJunitFormatter implements JUnitResultFormatter, TestListene
 
     // TODO combine with BuildListener ?
 
-    private PrintWriter output;
+    private PrintWriter _console;
     private String _systemOutput = null;
     private String _systemError = null;
 
     private Map<Test, Throwable> failedTests = new LinkedHashMap<Test, Throwable>();
     private final boolean _showOutput;
+    private final boolean _showCurrentTest;
 
     public EnhancedJunitFormatter() {
         _showOutput = System.getProperty("showOutput", "false").equals("true");
+        _showCurrentTest = System.getProperty("showCurrentTest", "false").equals("true");
     }
 
     @Override
     public void setOutput(OutputStream out) {
-        output = new PrintWriter(out);
+        _console = new PrintWriter(out);
     }
 
     @Override
@@ -67,17 +69,24 @@ public class EnhancedJunitFormatter implements JUnitResultFormatter, TestListene
 
     @Override
     public void startTestSuite(JUnitTest suite) {
-        output.write(fillWithWhiteSpace(String.format("Running %s... ", suite.getName()), 80));
+        _console.write(fillWithWhiteSpace(String.format("Running %s...", suite.getName()), 80));
+        if (_showCurrentTest) {
+            _console.write('\n');
+            _console.flush();
+        }
     }
 
     @Override
     public void endTestSuite(JUnitTest suite) {
+        if (_showCurrentTest) {
+            _console.write("\t");
+        }
         if (suite.failureCount() > 0 || suite.errorCount() > 0) {
-            output.write("FAILED");
+            _console.write("FAILED");
         } else if (suite.runCount() == 0) {
-            output.write("IGNORED");
+            _console.write("IGNORED");
         } else {
-            output.write("SUCCEED");
+            _console.write("SUCCEED");
         }
         StringBuilder sb = new StringBuilder("\t- Tests: ");
         sb.append(suite.runCount());
@@ -102,14 +111,17 @@ public class EnhancedJunitFormatter implements JUnitResultFormatter, TestListene
             }
         }
 
-        output.write(sb.toString());
+        _console.write(sb.toString());
         if (!failedTests.isEmpty()) {
             for (Entry<Test, Throwable> entry : failedTests.entrySet()) {
-                output.write("\t" + getTestName(entry.getKey()) + "() \t- " + entry.getValue().getClass().getSimpleName() + ": " + entry.getValue().getMessage() + "\n");
+                if (_showCurrentTest) {
+                    _console.write('\t');
+                }
+                _console.write("\t" + getTestName(entry.getKey()) + "() \t- " + entry.getValue().getClass().getSimpleName() + ": " + entry.getValue().getMessage() + "\n");
             }
             failedTests.clear();
         }
-        output.flush();
+        _console.flush();
     }
 
     @Override
@@ -267,7 +279,7 @@ public class EnhancedJunitFormatter implements JUnitResultFormatter, TestListene
 
     @Override
     protected void finalize() throws Throwable {
-        output.write("bye bye");
+        _console.write("bye bye");
         super.finalize();
     }
 

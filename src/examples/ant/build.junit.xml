@@ -32,6 +32,8 @@
 			<mkdir dir="${build.dir.test-reports}" />
 			<junit showoutput="false" printsummary="false" logfailedtests="false" haltonfailure="no" fork="yes" maxmemory="256m" dir="${root.dir}" errorProperty="tests.failed" failureProperty="tests.failed">
 				<sysproperty key="net.sourceforge.cobertura.datafile" file="${reports.dir}/aws-tasks.ser" />
+				<sysproperty key="showCurrentTest" value="${showCurrentTest}"/>
+				<sysproperty key="showOutput" value="${showOutput}"/>
 				<classpath>
 					<pathelement location="${instrumented.dir}" />
 					<pathelement location="${build.dir.main-classes}" />
