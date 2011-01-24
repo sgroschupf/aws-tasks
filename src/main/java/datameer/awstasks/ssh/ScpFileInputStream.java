@@ -81,14 +81,22 @@ public class ScpFileInputStream extends InputStream {
 
     @Override
     public void close() throws IOException {
-        try {
-            SshUtil.checkAcknowledgement(_sshInputStream);
-            SshUtil.sendAckOk(_sshOutputStream);
-        } catch (IOException e) {
-            // happens in the middle of read
+        if (_session.isConnected()) {
+            try {
+                SshUtil.checkAcknowledgement(_sshInputStream);
+                SshUtil.sendAckOk(_sshOutputStream);
+            } catch (IOException e) {
+                // happens in the middle of read
+            }
+            _execChannel.disconnect();
+            _session.disconnect();
         }
-        _execChannel.disconnect();
-        _session.disconnect();
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        close();
+        super.finalize();
     }
 
 }

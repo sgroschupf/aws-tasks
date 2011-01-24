@@ -15,6 +15,8 @@
  */
 package datameer.awstasks.exec;
 
+import java.util.Arrays;
+
 import datameer.awstasks.exec.handler.ExecVoidHandler;
 
 /**
@@ -54,5 +56,10 @@ public class ShellCommand<R> {
 
     public ExecOutputHandler<R> getDefaultHandler() {
         return _defaultHandler;
+    }
+
+    @Override
+    public String toString() {
+        return "cmd[" + Arrays.asList(_command).toString() + "]";
     }
 }

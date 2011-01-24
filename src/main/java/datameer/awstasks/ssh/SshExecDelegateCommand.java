@@ -75,6 +75,11 @@ public class SshExecDelegateCommand<R> extends JschCommand {
         return _result;
     }
 
+    @Override
+    public String toString() {
+        return _command.toString();
+    }
+
     static class ToLineOutputStream extends OutputStream {
 
         private final ExecOutputHandler<?> _outputHandler;

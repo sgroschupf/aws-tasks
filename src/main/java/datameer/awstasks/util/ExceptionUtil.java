@@ -15,6 +15,11 @@
  */
 package datameer.awstasks.util;
 
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
+
 public class ExceptionUtil {
 
     /**
@@ -51,4 +56,19 @@ public class ExceptionUtil {
             throw (T) throwable;
         }
     }
+
+    public static Map<Thread, StackTraceElement[]> getThreadsWithName(String namePatternString) {
+        Pattern namePattern = Pattern.compile(namePatternString);
+        Map<Thread, StackTraceElement[]> threadsToStacktraceMap = Thread.getAllStackTraces();
+
+        Set<Thread> keySet = threadsToStacktraceMap.keySet();
+        for (Iterator<Thread> iterator = keySet.iterator(); iterator.hasNext();) {
+            Thread thread = iterator.next();
+            if (!namePattern.matcher(thread.getName()).matches()) {
+                iterator.remove();
+            }
+        }
+        return threadsToStacktraceMap;
+    }
+
 }
