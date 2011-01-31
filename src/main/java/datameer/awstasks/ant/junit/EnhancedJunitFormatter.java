@@ -88,14 +88,17 @@ public class EnhancedJunitFormatter implements JUnitResultFormatter, TestListene
         } else {
             _console.write("SUCCEED");
         }
-        StringBuilder sb = new StringBuilder("\t- Tests: ");
-        sb.append(suite.runCount());
-        sb.append(", Failures: ");
-        sb.append(suite.failureCount());
-        sb.append(", Errors: ");
-        sb.append(suite.errorCount());
-        sb.append(", Time: ");
-        sb.append(formatTimeDuration(suite.getRunTime()));
+        StringBuilder sb = new StringBuilder();
+        if (suite.runCount() > 0) {
+            sb.append("\t- Tests: ");
+            sb.append(suite.runCount());
+            sb.append(", Failures: ");
+            sb.append(suite.failureCount());
+            sb.append(", Errors: ");
+            sb.append(suite.errorCount());
+            sb.append(", Time: ");
+            sb.append(formatTimeDuration(suite.getRunTime()));
+        }
         sb.append(StringUtils.LINE_SEP);
 
         // append the err and output streams to the log
