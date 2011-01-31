@@ -82,22 +82,21 @@ public class EnhancedJunitFormatter implements JUnitResultFormatter, TestListene
             _console.write("\t");
         }
         if (suite.failureCount() > 0 || suite.errorCount() > 0) {
-            _console.write("FAILED");
+            _console.write("FAILED!");
         } else if (suite.runCount() == 0) {
             _console.write("IGNORED");
         } else {
             _console.write("SUCCEED");
         }
-        StringBuilder sb = new StringBuilder();
+
+        StringBuilder sb = new StringBuilder(" in " + formatTimeDuration(suite.getRunTime()));
         if (suite.runCount() > 0) {
-            sb.append("\t- Tests: ");
+            sb.append("\t- Tests/Failures/Errors: ");
             sb.append(suite.runCount());
-            sb.append(", Failures: ");
+            sb.append("/");
             sb.append(suite.failureCount());
-            sb.append(", Errors: ");
+            sb.append("/");
             sb.append(suite.errorCount());
-            sb.append(", Time: ");
-            sb.append(formatTimeDuration(suite.getRunTime()));
         }
         sb.append(StringUtils.LINE_SEP);
 
@@ -120,7 +119,7 @@ public class EnhancedJunitFormatter implements JUnitResultFormatter, TestListene
                 if (_showCurrentTest) {
                     _console.write('\t');
                 }
-                _console.write("\t" + getTestName(entry.getKey()) + "() \t- " + entry.getValue().getClass().getSimpleName() + ": " + entry.getValue().getMessage() + "\n");
+                _console.write("\t" + getTestName(entry.getKey()) + "() \t| " + entry.getValue().getClass().getSimpleName() + ": " + entry.getValue().getMessage() + "\n");
             }
             failedTests.clear();
         }
