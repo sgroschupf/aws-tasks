@@ -47,4 +47,9 @@ public class SshExec extends SshCommand {
         return _outputProperty;
     }
 
+    @Override
+    public String toString() {
+        return _command;
+    }
+
 }

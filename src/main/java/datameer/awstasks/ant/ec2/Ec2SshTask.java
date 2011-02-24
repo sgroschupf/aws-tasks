@@ -112,16 +112,20 @@ public class Ec2SshTask extends AbstractEc2Task {
             // execute the commands
             SshClient sshClient = _instanceGroup.createSshClient(_username, _keyFile);
             for (Object command : _commands) {
-                if (command instanceof SshExec) {
-                    doSshExec(sshClient, (SshExec) command, instanceCount);
-                } else if (command instanceof ScpDownload) {
-                    doDownload(sshClient, (ScpDownload) command, instanceCount);
-                } else if (command instanceof ScpUpload) {
-                    doUpload(sshClient, (ScpUpload) command, instanceCount);
-                } else if (command instanceof Task) {
-                    ((Task) command).execute();
+                if (isCommandEnabled(command)) {
+                    if (command instanceof SshExec) {
+                        doSshExec(sshClient, (SshExec) command, instanceCount);
+                    } else if (command instanceof ScpDownload) {
+                        doDownload(sshClient, (ScpDownload) command, instanceCount);
+                    } else if (command instanceof ScpUpload) {
+                        doUpload(sshClient, (ScpUpload) command, instanceCount);
+                    } else if (command instanceof Task) {
+                        ((Task) command).execute();
+                    } else {
+                        throw new IllegalStateException("type '" + command.getClass().getName() + "' not supported here");
+                    }
                 } else {
-                    throw new IllegalStateException("type '" + command.getClass().getName() + "' not supported here");
+                    System.out.println("skipping command '" + command + "'");
                 }
             }
 
@@ -131,6 +135,13 @@ public class Ec2SshTask extends AbstractEc2Task {
         } catch (Exception e) {
             throw new BuildException(e);
         }
+    }
+
+    private boolean isCommandEnabled(Object command) {
+        if (!(command instanceof SshCommand)) {
+            return true;
+        }
+        return ((SshCommand) command).isIfFulfilled(getProject());
     }
 
     private void doSshExec(SshClient sshClient, SshExec sshCommand, int instanceCount) throws IOException {
@@ -156,6 +167,7 @@ public class Ec2SshTask extends AbstractEc2Task {
         if (pipeResultToProperty) {
             String result = new String(((ByteArrayOutputStream) outputStream).toByteArray());
             _propertyMap.put(sshCommand.getOutputProperty(), result);
+            getProject().setProperty(sshCommand.getOutputProperty(), result);
         }
     }
 
@@ -163,8 +175,12 @@ public class Ec2SshTask extends AbstractEc2Task {
         String command = sshCommand.getCommand();
         if (command.contains("$")) {
             for (String propertyNam : _propertyMap.keySet()) {
-                command = command.replaceAll("\\$" + propertyNam, _propertyMap.get(propertyNam));
-                command = command.replaceAll("\\$\\{" + propertyNam + "\\}", _propertyMap.get(propertyNam));
+                try {
+                    command = command.replaceAll("\\$" + propertyNam, _propertyMap.get(propertyNam));
+                    command = command.replaceAll("\\$\\{" + propertyNam + "\\}", _propertyMap.get(propertyNam));
+                } catch (Exception e) {
+                    throw new RuntimeException("failed to replace '" + propertyNam + "=" + _propertyMap.get(propertyNam) + "'", e);
+                }
             }
         }
         if (!command.equals(sshCommand.getCommand())) {
