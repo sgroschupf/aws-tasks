@@ -202,6 +202,7 @@
 		<echo>Git Revision: ${build.current.revision}</echo>
 
 		<jar jarfile="${build.dir}/${jar.name}" basedir="${build.dir.main-classes}">
+		    <fileset dir="${main.src.dir}" includes="**/*.java" />
 			<manifest>
 				<section name="datameer/aws-tasks">
 					<attribute name="Implementation-Vendor" value="Datameer Inc." />
