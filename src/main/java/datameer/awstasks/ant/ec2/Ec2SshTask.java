@@ -28,6 +28,7 @@ import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.taskdefs.Echo;
 
+import com.xerox.amazonws.ec2.EC2Exception;
 import com.xerox.amazonws.ec2.Jec2;
 
 import datameer.awstasks.ant.ec2.model.ScpDownload;
@@ -42,6 +43,7 @@ import datameer.awstasks.util.IoUtil;
 public class Ec2SshTask extends AbstractEc2Task {
 
     private String _username;
+    private String _password;
     private File _keyFile;
     private List<Object> _commands = new ArrayList<Object>();
     private Map<String, String> _propertyMap = new HashMap<String, String>();
@@ -61,6 +63,14 @@ public class Ec2SshTask extends AbstractEc2Task {
 
     public void setUsername(String username) {
         _username = username;
+    }
+
+    public String getPassword() {
+        return _password;
+    }
+
+    public void setPassword(String password) {
+        _password = password;
     }
 
     public File getKeyFile() {
@@ -110,7 +120,7 @@ public class Ec2SshTask extends AbstractEc2Task {
             }
 
             // execute the commands
-            SshClient sshClient = _instanceGroup.createSshClient(_username, _keyFile);
+            SshClient sshClient = createSshClient();
             for (Object command : _commands) {
                 if (isCommandEnabled(command)) {
                     if (command instanceof SshExec) {
@@ -135,6 +145,13 @@ public class Ec2SshTask extends AbstractEc2Task {
         } catch (Exception e) {
             throw new BuildException(e);
         }
+    }
+
+    private SshClient createSshClient() throws EC2Exception {
+        if (_keyFile != null) {
+            return _instanceGroup.createSshClient(_username, _keyFile);
+        }
+        return _instanceGroup.createSshClient(_username, _password);
     }
 
     private boolean isCommandEnabled(Object command) {
