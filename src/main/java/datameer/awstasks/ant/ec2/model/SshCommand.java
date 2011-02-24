@@ -47,7 +47,7 @@ public abstract class SshCommand {
         if (_if == null || _if.isEmpty()) {
             return true;
         }
-        return "true".equals(property.trim());
+        return property != null && "true".equals(property.trim());
     }
 
     public int[] compileTargetInstances(int instanceCount) {
