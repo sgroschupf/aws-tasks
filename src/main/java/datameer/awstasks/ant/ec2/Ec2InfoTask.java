@@ -39,13 +39,19 @@ public class Ec2InfoTask extends AbstractEc2ConnectTask {
         System.out.println("executing " + getClass().getSimpleName() + " for group '" + _groupName + "'");
         List<Instance> instances = instanceGroup.getReservationDescription(false).getInstances();
         getProject().setProperty("instances.count", instances.size() + "");
+        StringBuilder instancesHosts = new StringBuilder();
         for (int i = 0; i < instances.size(); i++) {
             getProject().setProperty("instance.host." + i, instances.get(i).getDnsName());
             getProject().setProperty("instance.aim." + i, instances.get(i).getImageId());
             getProject().setProperty("instance.id." + i, instances.get(i).getInstanceId());
             getProject().setProperty("instance.type." + i, instances.get(i).getInstanceType().name());
             getProject().setProperty("instance.state." + i, instances.get(i).getState());
+            instancesHosts.append(instances.get(i).getDnsName());
+            if (i < instances.size() - 1) {
+                instancesHosts.append(',');
+            }
         }
+        getProject().setProperty("instances.hosts", instancesHosts.toString());
 
         for (Task task : _commands) {
             task.setProject(getProject());
