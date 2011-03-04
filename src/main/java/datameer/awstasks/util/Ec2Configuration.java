@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
@@ -50,18 +52,57 @@ public class Ec2Configuration {
 
     /**
      * Reads a ec2.properties from classpath. The path is {@link #EC2_PROPERTIES_FILE}.
+     * 
+     * @throws IOException
      */
     public Ec2Configuration() throws IOException {
-        InputStream inputStream = Ec2Configuration.class.getResourceAsStream(EC2_PROPERTIES_FILE);
-        if (inputStream == null) {
-            throw new IOException(EC2_PROPERTIES_FILE + " not found in classpath");
-        }
+        this(EC2_PROPERTIES_FILE);
+    }
+
+    /**
+     * Reads the specified property files from the classpath.
+     * 
+     * @param files
+     * @throws IOException
+     */
+    public Ec2Configuration(String... files) throws IOException {
         _properties = new Properties();
-        _properties.load(inputStream);
+        for (String file : files) {
+            InputStream inputStream = Ec2Configuration.class.getResourceAsStream(file);
+            if (inputStream == null) {
+                throw new IOException(file + " not found in classpath.");
+            }
+            _properties.load(inputStream);
+        }
         _accessKeyId = _properties.getProperty(ACCESS_KEY);
         _accessKeySecret = _properties.getProperty(ACCESS_KEY_SECRET);
         _privateKeyName = _properties.getProperty(PRIVATE_KEY_NAME);
         _privateKeyFile = _properties.getProperty(PRIVATE_KEY_FILE);
+    }
+
+    public void resolveVariableProperties() {
+        for (Object key : _properties.keySet()) {
+            String keyAsString = (String) key;
+            boolean retry = true;
+            while (retry) {
+                retry = false;
+                String value = _properties.getProperty(keyAsString);
+                Pattern pattern = Pattern.compile(Pattern.quote("${") + "([^}]+)" + Pattern.quote("}"));
+                Matcher matcher = pattern.matcher(value);
+                if (matcher.find()) {
+                    String variable = matcher.group(1);
+                    String valueOfVariable = System.getProperty(variable);
+                    if (valueOfVariable == null) {
+                        valueOfVariable = _properties.getProperty(variable);
+                    }
+                    if (valueOfVariable != null) {
+                        value = value.replaceAll(Pattern.quote("${" + variable + "}"), Matcher.quoteReplacement(valueOfVariable));
+                        _properties.setProperty(keyAsString, value);
+                        retry = true;
+                    }
+                }
+            }
+        }
     }
 
     public boolean isEc2Configured() {
