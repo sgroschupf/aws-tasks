@@ -28,6 +28,7 @@ import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.taskdefs.Echo;
 
+import com.xerox.amazonws.ec2.EC2Exception;
 import com.xerox.amazonws.ec2.Jec2;
 
 import datameer.awstasks.ant.ec2.model.ScpDownload;
@@ -42,6 +43,7 @@ import datameer.awstasks.util.IoUtil;
 public class Ec2SshTask extends AbstractEc2Task {
 
     private String _username;
+    private String _password;
     private File _keyFile;
     private List<Object> _commands = new ArrayList<Object>();
     private Map<String, String> _propertyMap = new HashMap<String, String>();
@@ -61,6 +63,14 @@ public class Ec2SshTask extends AbstractEc2Task {
 
     public void setUsername(String username) {
         _username = username;
+    }
+
+    public String getPassword() {
+        return _password;
+    }
+
+    public void setPassword(String password) {
+        _password = password;
     }
 
     public File getKeyFile() {
@@ -110,18 +120,22 @@ public class Ec2SshTask extends AbstractEc2Task {
             }
 
             // execute the commands
-            SshClient sshClient = _instanceGroup.createSshClient(_username, _keyFile);
+            SshClient sshClient = createSshClient();
             for (Object command : _commands) {
-                if (command instanceof SshExec) {
-                    doSshExec(sshClient, (SshExec) command, instanceCount);
-                } else if (command instanceof ScpDownload) {
-                    doDownload(sshClient, (ScpDownload) command, instanceCount);
-                } else if (command instanceof ScpUpload) {
-                    doUpload(sshClient, (ScpUpload) command, instanceCount);
-                } else if (command instanceof Task) {
-                    ((Task) command).execute();
+                if (isCommandEnabled(command)) {
+                    if (command instanceof SshExec) {
+                        doSshExec(sshClient, (SshExec) command, instanceCount);
+                    } else if (command instanceof ScpDownload) {
+                        doDownload(sshClient, (ScpDownload) command, instanceCount);
+                    } else if (command instanceof ScpUpload) {
+                        doUpload(sshClient, (ScpUpload) command, instanceCount);
+                    } else if (command instanceof Task) {
+                        ((Task) command).execute();
+                    } else {
+                        throw new IllegalStateException("type '" + command.getClass().getName() + "' not supported here");
+                    }
                 } else {
-                    throw new IllegalStateException("type '" + command.getClass().getName() + "' not supported here");
+                    System.out.println("skipping command '" + command + "'");
                 }
             }
 
@@ -131,6 +145,20 @@ public class Ec2SshTask extends AbstractEc2Task {
         } catch (Exception e) {
             throw new BuildException(e);
         }
+    }
+
+    private SshClient createSshClient() throws EC2Exception {
+        if (_keyFile != null) {
+            return _instanceGroup.createSshClient(_username, _keyFile);
+        }
+        return _instanceGroup.createSshClient(_username, _password);
+    }
+
+    private boolean isCommandEnabled(Object command) {
+        if (!(command instanceof SshCommand)) {
+            return true;
+        }
+        return ((SshCommand) command).isIfFulfilled(getProject());
     }
 
     private void doSshExec(SshClient sshClient, SshExec sshCommand, int instanceCount) throws IOException {
@@ -156,6 +184,7 @@ public class Ec2SshTask extends AbstractEc2Task {
         if (pipeResultToProperty) {
             String result = new String(((ByteArrayOutputStream) outputStream).toByteArray());
             _propertyMap.put(sshCommand.getOutputProperty(), result);
+            getProject().setProperty(sshCommand.getOutputProperty(), result);
         }
     }
 
@@ -163,8 +192,12 @@ public class Ec2SshTask extends AbstractEc2Task {
         String command = sshCommand.getCommand();
         if (command.contains("$")) {
             for (String propertyNam : _propertyMap.keySet()) {
-                command = command.replaceAll("\\$" + propertyNam, _propertyMap.get(propertyNam));
-                command = command.replaceAll("\\$\\{" + propertyNam + "\\}", _propertyMap.get(propertyNam));
+                try {
+                    command = command.replaceAll("\\$" + propertyNam, _propertyMap.get(propertyNam));
+                    command = command.replaceAll("\\$\\{" + propertyNam + "\\}", _propertyMap.get(propertyNam));
+                } catch (Exception e) {
+                    throw new RuntimeException("failed to replace '" + propertyNam + "=" + _propertyMap.get(propertyNam) + "'", e);
+                }
             }
         }
         if (!command.equals(sshCommand.getCommand())) {

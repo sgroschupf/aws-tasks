@@ -15,9 +15,12 @@
  */
 package datameer.awstasks.ant.ec2.model;
 
+import org.apache.tools.ant.Project;
+
 public abstract class SshCommand {
 
     private String _targetInstances;
+    private String _if;
 
     public void setTargetInstances(String targetInstances) {
         _targetInstances = targetInstances;
@@ -29,6 +32,22 @@ public abstract class SshCommand {
 
     public boolean isToAllInstances() {
         return _targetInstances == null || _targetInstances.trim().equals("all");
+    }
+
+    public String getIf() {
+        return _if;
+    }
+
+    public void setIf(String if1) {
+        _if = if1;
+    }
+
+    public boolean isIfFulfilled(Project project) {
+        String property = project.getProperty(_if);
+        if (_if == null || _if.isEmpty()) {
+            return true;
+        }
+        return property != null && "true".equals(property.trim());
     }
 
     public int[] compileTargetInstances(int instanceCount) {
