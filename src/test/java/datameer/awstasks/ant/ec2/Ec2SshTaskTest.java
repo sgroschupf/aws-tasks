@@ -49,6 +49,7 @@ public class Ec2SshTaskTest extends AbstractTest {
     @Before
     public void setUp() throws Exception {
         when(_instanceGroup.createSshClient(null, (File) null)).thenReturn(_sshClient);
+        when(_instanceGroup.createSshClient(null, (String) null)).thenReturn(_sshClient);
         _sshTask.setGroupName("testGroup");
         _sshTask.setProject(new Project());
     }

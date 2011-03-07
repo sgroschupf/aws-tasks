@@ -17,7 +17,11 @@ package datameer.awstasks.util;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -38,6 +42,7 @@ import datameer.awstasks.aws.emr.EmrSettings;
  */
 public class Ec2Configuration {
 
+    private static final Pattern VARIABLE_PATTERN = Pattern.compile(Pattern.quote("${") + "([^}]+)" + Pattern.quote("}"));
     public static final String EC2_PROPERTIES_FILE = "/ec2.properties";
     private static final String ACCESS_KEY = "ec2.accessKey";
     private static final String ACCESS_KEY_SECRET = "ec2.accessSecret";
@@ -80,27 +85,40 @@ public class Ec2Configuration {
         _privateKeyFile = _properties.getProperty(PRIVATE_KEY_FILE);
     }
 
+    @SuppressWarnings("unchecked")
     public void resolveVariableProperties() {
-        for (Object key : _properties.keySet()) {
-            String keyAsString = (String) key;
-            boolean retry = true;
-            while (retry) {
-                retry = false;
-                String value = _properties.getProperty(keyAsString);
-                Pattern pattern = Pattern.compile(Pattern.quote("${") + "([^}]+)" + Pattern.quote("}"));
-                Matcher matcher = pattern.matcher(value);
-                if (matcher.find()) {
-                    String variable = matcher.group(1);
-                    String valueOfVariable = System.getProperty(variable);
-                    if (valueOfVariable == null) {
-                        valueOfVariable = _properties.getProperty(variable);
-                    }
-                    if (valueOfVariable != null) {
-                        value = value.replaceAll(Pattern.quote("${" + variable + "}"), Matcher.quoteReplacement(valueOfVariable));
-                        _properties.setProperty(keyAsString, value);
-                        retry = true;
+        List<String> keysWithPlaceholder = new ArrayList<String>();
+        Enumeration<String> propertyNames = (Enumeration<String>) _properties.propertyNames();
+        while (propertyNames.hasMoreElements()) {
+            String key = (String) propertyNames.nextElement();
+            if (VARIABLE_PATTERN.matcher(_properties.getProperty(key)).find()) {
+                keysWithPlaceholder.add(key);
+            }
+        }
+
+        while (!keysWithPlaceholder.isEmpty()) {
+            int resolveCount = 0;
+            for (Iterator<String> iterator = keysWithPlaceholder.iterator(); iterator.hasNext();) {
+                String keyWithPlaceholder = (String) iterator.next();
+                String value = _properties.getProperty(keyWithPlaceholder);
+                Matcher matcher = VARIABLE_PATTERN.matcher(value);
+                matcher.find();
+                String placeholder = matcher.group(1);
+                String valueOfPlaceholder = System.getProperty(placeholder);
+                if (valueOfPlaceholder == null) {
+                    valueOfPlaceholder = _properties.getProperty(placeholder);
+                }
+                if (valueOfPlaceholder != null) {
+                    resolveCount++;
+                    value = value.replaceAll(Pattern.quote("${" + placeholder + "}"), Matcher.quoteReplacement(valueOfPlaceholder));
+                    _properties.setProperty(keyWithPlaceholder, value);
+                    if (!matcher.find()) {
+                        iterator.remove();
                     }
                 }
+            }
+            if (resolveCount == 0) {
+                throw new IllegalStateException("could not resolve following keys which contain placeholders: " + keysWithPlaceholder);
             }
         }
     }
