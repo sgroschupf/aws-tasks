@@ -24,6 +24,7 @@ import datameer.awstasks.ant.AbstractAwsTask;
 import datameer.awstasks.ant.emr.model.EmrCommand;
 import datameer.awstasks.ant.emr.model.EmrStartCommand;
 import datameer.awstasks.ant.emr.model.EmrStopCommand;
+import datameer.awstasks.ant.s3.model.CreateBucketCommand;
 import datameer.awstasks.aws.emr.EmrCluster;
 import datameer.awstasks.aws.emr.EmrSettings;
 
@@ -32,6 +33,7 @@ public class EmrTask extends AbstractAwsTask {
     private String _clusterName;
     private String _s3Bucket;
     private List<EmrCommand> _emrCommands = new ArrayList<EmrCommand>();
+    private boolean _normalizeBucketName;
 
     public EmrTask() {
         // default constructor - needed by ant
@@ -53,8 +55,20 @@ public class EmrTask extends AbstractAwsTask {
         return _s3Bucket;
     }
 
+    public void setNormalizeBucketName(boolean normalizeBucketName) {
+        _normalizeBucketName = normalizeBucketName;
+    }
+
+    public boolean isNormalizeBucketName() {
+        return _normalizeBucketName;
+    }
+
     public EmrCluster createEmrCluster() {
-        EmrSettings settings = new EmrSettings(_clusterName, _accessKey, _s3Bucket);
+        String s3Bucket = _s3Bucket;
+        if (isNormalizeBucketName()) {
+            s3Bucket = CreateBucketCommand.normalizeBucketName(s3Bucket);
+        }
+        EmrSettings settings = new EmrSettings(_clusterName, _accessKey, s3Bucket);
         return new EmrCluster(settings, _accessSecret);
     }
 
