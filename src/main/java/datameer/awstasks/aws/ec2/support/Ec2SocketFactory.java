@@ -108,10 +108,11 @@ public class Ec2SocketFactory extends SocketFactory {
         }
 
         private SocketAddress translateSocketAddres(InetSocketAddress endpoint) {
-            String publicHostname = _publicAddressesByPrivateAddresses.get(endpoint.getHostName());
+            String hostName = endpoint.getAddress().getHostName();
+            String publicHostname = _publicAddressesByPrivateAddresses.get(hostName);
             if (publicHostname != null) {
                 if (LOG.isTraceEnabled()) {
-                    LOG.trace("translate private address '" + endpoint.getHostName() + "' into public address '" + publicHostname + "'");
+                    LOG.trace("translate private address '" + hostName + "' into public address '" + publicHostname + "'");
                 }
                 endpoint = new InetSocketAddress(publicHostname, endpoint.getPort());
             }

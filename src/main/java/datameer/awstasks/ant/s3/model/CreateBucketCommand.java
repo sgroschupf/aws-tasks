@@ -25,6 +25,7 @@ public class CreateBucketCommand extends S3Command {
     private String _name;
     private String _location;
     private boolean _emptyIfExistent;
+    private boolean _normalizeName;
 
     public void setName(String name) {
         _name = name;
@@ -50,21 +51,52 @@ public class CreateBucketCommand extends S3Command {
         return _emptyIfExistent;
     }
 
+    public void setNormalizeName(boolean normalizeName) {
+        _normalizeName = normalizeName;
+    }
+
+    public boolean isNormalizeName() {
+        return _normalizeName;
+    }
+
     @Override
     public void execute(AmazonS3 s3Service) {
-        // S3Bucket s3Bucket = new S3Bucket(_name, _location);
-        boolean doesBucketExist = s3Service.doesBucketExist(_name);
+        String name = getNormalizedName();
+        boolean doesBucketExist = s3Service.doesBucketExist(name);
 
         if (isEmptyIfExistent() && doesBucketExist) {
-            List<S3ObjectSummary> s3Objects = s3Service.listObjects(_name).getObjectSummaries();
+            List<S3ObjectSummary> s3Objects = s3Service.listObjects(name).getObjectSummaries();
             for (S3ObjectSummary s3Object : s3Objects) {
-                s3Service.deleteObject(_name, s3Object.getKey());
+                s3Service.deleteObject(name, s3Object.getKey());
             }
             doesBucketExist = false;
         }
         if (!doesBucketExist) {
-            s3Service.createBucket(_name, _location);
+            try {
+                s3Service.createBucket(name, _location);
+                System.out.println("created bucket '" + name + "'");
+            } catch (Exception e) {
+                throw new RuntimeException("failed to create bucket '" + name + "'", e);
+            }
         }
+    }
+
+    private String getNormalizedName() {
+        if (isNormalizeName()) {
+            return normalizeName(_name);
+        }
+        return _name;
+    }
+
+    private String normalizeName(String name) {
+        name = name.toLowerCase();
+        name = name.replace(' ', '-');
+        return name;
+    }
+
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName() + "[" + getNormalizedName() + "]";
     }
 
 }
