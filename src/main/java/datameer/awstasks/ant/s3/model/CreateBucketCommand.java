@@ -91,6 +91,7 @@ public class CreateBucketCommand extends S3Command {
     private String normalizeName(String name) {
         name = name.toLowerCase();
         name = name.replace(' ', '-');
+        name = name.replace('.', '-');
         return name;
     }
 
