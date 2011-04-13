@@ -17,8 +17,12 @@ package datameer.awstasks.ant.s3.model;
 
 import java.util.List;
 
+import org.apache.tools.ant.Project;
+
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
+
+import datameer.awstasks.util.S3Util;
 
 public class CreateBucketCommand extends S3Command {
 
@@ -60,7 +64,7 @@ public class CreateBucketCommand extends S3Command {
     }
 
     @Override
-    public void execute(AmazonS3 s3Service) {
+    public void execute(Project project, AmazonS3 s3Service) {
         String name = getNormalizedName();
         boolean doesBucketExist = s3Service.doesBucketExist(name);
 
@@ -83,16 +87,9 @@ public class CreateBucketCommand extends S3Command {
 
     private String getNormalizedName() {
         if (isNormalizeName()) {
-            return normalizeBucketName(_name);
+            return S3Util.normalizeBucketName(_name);
         }
         return _name;
-    }
-
-    public static String normalizeBucketName(String name) {
-        name = name.toLowerCase();
-        name = name.replace(' ', '-');
-        name = name.replace('.', '-');
-        return name;
     }
 
     @Override

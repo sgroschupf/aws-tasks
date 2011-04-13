@@ -44,7 +44,7 @@ public class S3Task extends AbstractAwsTask {
             AmazonS3Client s3Service = createS3Service();
             for (S3Command s3Command : _s3Commands) {
                 System.out.println("executing " + s3Command);
-                s3Command.execute(s3Service);
+                s3Command.execute(getProject(), s3Service);
             }
         } catch (Exception e) {
             throw new BuildException(e);

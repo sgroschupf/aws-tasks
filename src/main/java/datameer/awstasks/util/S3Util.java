@@ -44,4 +44,11 @@ public class S3Util {
         }
     }
 
+    public static String normalizeBucketName(String name) {
+        name = name.toLowerCase();
+        name = name.replace(' ', '-');
+        name = name.replace('.', '-');
+        return name;
+    }
+
 }

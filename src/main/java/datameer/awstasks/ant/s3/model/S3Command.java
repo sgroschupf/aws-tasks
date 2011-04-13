@@ -15,10 +15,12 @@
  */
 package datameer.awstasks.ant.s3.model;
 
+import org.apache.tools.ant.Project;
+
 import com.amazonaws.services.s3.AmazonS3;
 
 public abstract class S3Command {
 
-    public abstract void execute(AmazonS3 s3Service);
+    public abstract void execute(Project project, AmazonS3 s3Service);
 
 }

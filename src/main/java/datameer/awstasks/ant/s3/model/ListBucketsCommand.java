@@ -17,13 +17,15 @@ package datameer.awstasks.ant.s3.model;
 
 import java.util.List;
 
+import org.apache.tools.ant.Project;
+
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.Bucket;
 
 public class ListBucketsCommand extends S3Command {
 
     @Override
-    public void execute(AmazonS3 s3Service) {
+    public void execute(Project project, AmazonS3 s3Service) {
         List<Bucket> buckets = s3Service.listBuckets();
         for (Bucket s3Bucket : buckets) {
             System.out.println(s3Bucket.getName());

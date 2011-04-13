@@ -15,6 +15,8 @@
  */
 package datameer.awstasks.ant.s3.model;
 
+import org.apache.tools.ant.Project;
+
 import com.amazonaws.services.s3.AmazonS3;
 
 public class DeleteBucketCommand extends S3Command {
@@ -30,7 +32,7 @@ public class DeleteBucketCommand extends S3Command {
     }
 
     @Override
-    public void execute(AmazonS3 s3Service) {
+    public void execute(Project project, AmazonS3 s3Service) {
         s3Service.deleteBucket(_name);
     }
 
