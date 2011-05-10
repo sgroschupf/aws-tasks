@@ -211,7 +211,7 @@ public class JschRunner extends ShellExecutor {
         }
     }
 
-    private Session openSession() throws JSchException {
+    public Session openSession() throws JSchException {
         JSch jsch = new JSch();
         if (isDebug()) {
             JSch.setLogger(DEBUG_LOGGER);
