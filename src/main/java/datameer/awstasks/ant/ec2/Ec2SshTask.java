@@ -26,7 +26,7 @@ import java.util.Map;
 
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Task;
-import org.apache.tools.ant.taskdefs.Echo;
+import org.apache.tools.ant.TaskContainer;
 
 import com.xerox.amazonws.ec2.EC2Exception;
 import com.xerox.amazonws.ec2.Jec2;
@@ -40,7 +40,7 @@ import datameer.awstasks.aws.ec2.InstanceGroupImpl;
 import datameer.awstasks.aws.ec2.ssh.SshClient;
 import datameer.awstasks.util.IoUtil;
 
-public class Ec2SshTask extends AbstractEc2Task {
+public class Ec2SshTask extends AbstractEc2Task implements TaskContainer {
 
     private String _username;
     private String _password;
@@ -81,7 +81,8 @@ public class Ec2SshTask extends AbstractEc2Task {
         _keyFile = keyFile;
     }
 
-    public void addEcho(Echo task) {
+    @Override
+    public void addTask(Task task) {
         _commands.add(task);
     }
 
@@ -130,7 +131,7 @@ public class Ec2SshTask extends AbstractEc2Task {
                     } else if (command instanceof ScpUpload) {
                         doUpload(sshClient, (ScpUpload) command, instanceCount);
                     } else if (command instanceof Task) {
-                        ((Task) command).execute();
+                        ((Task) command).perform();
                     } else {
                         throw new IllegalStateException("type '" + command.getClass().getName() + "' not supported here");
                     }

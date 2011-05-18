@@ -28,7 +28,7 @@
 			privateKeyName="${ec2.privateKeyName}"
 			instanceType="default" 
 			userData="a | b | c"
-			availabilityZone="us-east-1a">
+			availabilityZone="us-east-1c">
 			<groupPermission protocol="tcp" fromPort="22" toPort="22" sourceIpOrGroup="0.0.0.0/0"/>
 			<groupPermission protocol="tcp" fromPort="10023" sourceIpOrGroup="0.0.0.0/0"/>
 		</ec2-start>
