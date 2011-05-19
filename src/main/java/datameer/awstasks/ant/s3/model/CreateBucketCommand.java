@@ -73,7 +73,7 @@ public class CreateBucketCommand extends S3Command {
             for (S3ObjectSummary s3Object : s3Objects) {
                 s3Service.deleteObject(name, s3Object.getKey());
             }
-            doesBucketExist = false;
+            System.out.println("emptied bucket '" + name + "'");
         }
         if (!doesBucketExist) {
             try {
