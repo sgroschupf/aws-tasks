@@ -120,6 +120,7 @@ public class InstanceGroupImpl implements InstanceGroup {
         long end = System.currentTimeMillis() + timeUnit.toMillis(waitTime);
         List<String> unexpectedStates = new ArrayList<String>();
         do {
+            unexpectedStates.clear();
             try {
                 long sleepTime = 10000;
                 LOG.info(String.format("wait on instances %s to enter 'running' mode. Sleeping %d ms. zzz...", _reservationDescription.getGroups(), sleepTime));
