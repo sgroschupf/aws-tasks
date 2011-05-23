@@ -26,12 +26,12 @@ import org.apache.log4j.Logger;
 import com.amazonaws.services.ec2.model.InstanceStateName;
 import com.xerox.amazonws.ec2.EC2Exception;
 import com.xerox.amazonws.ec2.GroupDescription;
+import com.xerox.amazonws.ec2.GroupDescription.IpPermission;
 import com.xerox.amazonws.ec2.Jec2;
 import com.xerox.amazonws.ec2.LaunchConfiguration;
 import com.xerox.amazonws.ec2.ReservationDescription;
-import com.xerox.amazonws.ec2.TerminatingInstanceDescription;
-import com.xerox.amazonws.ec2.GroupDescription.IpPermission;
 import com.xerox.amazonws.ec2.ReservationDescription.Instance;
+import com.xerox.amazonws.ec2.TerminatingInstanceDescription;
 
 import datameer.awstasks.aws.ec2.ssh.SshClient;
 import datameer.awstasks.aws.ec2.ssh.SshClientImpl;
@@ -54,6 +54,7 @@ public class InstanceGroupImpl implements InstanceGroup {
         checkEc2Association(false);
         LOG.info(String.format("connecting to instances of group '%s'", groupName));
         _reservationDescription = Ec2Util.findByGroup(_ec2, groupName, InstanceStateName.Pending, InstanceStateName.Running);
+        waitUntilServerUp(TimeUnit.MINUTES, 10);
         if (_reservationDescription == null) {
             throw new EC2Exception("no instances of group '" + groupName + "' running");
         }
@@ -117,9 +118,8 @@ public class InstanceGroupImpl implements InstanceGroup {
 
     private ReservationDescription waitUntilServerUp(TimeUnit timeUnit, long waitTime) throws EC2Exception {
         long end = System.currentTimeMillis() + timeUnit.toMillis(waitTime);
-        boolean notAllUp;
+        List<String> unexpectedStates = new ArrayList<String>();
         do {
-            notAllUp = false;
             try {
                 long sleepTime = 10000;
                 LOG.info(String.format("wait on instances %s to enter 'running' mode. Sleeping %d ms. zzz...", _reservationDescription.getGroups(), sleepTime));
@@ -132,15 +132,15 @@ public class InstanceGroupImpl implements InstanceGroup {
             List<Instance> startingInstances = _reservationDescription.getInstances();
             for (Instance instance : startingInstances) {
                 if (!"running".equalsIgnoreCase(instance.getState())) {
-                    notAllUp = true;
+                    unexpectedStates.add(instance.getState());
                 }
                 if ("terminated".equalsIgnoreCase(instance.getState())) {
                     throw new EC2Exception("instance for " + _reservationDescription.getGroups() + " terminated:" + instance.getReason());
                 }
             }
-        } while (notAllUp && System.currentTimeMillis() < end);
-        if (notAllUp) {
-            throw new EC2Exception("not all instance are in state 'running'");
+        } while (!unexpectedStates.isEmpty() && System.currentTimeMillis() < end);
+        if (!unexpectedStates.isEmpty()) {
+            throw new EC2Exception("not all instance of group '" + _reservationDescription.getGroups() + "' are in state 'running', some are in: " + unexpectedStates);
         }
         return _reservationDescription;
     }
