@@ -57,7 +57,9 @@ public class InstanceGroupImpl implements InstanceGroup {
         if (_reservationDescription == null) {
             throw new EC2Exception("no instances of group '" + groupName + "' running");
         }
-        waitUntilServerUp(TimeUnit.MINUTES, 10);
+        if (!"running".equalsIgnoreCase(_reservationDescription.getInstances().get(0).getState())) {
+            waitUntilServerUp(TimeUnit.MINUTES, 10);
+        }
     }
 
     @Override
