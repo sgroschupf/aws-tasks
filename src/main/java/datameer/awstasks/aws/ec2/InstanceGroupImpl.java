@@ -54,10 +54,10 @@ public class InstanceGroupImpl implements InstanceGroup {
         checkEc2Association(false);
         LOG.info(String.format("connecting to instances of group '%s'", groupName));
         _reservationDescription = Ec2Util.findByGroup(_ec2, groupName, InstanceStateName.Pending, InstanceStateName.Running);
-        waitUntilServerUp(TimeUnit.MINUTES, 10);
         if (_reservationDescription == null) {
             throw new EC2Exception("no instances of group '" + groupName + "' running");
         }
+        waitUntilServerUp(TimeUnit.MINUTES, 10);
     }
 
     @Override
