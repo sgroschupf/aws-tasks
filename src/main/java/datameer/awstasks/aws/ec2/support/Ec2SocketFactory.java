@@ -99,15 +99,15 @@ public class Ec2SocketFactory extends SocketFactory {
 
         @Override
         public void connect(SocketAddress endpoint) throws IOException {
-            super.connect(translateSocketAddres((InetSocketAddress) endpoint));
+            super.connect(translateSocketAddress((InetSocketAddress) endpoint));
         }
 
         @Override
         public void connect(SocketAddress endpoint, int timeout) throws IOException {
-            super.connect(translateSocketAddres((InetSocketAddress) endpoint), timeout);
+            super.connect(translateSocketAddress((InetSocketAddress) endpoint), timeout);
         }
 
-        private SocketAddress translateSocketAddres(InetSocketAddress endpoint) {
+        private SocketAddress translateSocketAddress(InetSocketAddress endpoint) {
             String hostName = endpoint.getAddress().getHostName();
             String publicHostname = _publicAddressesByPrivateAddresses.get(hostName);
             if (publicHostname != null) {
