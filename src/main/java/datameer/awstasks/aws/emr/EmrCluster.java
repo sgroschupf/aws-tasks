@@ -48,6 +48,7 @@ import com.xerox.amazonws.sdb.ItemAttribute;
 import com.xerox.amazonws.sdb.SDBException;
 import com.xerox.amazonws.sdb.SimpleDB;
 
+import datameer.awstasks.aws.concurrent.ObjectLock;
 import datameer.awstasks.util.S3Util;
 
 /**
@@ -82,6 +83,7 @@ public class EmrCluster {
 
     protected String _jobFlowId;
     protected ClusterState _clusterState = ClusterState.UNCONNECTED;
+    private ObjectLock<String> _uploadLock = ObjectLock.create();
 
     // TODO jz: rethrow interrupted exceptions
 
@@ -240,6 +242,8 @@ public class EmrCluster {
 
     /**
      * Connects to EMR cluster and equilibrate the local state with the remote state.
+     * 
+     * @throws InterruptedException
      */
     public void synchronizeState() throws InterruptedException {
         if (_clusterState == ClusterState.UNCONNECTED) {
@@ -309,7 +313,9 @@ public class EmrCluster {
         if (_s3Service == null) {
             _s3Service = new AmazonS3Client(new BasicAWSCredentials(getSettings().getAccessKey(), _accessSecret));
         }
-        synchronized (jobJar.getAbsolutePath().intern()) {
+
+        _uploadLock.lock(jobJar.getAbsolutePath());
+        try {
             String s3JobJarPath = new File(getSettings().getS3JobJarBasePath(), s3JobJarName).getPath();
             String s3Bucket = getSettings().getS3Bucket();
             if (!_s3Service.doesBucketExist(s3Bucket)) {
@@ -322,6 +328,8 @@ public class EmrCluster {
                 LOG.info("using cached job-jar: " + s3JobJarPath);
             }
             return "s3n://" + getSettings().getAccessKey() + "@" + s3Bucket + s3JobJarPath;
+        } finally {
+            _uploadLock.unlock(jobJar.getAbsolutePath());
         }
     }
 
