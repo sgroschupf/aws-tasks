@@ -21,8 +21,8 @@ import java.util.List;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.taskdefs.Echo;
 
-import com.xerox.amazonws.ec2.Jec2;
-import com.xerox.amazonws.ec2.ReservationDescription.Instance;
+import com.amazonaws.services.ec2.AmazonEC2;
+import com.amazonaws.services.ec2.model.Instance;
 
 import datameer.awstasks.aws.ec2.InstanceGroup;
 
@@ -35,18 +35,18 @@ public class Ec2InfoTask extends AbstractEc2ConnectTask {
     }
 
     @Override
-    protected void execute(Jec2 ec2, InstanceGroup instanceGroup) throws Exception {
+    protected void execute(AmazonEC2 ec2, InstanceGroup instanceGroup) throws Exception {
         System.out.println("executing " + getClass().getSimpleName() + " for group '" + _groupName + "'");
-        List<Instance> instances = instanceGroup.getReservationDescription(false).getInstances();
+        List<Instance> instances = instanceGroup.getInstances(false);
         getProject().setProperty("instances.count", instances.size() + "");
         StringBuilder instancesHosts = new StringBuilder();
         for (int i = 0; i < instances.size(); i++) {
-            getProject().setProperty("instance.host." + i, instances.get(i).getDnsName());
+            getProject().setProperty("instance.host." + i, instances.get(i).getPublicDnsName());
             getProject().setProperty("instance.aim." + i, instances.get(i).getImageId());
             getProject().setProperty("instance.id." + i, instances.get(i).getInstanceId());
-            getProject().setProperty("instance.type." + i, instances.get(i).getInstanceType().name());
-            getProject().setProperty("instance.state." + i, instances.get(i).getState());
-            instancesHosts.append(instances.get(i).getDnsName());
+            getProject().setProperty("instance.type." + i, instances.get(i).getInstanceType());
+            getProject().setProperty("instance.state." + i, instances.get(i).getState().getName());
+            instancesHosts.append(instances.get(i).getPublicDnsName());
             if (i < instances.size() - 1) {
                 instancesHosts.append(',');
             }

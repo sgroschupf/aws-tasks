@@ -15,7 +15,9 @@
  */
 package datameer.awstasks.ant.ec2;
 
-import com.xerox.amazonws.ec2.Jec2;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.ec2.AmazonEC2;
+import com.amazonaws.services.ec2.AmazonEC2Client;
 
 import datameer.awstasks.ant.AbstractAwsTask;
 
@@ -31,8 +33,8 @@ public class AbstractEc2Task extends AbstractAwsTask {
         return _groupName;
     }
 
-    public Jec2 createJec2() {
-        return new Jec2(_accessKey, _accessSecret);
+    public AmazonEC2 createEc2() {
+        return new AmazonEC2Client(new BasicAWSCredentials(_accessKey, _accessSecret));
     }
 
 }

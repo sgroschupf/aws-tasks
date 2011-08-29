@@ -17,14 +17,16 @@ package datameer.awstasks.aws.ec2;
 
 import static org.junit.Assert.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
-import com.xerox.amazonws.ec2.Jec2;
-import com.xerox.amazonws.ec2.ReservationDescription;
-import com.xerox.amazonws.ec2.ReservationDescription.Instance;
+import com.amazonaws.services.ec2.AmazonEC2;
+import com.amazonaws.services.ec2.model.Instance;
+import com.amazonaws.services.ec2.model.InstanceStateName;
+import com.amazonaws.services.ec2.model.Reservation;
 
 import datameer.awstasks.util.Ec2Util;
 
@@ -32,71 +34,71 @@ public class InstanceGroupImplIntegTest extends AbstractEc2IntegrationTest {
 
     @Test
     public void testStartWithoutWait() throws Exception {
-        Jec2 ec2 = _ec2Conf.createJEc2();
+        AmazonEC2 ec2 = _ec2Conf.createEc2();
         InstanceGroup instanceGroup = new InstanceGroupImpl(ec2);
 
         // startup
         int instanceCount = 1;
-        ReservationDescription reservationDescription = instanceGroup.startup(createLaunchConfiguration(instanceCount));
+        Reservation reservation = instanceGroup.startup(createLaunchConfiguration(instanceCount));
         assertEquals(instanceCount, instanceGroup.instanceCount());
         assertTrue(instanceGroup.isAssociated());
-        assertEquals(instanceCount, reservationDescription.getInstances().size());
-        checkInstanceMode(reservationDescription, "pending");
+        assertEquals(instanceCount, reservation.getInstances().size());
+        checkInstanceMode(reservation.getInstances(), InstanceStateName.Pending);
 
         // shutdown
         instanceGroup.shutdown();
         Thread.sleep(500);
-        checkInstanceMode(Ec2Util.reloadReservationDescription(ec2, reservationDescription), "shutting-down|terminated");
+        checkInstanceMode(Ec2Util.reloadInstanceDescriptions(ec2, reservation.getInstances()), InstanceStateName.ShuttingDown, InstanceStateName.Terminated);
         assertFalse(instanceGroup.isAssociated());
     }
 
     @Test
     public void testStartWithWaitOnRunning() throws Exception {
-        Jec2 ec2 = _ec2Conf.createJEc2();
+        AmazonEC2 ec2 = _ec2Conf.createEc2();
         InstanceGroup instanceGroup = new InstanceGroupImpl(ec2);
 
         // startup
-        ReservationDescription reservationDescription = instanceGroup.startup(createLaunchConfiguration(1), TimeUnit.MINUTES, 10);
+        Reservation reservation = instanceGroup.startup(createLaunchConfiguration(1), TimeUnit.MINUTES, 10);
         assertTrue(instanceGroup.isAssociated());
-        assertEquals(1, reservationDescription.getInstances().size());
-        checkInstanceMode(reservationDescription, "running");
+        assertEquals(1, reservation.getInstances().size());
+        checkInstanceMode(reservation.getInstances(), InstanceStateName.Running);
 
         // shutdown
         instanceGroup.shutdown();
         Thread.sleep(1000);
-        checkInstanceMode(Ec2Util.reloadReservationDescription(ec2, reservationDescription), "shutting-down|terminated");
+        checkInstanceMode(Ec2Util.reloadInstanceDescriptions(ec2, reservation.getInstances()), InstanceStateName.ShuttingDown, InstanceStateName.Terminated);
         assertFalse(instanceGroup.isAssociated());
     }
 
     @Test
     public void testConnectToReservation() throws Exception {
-        Jec2 ec2 = _ec2Conf.createJEc2();
+        AmazonEC2 ec2 = _ec2Conf.createEc2();
         InstanceGroup instanceGroup1 = new InstanceGroupImpl(ec2);
         InstanceGroup instanceGroup2 = new InstanceGroupImpl(ec2);
 
         // startup
-        ReservationDescription reservationDescription = instanceGroup1.startup(createLaunchConfiguration(1), TimeUnit.MINUTES, 10);
+        Reservation reservation = instanceGroup1.startup(createLaunchConfiguration(1), TimeUnit.MINUTES, 10);
         assertTrue(instanceGroup1.isAssociated());
 
         // connect
-        instanceGroup2.connectTo(reservationDescription);
+        instanceGroup2.connectTo(reservation);
         assertTrue(instanceGroup2.isAssociated());
 
         // shutdown
         instanceGroup2.shutdown();
         Thread.sleep(500);
-        checkInstanceMode(Ec2Util.reloadReservationDescription(ec2, reservationDescription), "shutting-down|terminated");
+        checkInstanceMode(Ec2Util.reloadInstanceDescriptions(ec2, reservation.getInstances()), InstanceStateName.ShuttingDown, InstanceStateName.Terminated);
         assertFalse(instanceGroup2.isAssociated());
     }
 
     @Test
     public void testConnectToGroup() throws Exception {
-        Jec2 ec2 = _ec2Conf.createJEc2();
+        AmazonEC2 ec2 = _ec2Conf.createEc2();
         InstanceGroup instanceGroup1 = new InstanceGroupImpl(ec2);
         InstanceGroup instanceGroup2 = new InstanceGroupImpl(ec2);
 
         // startup
-        ReservationDescription reservationDescription = instanceGroup1.startup(createLaunchConfiguration(1), TimeUnit.MINUTES, 10);
+        Reservation reservation = instanceGroup1.startup(createLaunchConfiguration(1), TimeUnit.MINUTES, 10);
         assertTrue(instanceGroup1.isAssociated());
 
         // connect
@@ -106,22 +108,20 @@ public class InstanceGroupImplIntegTest extends AbstractEc2IntegrationTest {
         // shutdown
         instanceGroup2.shutdown();
         Thread.sleep(500);
-        checkInstanceMode(Ec2Util.reloadReservationDescription(ec2, reservationDescription), "shutting-down|terminated");
+        checkInstanceMode(Ec2Util.reloadInstanceDescriptions(ec2, reservation.getInstances()), InstanceStateName.ShuttingDown, InstanceStateName.Terminated);
         assertFalse(instanceGroup2.isAssociated());
     }
 
-    private void checkInstanceMode(ReservationDescription reservationDescription, String modesString) {
-        String[] modes = modesString.split("\\|");
-        List<Instance> instances = reservationDescription.getInstances();
+    private void checkInstanceMode(List<Instance> instances, InstanceStateName... instanceModes) {
         for (Instance instance : instances) {
             boolean inOneOfDesiredStates = false;
-            for (String mode : modes) {
-                if (mode.equals(instance.getState())) {
+            for (InstanceStateName instanceStateName : instanceModes) {
+                if (instanceStateName.toString().equals(instance.getState().getName())) {
                     inOneOfDesiredStates = true;
                 }
             }
             if (!inOneOfDesiredStates) {
-                fail("instance is in mode '" + instance.getState() + "' but should be (one of) '" + modesString + "'");
+                fail("instance is in mode '" + instance.getState() + "' but should be (one of) '" + Arrays.asList(instanceModes) + "'");
             }
         }
 

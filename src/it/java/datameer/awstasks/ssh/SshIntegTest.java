@@ -25,8 +25,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
 
-import com.xerox.amazonws.ec2.EC2Exception;
-
 import datameer.awstasks.aws.ec2.AbstractEc2IntegrationInteractionTest;
 import datameer.awstasks.util.IoUtil;
 
@@ -94,8 +92,8 @@ public class SshIntegTest extends AbstractEc2IntegrationInteractionTest {
         assertEquals(countFiles(uploadedFolder), countFiles(new File(downloadFolder, uploadedFolder.getName())));
     }
 
-    private JschRunner createJschRunner() throws EC2Exception, IOException {
-        JschRunner jschRunner = new JschRunner("ubuntu", _instanceGroup.getReservationDescription(false).getInstances().get(0).getDnsName());
+    private JschRunner createJschRunner() throws IOException {
+        JschRunner jschRunner = new JschRunner("ubuntu", _instanceGroup.getInstances(false).get(0).getPublicDnsName());
         jschRunner.setKeyfile(new File(_ec2Conf.getPrivateKeyFile()));
         jschRunner.setTrust(true);
 

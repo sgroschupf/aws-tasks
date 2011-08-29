@@ -15,38 +15,38 @@
  */
 package datameer.awstasks.aws.ec2;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
+import com.amazonaws.services.ec2.AmazonEC2;
+import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.InstanceStateName;
-import com.xerox.amazonws.ec2.EC2Exception;
-import com.xerox.amazonws.ec2.Jec2;
-import com.xerox.amazonws.ec2.ReservationDescription;
 
 import datameer.awstasks.util.Ec2Util;
 
 public class AbstractEc2IntegrationInteractionTest extends AbstractEc2IntegrationTest {
 
     protected static InstanceGroupImpl _instanceGroup;
-    protected static Jec2 _ec2;
-    protected static boolean CLUSTER_ALREADY_RUNNING = false;// to avoid startup time
+    protected static AmazonEC2 _ec2;
+    protected static boolean CLUSTER_ALREADY_RUNNING = false;// manual switch to avoid startup time
     protected static int INSTANCE_COUNT = 2;
 
     @BeforeClass
-    public static void startupInstanceGroup() throws EC2Exception {
-        _ec2 = _ec2Conf.createJEc2();
+    public static void startupInstanceGroup() {
+        _ec2 = _ec2Conf.createEc2();
         _instanceGroup = new InstanceGroupImpl(_ec2);
 
         if (CLUSTER_ALREADY_RUNNING) {
             LOG.info("try to use existing instance group");
-            ReservationDescription reservationDescription = Ec2Util.findByGroup(_ec2, TEST_SECURITY_GROUP, InstanceStateName.Pending, InstanceStateName.Running);
-            if (reservationDescription == null) {
+            List<Instance> instances = Ec2Util.findByGroup(_ec2, TEST_SECURITY_GROUP, false, InstanceStateName.Pending, InstanceStateName.Running);
+            if (instances == null) {
                 LOG.warn("reservation description with running instances NOT found - starting instance group");
             } else {
                 LOG.warn("reservation description with running instances FOUND - using instance group");
-                _instanceGroup.connectTo(reservationDescription);
+                _instanceGroup.connectTo(TEST_SECURITY_GROUP);
             }
         }
         if (!_instanceGroup.isAssociated()) {
@@ -55,7 +55,7 @@ public class AbstractEc2IntegrationInteractionTest extends AbstractEc2Integratio
     }
 
     @AfterClass
-    public static void shutdownInstanceGroup() throws EC2Exception {
+    public static void shutdownInstanceGroup() {
         if (CLUSTER_ALREADY_RUNNING) {
             LOG.info("don't shutdown instance group");
         } else {

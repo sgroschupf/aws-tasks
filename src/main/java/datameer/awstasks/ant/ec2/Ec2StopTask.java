@@ -15,14 +15,14 @@
  */
 package datameer.awstasks.ant.ec2;
 
-import com.xerox.amazonws.ec2.Jec2;
+import com.amazonaws.services.ec2.AmazonEC2;
 
 import datameer.awstasks.aws.ec2.InstanceGroup;
 
 public class Ec2StopTask extends AbstractEc2ConnectTask {
 
     @Override
-    protected void execute(Jec2 ec2, InstanceGroup instanceGroup) throws Exception {
+    protected void execute(AmazonEC2 ec2, InstanceGroup instanceGroup) throws Exception {
         System.out.println("executing " + getClass().getSimpleName() + " with groupName '" + _groupName + "'");
         instanceGroup.shutdown();
     }

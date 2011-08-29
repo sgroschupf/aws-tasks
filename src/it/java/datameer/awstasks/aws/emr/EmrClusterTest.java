@@ -140,7 +140,7 @@ public class EmrClusterTest extends AbstractAwsIntegrationTest {
         // assertEquals(2, stepFuture.getStepIndex());// 1 is debug step
         stepFuture.join();
 
-        // check simpledb debuggin information
+        // check simpledb debugging information
         StepMetadata stepMetaData = stepFuture.getStepMetaData();
         assertNotNull(stepMetaData);
         assertEquals(_emrCluster.getJobFlowId(), stepMetaData.get(StepMetadata.JOB_FLOW_ID));

@@ -28,8 +28,7 @@ import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.TaskContainer;
 
-import com.xerox.amazonws.ec2.EC2Exception;
-import com.xerox.amazonws.ec2.Jec2;
+import com.amazonaws.services.ec2.AmazonEC2;
 
 import datameer.awstasks.ant.ec2.model.ScpDownload;
 import datameer.awstasks.ant.ec2.model.ScpUpload;
@@ -102,7 +101,7 @@ public class Ec2SshTask extends AbstractEc2Task implements TaskContainer {
     public void execute() throws BuildException {
         System.out.println("executing " + getClass().getSimpleName() + " for group '" + _groupName + "'");
         if (_instanceGroup == null) {
-            Jec2 ec2 = createJec2();
+            AmazonEC2 ec2 = createEc2();
             _instanceGroup = new InstanceGroupImpl(ec2);
         }
 
@@ -148,7 +147,7 @@ public class Ec2SshTask extends AbstractEc2Task implements TaskContainer {
         }
     }
 
-    private SshClient createSshClient() throws EC2Exception {
+    private SshClient createSshClient() {
         if (_keyFile != null) {
             return _instanceGroup.createSshClient(_username, _keyFile);
         }

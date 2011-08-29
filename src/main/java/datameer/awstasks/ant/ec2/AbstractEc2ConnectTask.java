@@ -17,7 +17,7 @@ package datameer.awstasks.ant.ec2;
 
 import org.apache.tools.ant.BuildException;
 
-import com.xerox.amazonws.ec2.Jec2;
+import com.amazonaws.services.ec2.AmazonEC2;
 
 import datameer.awstasks.aws.ec2.InstanceGroup;
 import datameer.awstasks.aws.ec2.InstanceGroupImpl;
@@ -26,7 +26,7 @@ public abstract class AbstractEc2ConnectTask extends AbstractEc2Task {
 
     @Override
     public final void execute() throws BuildException {
-        Jec2 ec2 = new Jec2(_accessKey, _accessSecret);
+        AmazonEC2 ec2 = createEc2();
         InstanceGroup instanceGroup = new InstanceGroupImpl(ec2);
         try {
             instanceGroup.connectTo(_groupName);
@@ -36,5 +36,5 @@ public abstract class AbstractEc2ConnectTask extends AbstractEc2Task {
         }
     }
 
-    protected abstract void execute(Jec2 ec2, InstanceGroup instanceGroup) throws Exception;
+    protected abstract void execute(AmazonEC2 ec2, InstanceGroup instanceGroup) throws Exception;
 }

@@ -18,7 +18,6 @@ package datameer.awstasks.aws.emr;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -43,10 +42,11 @@ import com.amazonaws.services.elasticmapreduce.model.StepDetail;
 import com.amazonaws.services.elasticmapreduce.model.TerminateJobFlowsRequest;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.xerox.amazonws.sdb.Domain;
-import com.xerox.amazonws.sdb.ItemAttribute;
-import com.xerox.amazonws.sdb.SDBException;
-import com.xerox.amazonws.sdb.SimpleDB;
+import com.amazonaws.services.simpledb.AmazonSimpleDB;
+import com.amazonaws.services.simpledb.AmazonSimpleDBClient;
+import com.amazonaws.services.simpledb.model.Attribute;
+import com.amazonaws.services.simpledb.model.Item;
+import com.amazonaws.services.simpledb.model.SelectRequest;
 
 import datameer.awstasks.aws.concurrent.ObjectLock;
 import datameer.awstasks.util.S3Util;
@@ -76,7 +76,7 @@ public class EmrCluster {
     private final String _accessSecret;
     protected AmazonElasticMapReduceCustomClient _emrWebService;
     private AmazonS3 _s3Service;
-    protected SimpleDB _simpleDB;
+    protected AmazonSimpleDB _simpleDB;
     protected long _startTime;
     protected volatile String _masterHost;
     protected volatile int _instanceCount;
@@ -93,7 +93,7 @@ public class EmrCluster {
         _emrWebService = new AmazonElasticMapReduceCustomClient(settings.getAccessKey(), _accessSecret);
         // FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
         if (settings.isDebugEnabled()) {
-            _simpleDB = new SimpleDB(settings.getAccessKey(), accessSecret);
+            _simpleDB = new AmazonSimpleDBClient(new BasicAWSCredentials(settings.getAccessKey(), accessSecret));
         }
     }
 
@@ -148,8 +148,8 @@ public class EmrCluster {
             boolean keepAlive = true;
             JobFlowInstancesConfig jobConfig = new JobFlowInstancesConfig();
             jobConfig.setHadoopVersion(_settings.getHadoopVersion());
-            jobConfig.setMasterInstanceType(settings.getMasterInstanceType().getId());
-            jobConfig.setSlaveInstanceType(settings.getNodeInstanceType().getId());
+            jobConfig.setMasterInstanceType(settings.getMasterInstanceType().toString());
+            jobConfig.setSlaveInstanceType(settings.getNodeInstanceType().toString());
             jobConfig.setInstanceCount(settings.getInstanceCount());
             jobConfig.setEc2KeyName(settings.getPrivateKeyName());
             jobConfig.setPlacement(new PlacementType());
@@ -473,7 +473,7 @@ public class EmrCluster {
 
         private final String _stepName;
         private final int _stepIndex;
-        private Domain _domain;
+        private String _domain;
 
         public StepFuture(String stepName, int stepIndex) {
             _stepName = stepName;
@@ -492,16 +492,16 @@ public class EmrCluster {
             return EmrCluster.this.getStepState(_jobFlowId, _stepName);
         }
 
-        public StepMetadata getStepMetaData() throws SDBException {
+        public StepMetadata getStepMetaData() {
             if (_simpleDB == null) {
                 throw new IllegalStateException("can retrieve step metadata only when hadoop debugging enabled");
             }
             if (_domain == null) {
                 _domain = getDomain();
             }
-            String query = "SELECT * FROM `" + _domain.getName() + "` WHERE " + StepMetadata.JOB_FLOW_ID + " = '" + _jobFlowId + "' AND " + StepMetadata.STEP_ID + " = '" + _stepIndex + "' AND "
+            String query = "SELECT * FROM `" + _domain + "` WHERE " + StepMetadata.JOB_FLOW_ID + " = '" + _jobFlowId + "' AND " + StepMetadata.STEP_ID + " = '" + _stepIndex + "' AND "
                     + StepMetadata.TYPE + " = 'job'";
-            Map<String, List<ItemAttribute>> items = _domain.selectItems(query, null).getItems();
+            List<Item> items = _simpleDB.select(new SelectRequest(query)).getItems();
             if (items.size() > 1) {
                 throw new IllegalStateException("found more then one (" + items.size() + ") item for query '" + query + "'");
             }
@@ -512,28 +512,23 @@ public class EmrCluster {
                 // throw new IllegalStateException("found no items for query '" + query + "'");
             }
 
-            List<ItemAttribute> attributes = items.values().iterator().next();
-            for (ItemAttribute itemAttribute : attributes) {
-                stepMetadata.add(itemAttribute.getName(), itemAttribute.getValue());
+            for (Attribute attr : items.get(0).getAttributes()) {
+                stepMetadata.add(attr.getName(), attr.getValue());
             }
 
             return stepMetadata;
         }
 
-        private Domain getDomain() throws SDBException {
-            List<Domain> domains = _simpleDB.listDomains().getDomainList();
-            for (Iterator<Domain> iterator = domains.iterator(); iterator.hasNext();) {
-                Domain domain = iterator.next();
-                if (!domain.getName().startsWith("ElasticMapReduce-")) {
+        private String getDomain() {
+            List<String> domains = _simpleDB.listDomains().getDomainNames();
+            for (Iterator<String> iterator = domains.iterator(); iterator.hasNext();) {
+                String domain = iterator.next();
+                if (!domain.startsWith("ElasticMapReduce-")) {
                     iterator.remove();
                 }
             }
-            Collections.sort(domains, new Comparator<Domain>() {
-                @Override
-                public int compare(Domain o1, Domain o2) {
-                    return o2.getName().compareTo(o1.getName());
-                }
-            });
+            Collections.sort(domains);
+            Collections.reverse(domains);
             if (domains.isEmpty()) {
                 throw new IllegalStateException("found no hadoop-debugging domains");
             }

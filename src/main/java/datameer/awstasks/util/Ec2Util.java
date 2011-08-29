@@ -15,60 +15,105 @@
  */
 package datameer.awstasks.util;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.services.ec2.AmazonEC2;
+import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
+import com.amazonaws.services.ec2.model.DescribeSecurityGroupsRequest;
+import com.amazonaws.services.ec2.model.DescribeSecurityGroupsResult;
+import com.amazonaws.services.ec2.model.Filter;
+import com.amazonaws.services.ec2.model.GroupIdentifier;
+import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.InstanceStateName;
-import com.xerox.amazonws.ec2.EC2Exception;
-import com.xerox.amazonws.ec2.GroupDescription;
-import com.xerox.amazonws.ec2.Jec2;
-import com.xerox.amazonws.ec2.ReservationDescription;
-import com.xerox.amazonws.ec2.GroupDescription.IpPermission;
-import com.xerox.amazonws.ec2.ReservationDescription.Instance;
+import com.amazonaws.services.ec2.model.IpPermission;
+import com.amazonaws.services.ec2.model.Reservation;
+import com.amazonaws.services.ec2.model.SecurityGroup;
 
 public class Ec2Util {
 
-    public static ReservationDescription findByGroup(Jec2 ec2, String securityGroup, InstanceStateName... instanceStates) throws EC2Exception {
-        List<ReservationDescription> reservationDescriptions = ec2.describeInstances(Collections.EMPTY_LIST);
-        List<ReservationDescription> matchingReservationDescriptions = new ArrayList<ReservationDescription>(3);
-        for (ReservationDescription reservationDescription : reservationDescriptions) {
-            if (reservationDescription.getGroups().contains(securityGroup) && isInOneOfStates(reservationDescription.getInstances().get(0).getState(), instanceStates)) {
-                matchingReservationDescriptions.add(reservationDescription);
-            }
-        }
-        if (matchingReservationDescriptions.size() > 1) {
-            throw new EC2Exception("found more then one instance group for security group '" + securityGroup + "' and with instances in '" + Arrays.asList(instanceStates) + "' mode");
-        } else if (matchingReservationDescriptions.isEmpty()) {
+    public static List<Instance> findByGroup(AmazonEC2 ec2, String securityGroup, boolean includeMultipleReservations, InstanceStateName... instanceStates) {
+        List<Reservation> reservations = ec2.describeInstances(new DescribeInstancesRequest().withFilters(Filters.groupName(securityGroup), Filters.instanceStates(instanceStates))).getReservations();
+        if (reservations.size() > 1 && !includeMultipleReservations) {
+            throw new IllegalArgumentException("found more then one (" + reservations.size() + ") running instance group (reservation) for the given security group '" + securityGroup
+                    + "' with instances in '" + Arrays.asList(instanceStates) + "' mode");
+        } else if (reservations.isEmpty()) {
             return null;
         }
-        return matchingReservationDescriptions.get(0);
+        List<Instance> instances = new ArrayList<Instance>();
+        for (Reservation reservation : reservations) {
+            instances.addAll(reservation.getInstances());
+        }
+        return instances;
     }
 
-    private static boolean isInOneOfStates(String state, InstanceStateName... instanceStates) {
-        for (InstanceStateName instanceStateName : instanceStates) {
-            if (state.equalsIgnoreCase(instanceStateName.name())) {
-                return true;
+    public static Collection<String> getSecurityGroups(List<Instance> instances) {
+        Set<String> groups = new HashSet<String>();
+        for (Instance instance : instances) {
+            List<GroupIdentifier> securityGroups = instance.getSecurityGroups();
+            for (GroupIdentifier groupIdentifier : securityGroups) {
+                groups.add(groupIdentifier.getGroupName());
             }
         }
-        return false;
+        return groups;
     }
 
-    public static ReservationDescription reloadReservationDescription(Jec2 ec2, ReservationDescription reservationDescription) throws EC2Exception {
-        List<String> instanceIds = getInstanceIds(reservationDescription);
-        List<ReservationDescription> reservationDescriptions = ec2.describeInstances(instanceIds);
-        if (reservationDescriptions.size() > 1) {
-            throw new IllegalStateException("found more then one reservation description for thes instances: " + instanceIds);
+    public static List<IpPermission> getPermissions(AmazonEC2 ec2, Collection<String> securityGroupNames, Filter... filters) {
+        List<SecurityGroup> securityGroups = ec2.describeSecurityGroups(new DescribeSecurityGroupsRequest().withGroupNames(securityGroupNames).withFilters(filters)).getSecurityGroups();
+        List<IpPermission> ipPermissions = new ArrayList<IpPermission>(3);
+        for (SecurityGroup groupDescription : securityGroups) {
+            ipPermissions.addAll(groupDescription.getIpPermissions());
         }
-        if (reservationDescriptions.isEmpty()) {
-            throw new IllegalStateException("found no reservation description for these instances: " + instanceIds);
-        }
-        return reservationDescriptions.get(0);
+        return ipPermissions;
     }
 
-    public static List<String> getInstanceIds(ReservationDescription reservationDescription) {
+    public static String[] toStrings(Enum<?>... enumInstances) {
+        String[] names = new String[enumInstances.length];
+        for (int i = 0; i < names.length; i++) {
+            names[i] = enumInstances[i].toString();
+        }
+        return names;
+    }
+
+    public static List<String> toIds(List<Instance> instances) {
+        List<String> ids = new ArrayList<String>(instances.size());
+        for (Instance instance : instances) {
+            ids.add(instance.getInstanceId());
+        }
+        return ids;
+    }
+
+    public static List<String> toPublicDns(List<Instance> instances) {
+        List<String> dns = new ArrayList<String>(instances.size());
+        for (Instance instance : instances) {
+            dns.add(instance.getPublicDnsName());
+        }
+        return dns;
+    }
+
+    public static List<Instance> reloadInstanceDescriptions(AmazonEC2 ec2, List<Instance> instances) {
+        List<Reservation> reservations = ec2.describeInstances(new DescribeInstancesRequest().withInstanceIds(toIds(instances))).getReservations();
+        List<Instance> updatedInstanceDescriptioins = new ArrayList<Instance>();
+        for (Reservation reservation : reservations) {
+            updatedInstanceDescriptioins.addAll(reservation.getInstances());
+        }
+        return updatedInstanceDescriptioins;
+    }
+
+    public static Reservation reloadReservation(AmazonEC2 ec2, Reservation reservation) {
+        List<Reservation> reservations = ec2.describeInstances(new DescribeInstancesRequest().withFilters(Filters.reservationId(reservation.getReservationId()))).getReservations();
+        if (reservations.size() != 1) {
+            throw new IllegalStateException("do not found resevervation with id '" + reservation.getReservationId() + "': " + reservations);
+        }
+        return reservations.get(0);
+    }
+
+    public static List<String> getInstanceIds(Reservation reservationDescription) {
         List<Instance> instances = reservationDescription.getInstances();
         List<String> instanceIds = new ArrayList<String>(instances.size());
         for (Instance instance : instances) {
@@ -77,30 +122,16 @@ public class Ec2Util {
         return instanceIds;
     }
 
-    public static void main(String[] args) throws IOException, EC2Exception {
-        Jec2 ec2 = new Ec2Configuration().createJEc2();
-        ec2.describeSecurityGroups(Arrays.asList("asda"));
-    }
-
-    public static boolean groupExists(Jec2 ec2, String groupName) {
+    public static boolean groupExists(AmazonEC2 ec2, String groupName) {
         try {
-            ec2.describeSecurityGroups(Arrays.asList(groupName));
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    public static List<IpPermission> getPermissions(Jec2 ec2, List<String> groupNames) throws EC2Exception {
-        List<GroupDescription> securityGroups = ec2.describeSecurityGroups(groupNames);
-        List<IpPermission> ipPermissions = new ArrayList<IpPermission>(3);
-        for (GroupDescription groupDescription : securityGroups) {
-            List<IpPermission> permissions = groupDescription.getPermissions();
-            for (IpPermission ipPermission : permissions) {
-                ipPermissions.add(ipPermission);
+            DescribeSecurityGroupsResult groups = ec2.describeSecurityGroups(new DescribeSecurityGroupsRequest().withGroupNames(groupName));
+            return !groups.getSecurityGroups().isEmpty();
+        } catch (AmazonServiceException e) {
+            if (e.getErrorCode().equals("InvalidGroup.NotFound")) {
+                return false;
             }
+            throw e;
         }
-        return ipPermissions;
     }
 
 }

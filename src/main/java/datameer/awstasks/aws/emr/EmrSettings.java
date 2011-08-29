@@ -18,9 +18,8 @@ package datameer.awstasks.aws.emr;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import com.amazonaws.services.ec2.model.InstanceType;
 import com.amazonaws.services.elasticmapreduce.model.BootstrapActionConfig;
-
-import datameer.awstasks.aws.InstanceType;
 
 public class EmrSettings {
 
@@ -33,8 +32,8 @@ public class EmrSettings {
     private String _hadoopVersion;
     private String _additionalStartInfo;
     private final Collection<BootstrapActionConfig> _bootstrapActions = new ArrayList<BootstrapActionConfig>(3);
-    private InstanceType _masterInstanceType = InstanceType.SMALL;
-    private InstanceType _nodeInstanceType = InstanceType.SMALL;
+    private InstanceType _masterInstanceType = InstanceType.M1Small;
+    private InstanceType _nodeInstanceType = InstanceType.M1Small;
     private String _s3LogPath = "/emr/logs";
     private String _s3JobJarBasePath = "/emr/jobjars";
     private boolean _debugEnabled = true;

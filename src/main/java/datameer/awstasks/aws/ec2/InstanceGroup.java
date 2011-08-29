@@ -16,11 +16,12 @@
 package datameer.awstasks.aws.ec2;
 
 import java.io.File;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import com.xerox.amazonws.ec2.EC2Exception;
-import com.xerox.amazonws.ec2.LaunchConfiguration;
-import com.xerox.amazonws.ec2.ReservationDescription;
+import com.amazonaws.services.ec2.model.Instance;
+import com.amazonaws.services.ec2.model.Reservation;
+import com.amazonaws.services.ec2.model.RunInstancesRequest;
 
 import datameer.awstasks.aws.ec2.ssh.SshClient;
 
@@ -36,9 +37,8 @@ public interface InstanceGroup {
      * @param launchConfiguration
      * @return a {@link ReservationDescription} with (snapshot) information about the running
      *         instances
-     * @throws EC2Exception
      */
-    ReservationDescription startup(LaunchConfiguration launchConfiguration) throws EC2Exception;
+    Reservation startup(RunInstancesRequest launchConfiguration);
 
     /**
      * Starts the configured {@linkplain InstanceGroup} and waits until all instances are in
@@ -52,10 +52,8 @@ public interface InstanceGroup {
      *            maximum time to wait (average startup time depends on image but is around 1 min)
      * @return a {@link ReservationDescription} with (snapshot) information about the running
      *         instances
-     * @throws EC2Exception
-     *             if wait time is not enough or for any other configuration/communication problem
      */
-    ReservationDescription startup(LaunchConfiguration launchConfiguration, TimeUnit timeUnit, long time) throws EC2Exception;
+    Reservation startup(RunInstancesRequest launchConfiguration, TimeUnit timeUnit, long time);
 
     /**
      * Connect to already running instances of a reservation.
@@ -63,7 +61,7 @@ public interface InstanceGroup {
      * @param reservationDescription
      * @throws EC2Exception
      */
-    void connectTo(ReservationDescription reservationDescription) throws EC2Exception;
+    void connectTo(Reservation reservationDescription);
 
     /**
      * Connect to running instances in a security group. If more then one reservation for that group
@@ -72,14 +70,14 @@ public interface InstanceGroup {
      * @param groupName
      * @throws EC2Exception
      */
-    void connectTo(String groupName) throws EC2Exception;
+    void connectTo(String groupName);
 
     /**
      * Shut all ec2 instances in this group down.
      * 
      * @throws EC2Exception
      */
-    void shutdown() throws EC2Exception;
+    void shutdown();
 
     /**
      * 
@@ -88,11 +86,11 @@ public interface InstanceGroup {
      */
     boolean isAssociated();
 
-    ReservationDescription getReservationDescription(boolean updateBefore) throws EC2Exception;
+    List<Instance> getInstances(boolean updateBefore);
 
-    SshClient createSshClient(String username, File privateKey) throws EC2Exception;
+    SshClient createSshClient(String username, File privateKey);
 
-    SshClient createSshClient(String username, String password) throws EC2Exception;
+    SshClient createSshClient(String username, String password);
 
     int instanceCount();
 

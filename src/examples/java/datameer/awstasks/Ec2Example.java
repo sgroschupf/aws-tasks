@@ -19,9 +19,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import com.xerox.amazonws.ec2.EC2Exception;
-import com.xerox.amazonws.ec2.Jec2;
-import com.xerox.amazonws.ec2.LaunchConfiguration;
+import com.amazonaws.services.ec2.AmazonEC2;
+import com.amazonaws.services.ec2.model.RunInstancesRequest;
 
 import datameer.awstasks.aws.ec2.InstanceGroup;
 import datameer.awstasks.aws.ec2.ssh.SshClient;
@@ -30,14 +29,15 @@ import datameer.awstasks.util.IoUtil;
 
 public class Ec2Example {
 
-    public static void main(String[] args) throws EC2Exception, IOException {
+    public static void main(String[] args) throws IOException {
         // have your aws access data
         // File privateKeyFile = null;
         // String accessKeyId = null;
         // String accessKeySecret = null;
         // String privateKeyName = null;
         //
-        // Jec2 ec2 = new Jec2(accessKeyId, accessKeySecret);
+        // AmazonEC2 ec2 = new AmazonEC2Client(new BasicAWSCredentials(accessKeyId,
+        // accessKeySecret));
         // InstanceGroup instanceGroup = new InstanceGroupImpl(ec2);
 
         // or alternatively use the Ec2Configuration
@@ -45,11 +45,11 @@ public class Ec2Example {
         String privateKeyName = ec2Configuration.getPrivateKeyName();
         File privateKeyFile = new File(ec2Configuration.getPrivateKeyFile());
 
-        Jec2 ec2 = ec2Configuration.createJEc2();
+        AmazonEC2 ec2 = ec2Configuration.createEc2();
         InstanceGroup instanceGroup = ec2Configuration.createInstanceGroup(ec2);
 
         // startup an instance group
-        LaunchConfiguration launchConfiguration = new LaunchConfiguration("ami-5059be39", 5, 5);
+        RunInstancesRequest launchConfiguration = new RunInstancesRequest("ami-5059be39", 5, 5);
         launchConfiguration.setKeyName(privateKeyName);
         instanceGroup.startup(launchConfiguration, TimeUnit.MINUTES, 5);
 

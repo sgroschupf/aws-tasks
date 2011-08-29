@@ -23,71 +23,79 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
+import com.amazonaws.services.ec2.AmazonEC2;
+import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.InstanceStateName;
-import com.xerox.amazonws.ec2.EC2Exception;
-import com.xerox.amazonws.ec2.GroupDescription;
-import com.xerox.amazonws.ec2.GroupDescription.IpPermission;
-import com.xerox.amazonws.ec2.Jec2;
-import com.xerox.amazonws.ec2.LaunchConfiguration;
-import com.xerox.amazonws.ec2.ReservationDescription;
-import com.xerox.amazonws.ec2.ReservationDescription.Instance;
-import com.xerox.amazonws.ec2.TerminatingInstanceDescription;
+import com.amazonaws.services.ec2.model.IpPermission;
+import com.amazonaws.services.ec2.model.Reservation;
+import com.amazonaws.services.ec2.model.RunInstancesRequest;
+import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
+import com.amazonaws.services.ec2.model.TerminateInstancesResult;
 
 import datameer.awstasks.aws.ec2.ssh.SshClient;
 import datameer.awstasks.aws.ec2.ssh.SshClientImpl;
 import datameer.awstasks.ssh.JschRunner;
 import datameer.awstasks.util.Ec2Util;
+import datameer.awstasks.util.ExceptionUtil;
+import datameer.awstasks.util.Filters;
 
 public class InstanceGroupImpl implements InstanceGroup {
 
     private static Logger LOG = Logger.getLogger(InstanceGroupImpl.class);
 
-    private final Jec2 _ec2;
-    private ReservationDescription _reservationDescription;
+    private final AmazonEC2 _ec2;
+    private final boolean _inlcudeMultipleReservations;
+    private List<com.amazonaws.services.ec2.model.Instance> _instances;
 
-    public InstanceGroupImpl(Jec2 ec2) {
+    public InstanceGroupImpl(AmazonEC2 ec2) {
+        this(ec2, false);
+    }
+
+    public InstanceGroupImpl(AmazonEC2 ec2, boolean inlcudeMultipleReservations) {
         _ec2 = ec2;
+        _inlcudeMultipleReservations = inlcudeMultipleReservations;
     }
 
     @Override
-    public void connectTo(String groupName) throws EC2Exception {
+    public void connectTo(String groupName) {
         checkEc2Association(false);
         LOG.info(String.format("connecting to instances of group '%s'", groupName));
-        _reservationDescription = Ec2Util.findByGroup(_ec2, groupName, InstanceStateName.Pending, InstanceStateName.Running);
-        if (_reservationDescription == null) {
-            throw new EC2Exception("no instances of group '" + groupName + "' running");
+        _instances = Ec2Util.findByGroup(_ec2, groupName, _inlcudeMultipleReservations, InstanceStateName.Pending, InstanceStateName.Running);
+        if (_instances == null) {
+            throw new IllegalArgumentException("no instances of group '" + groupName + "' running");
         }
-        if (!"running".equalsIgnoreCase(_reservationDescription.getInstances().get(0).getState())) {
+        if (!InstanceStateName.Running.name().equalsIgnoreCase(_instances.get(0).getState().getName())) {
             waitUntilServerUp(TimeUnit.MINUTES, 10);
         }
     }
 
     @Override
-    public void connectTo(ReservationDescription reservationDescription) throws EC2Exception {
+    public void connectTo(Reservation reservation) {
         checkEc2Association(false);
-        LOG.info(String.format("connecting to reservation '%s'", reservationDescription.getReservationId()));
-        _reservationDescription = reservationDescription;
-        updateReservationDescription();
+        LOG.info(String.format("connecting to reservation '%s'", reservation.getReservationId()));
+        _instances = reservation.getInstances();
+        updateInstanceDescriptions();
     }
 
     @Override
-    public ReservationDescription startup(LaunchConfiguration launchConfiguration) throws EC2Exception {
+    public Reservation startup(RunInstancesRequest launchConfiguration) {
         return startup(launchConfiguration, null, 0);
     }
 
     @Override
-    public ReservationDescription startup(LaunchConfiguration launchConfiguration, TimeUnit timeUnit, long time) throws EC2Exception {
+    public Reservation startup(RunInstancesRequest launchConfiguration, TimeUnit timeUnit, long time) {
         checkEc2Association(false);
         LOG.info(String.format("starting %d to %d instances with %s in groups %s...", launchConfiguration.getMinCount(), launchConfiguration.getMaxCount(), launchConfiguration.getImageId(),
-                launchConfiguration.getSecurityGroup()));
-        _reservationDescription = _ec2.runInstances(launchConfiguration);
-        List<String> instanceIds = Ec2Util.getInstanceIds(_reservationDescription);
-        LOG.info(String.format("triggered start of %d instances: %s", _reservationDescription.getInstances().size(), instanceIds));
+                launchConfiguration.getSecurityGroups()));
+        Reservation reservation = _ec2.runInstances(launchConfiguration).getReservation();
+        _instances = reservation.getInstances();
+        List<String> instanceIds = Ec2Util.toIds(_instances);
+        LOG.info(String.format("triggered start of %d instances: %s", instanceIds.size(), instanceIds));
         if (timeUnit != null) {
             waitUntilServerUp(timeUnit, time);
-            LOG.info(String.format("started %d instances: %s / %s", _reservationDescription.getInstances().size(), instanceIds, getPublicDns(_reservationDescription)));
+            LOG.info(String.format("started %d instances: %s / %s", instanceIds.size(), instanceIds, Ec2Util.toPublicDns(_instances)));
         }
-        return _reservationDescription;
+        return Ec2Util.reloadReservation(_ec2, reservation);
     }
 
     private void checkEc2Association(boolean shouldBeAssociated) {
@@ -101,99 +109,90 @@ public class InstanceGroupImpl implements InstanceGroup {
 
     @Override
     public boolean isAssociated() {
-        return _reservationDescription != null;
+        return _instances != null;
     }
 
     @Override
     public int instanceCount() {
         checkEc2Association(true);
-        return _reservationDescription.getInstances().size();
+        return _instances.size();
     }
 
     @Override
-    public void shutdown() throws EC2Exception {
+    public void shutdown() {
         checkEc2Association(true);
-        List<TerminatingInstanceDescription> terminatedInstances = _ec2.terminateInstances(Ec2Util.getInstanceIds(_reservationDescription));
-        _reservationDescription = null;
-        LOG.info("stopped " + terminatedInstances.size() + " instances");
+        TerminateInstancesResult result = _ec2.terminateInstances(new TerminateInstancesRequest(Ec2Util.toIds(_instances)));
+        _instances = null;
+        LOG.info("stopped " + result.getTerminatingInstances().size() + " instances");
     }
 
-    private ReservationDescription waitUntilServerUp(TimeUnit timeUnit, long waitTime) throws EC2Exception {
+    private List<Instance> waitUntilServerUp(TimeUnit timeUnit, long waitTime) {
         long end = System.currentTimeMillis() + timeUnit.toMillis(waitTime);
         List<String> unexpectedStates = new ArrayList<String>();
         do {
             unexpectedStates.clear();
             try {
                 long sleepTime = 10000;
-                LOG.info(String.format("wait on instances %s to enter 'running' mode. Sleeping %d ms. zzz...", _reservationDescription.getGroups(), sleepTime));
+                LOG.info(String.format("wait on instances %s to enter 'running' mode. Sleeping %d ms. zzz...", Ec2Util.getSecurityGroups(_instances), sleepTime));
                 Thread.sleep(sleepTime);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
 
-            updateReservationDescription();
-            List<Instance> startingInstances = _reservationDescription.getInstances();
+            updateInstanceDescriptions();
+            List<Instance> startingInstances = _instances;
             for (Instance instance : startingInstances) {
-                if (!"running".equalsIgnoreCase(instance.getState())) {
-                    unexpectedStates.add(instance.getState());
+                if (!InstanceStateName.Running.name().equalsIgnoreCase(instance.getState().getName())) {
+                    unexpectedStates.add(instance.getState().getName());
                 }
-                if ("terminated".equalsIgnoreCase(instance.getState())) {
-                    throw new EC2Exception("instance for " + _reservationDescription.getGroups() + " terminated:" + instance.getReason());
+                if (InstanceStateName.Terminated.name().equalsIgnoreCase(instance.getState().getName())) {
+                    throw new IllegalStateException("instance for " + instance.getSecurityGroups() + " terminated:" + instance.getStateTransitionReason());
                 }
             }
         } while (!unexpectedStates.isEmpty() && System.currentTimeMillis() < end);
         if (!unexpectedStates.isEmpty()) {
-            throw new EC2Exception("not all instance of group '" + _reservationDescription.getGroups() + "' are in state 'running', some are in: " + unexpectedStates);
+            throw new IllegalStateException("not all instance of group '" + Ec2Util.getSecurityGroups(_instances) + "' are in state 'running', some are in: " + unexpectedStates);
         }
-        return _reservationDescription;
+        return _instances;
     }
 
     @Override
-    public ReservationDescription getReservationDescription(boolean updateBefore) throws EC2Exception {
+    public List<Instance> getInstances(boolean updateBefore) {
         checkEc2Association(true);
         if (updateBefore) {
-            updateReservationDescription();
+            updateInstanceDescriptions();
         }
-        return _reservationDescription;
+        return _instances;
     }
 
-    private static List<String> getPublicDns(ReservationDescription reservationDescription) {
-        List<Instance> instances = reservationDescription.getInstances();
-        List<String> instanceIds = new ArrayList<String>(instances.size());
-        for (Instance instance : instances) {
-            instanceIds.add(instance.getDnsName());
-        }
-        return instanceIds;
-    }
-
-    private synchronized void updateReservationDescription() throws EC2Exception {
-        _reservationDescription = Ec2Util.reloadReservationDescription(_ec2, _reservationDescription);
+    private synchronized void updateInstanceDescriptions() {
+        _instances = Ec2Util.reloadInstanceDescriptions(_ec2, _instances);
     }
 
     @Override
-    public SshClient createSshClient(String username, File privateKey) throws EC2Exception {
+    public SshClient createSshClient(String username, File privateKey) {
         List<String> instanceDns = checkSshPreconditions();
         checkSshConnection(username, instanceDns, privateKey, null);
         return new SshClientImpl(username, privateKey, instanceDns);
     }
 
-    private List<String> checkSshPreconditions() throws EC2Exception {
+    private List<String> checkSshPreconditions() {
         checkEc2Association(true);
-        updateReservationDescription();
-        checkInstanceMode(_reservationDescription.getInstances(), "running");
-        List<String> instanceDns = getPublicDns(_reservationDescription);
+        updateInstanceDescriptions();
+        checkInstanceMode(_instances, InstanceStateName.Running);
+        List<String> instanceDns = Ec2Util.toPublicDns(_instances);
         checkSshPermissions();
         return instanceDns;
     }
 
     @Override
-    public SshClient createSshClient(String username, String password) throws EC2Exception {
+    public SshClient createSshClient(String username, String password) {
         List<String> instanceDns = checkSshPreconditions();
         checkSshConnection(username, instanceDns, null, password);
         return new SshClientImpl(username, password, instanceDns);
     }
 
-    private void checkSshConnection(String username, List<String> instanceDns, File privateKey, String password) throws EC2Exception {
+    private void checkSshConnection(String username, List<String> instanceDns, File privateKey, String password) {
         LOG.info("checking ssh connections");
         for (String dns : instanceDns) {
             JschRunner runner = new JschRunner(username, dns);
@@ -206,46 +205,32 @@ public class InstanceGroupImpl implements InstanceGroup {
             try {
                 runner.testConnect(TimeUnit.MINUTES.toMillis(5));
             } catch (IOException e) {
-                throw new EC2Exception(e.getMessage());
+                throw ExceptionUtil.convertToRuntimeException(e);
             }
         }
     }
 
-    private void checkSshPermissions() throws EC2Exception {
+    private void checkSshPermissions() {
         GroupPermission sshPermission = GroupPermission.createStandardSsh();
-        List<IpPermission> tcpPermissions = getPermissions(sshPermission.getProtocol());
-        if (tcpPermissions.isEmpty()) {
-            throw new EC2Exception("no permission for '" + sshPermission + "' set");
+        List<IpPermission> ipPermissions = Ec2Util.getPermissions(_ec2, Ec2Util.getSecurityGroups(_instances), Filters.permissionProtocol(sshPermission.getProtocol()));
+        if (ipPermissions.isEmpty()) {
+            throw new IllegalStateException("no permission for '" + sshPermission + "' set");
         }
         boolean foundMatching = false;
-        for (IpPermission ipPermission : tcpPermissions) {
+        for (IpPermission ipPermission : ipPermissions) {
             if (sshPermission.matches(ipPermission)) {
                 foundMatching = true;
                 break;
             }
         }
         if (!foundMatching) {
-            throw new EC2Exception("found permission for protocol '" + sshPermission.getProtocol() + " but with diverse ports (need " + sshPermission + ")");
+            throw new IllegalStateException("found permission for protocol '" + sshPermission.getProtocol() + " but with diverse ports (need " + sshPermission + ")");
         }
     }
 
-    private List<IpPermission> getPermissions(String protocol) throws EC2Exception {
-        List<GroupDescription> securityGroups = _ec2.describeSecurityGroups(_reservationDescription.getGroups());
-        List<IpPermission> ipPermissions = new ArrayList<IpPermission>(3);
-        for (GroupDescription groupDescription : securityGroups) {
-            List<IpPermission> permissions = groupDescription.getPermissions();
-            for (IpPermission ipPermission : permissions) {
-                if (ipPermission.getProtocol().equals(protocol)) {
-                    ipPermissions.add(ipPermission);
-                }
-            }
-        }
-        return ipPermissions;
-    }
-
-    private void checkInstanceMode(List<Instance> instances, String desiredMode) {
+    private void checkInstanceMode(List<Instance> instances, InstanceStateName desiredMode) {
         for (Instance instance : instances) {
-            if (!instance.getState().equals(desiredMode)) {
+            if (!instance.getState().getName().equals(desiredMode.toString())) {
                 throw new IllegalStateException("instance " + instance.getInstanceId() + " is not in mode '" + desiredMode + "' but in mode '" + instance.getState() + "'");
             }
         }

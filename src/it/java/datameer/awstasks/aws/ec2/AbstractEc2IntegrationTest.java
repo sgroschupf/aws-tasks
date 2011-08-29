@@ -17,7 +17,7 @@ package datameer.awstasks.aws.ec2;
 
 import java.util.Arrays;
 
-import com.xerox.amazonws.ec2.LaunchConfiguration;
+import com.amazonaws.services.ec2.model.RunInstancesRequest;
 
 import datameer.awstasks.aws.AbstractAwsIntegrationTest;
 
@@ -25,12 +25,12 @@ public abstract class AbstractEc2IntegrationTest extends AbstractAwsIntegrationT
 
     public static final String TEST_SECURITY_GROUP = "aws-tasks.test";
 
-    protected static LaunchConfiguration createLaunchConfiguration(int instanceCount) {
+    protected static RunInstancesRequest createLaunchConfiguration(int instanceCount) {
         String imageId = "ami-5059be39";
-        LaunchConfiguration launchConfiguration = new LaunchConfiguration(imageId, instanceCount, instanceCount);
-        launchConfiguration.setKeyName(_ec2Conf.getPrivateKeyName());
-        launchConfiguration.setSecurityGroup(Arrays.asList(TEST_SECURITY_GROUP, "default"));
-        return launchConfiguration;
+        RunInstancesRequest runRequest = new RunInstancesRequest(imageId, instanceCount, instanceCount);
+        runRequest.setKeyName(_ec2Conf.getPrivateKeyName());
+        runRequest.setSecurityGroups(Arrays.asList(TEST_SECURITY_GROUP, "default"));
+        return runRequest;
     }
 
 }

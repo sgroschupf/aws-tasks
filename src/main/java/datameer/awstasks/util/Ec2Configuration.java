@@ -27,10 +27,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.ec2.AmazonEC2;
+import com.amazonaws.services.ec2.AmazonEC2Client;
+import com.amazonaws.services.ec2.model.RunInstancesRequest;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.xerox.amazonws.ec2.Jec2;
-import com.xerox.amazonws.ec2.LaunchConfiguration;
 
 import datameer.awstasks.aws.ec2.InstanceGroup;
 import datameer.awstasks.aws.ec2.InstanceGroupImpl;
@@ -151,15 +152,15 @@ public class Ec2Configuration {
         return property;
     }
 
-    public LaunchConfiguration createLaunchConfiguration(String ami, String group, int instanceCount) {
-        LaunchConfiguration launchConfiguration = new LaunchConfiguration(ami, instanceCount, instanceCount);
+    public RunInstancesRequest createLaunchConfiguration(String ami, String group, int instanceCount) {
+        RunInstancesRequest launchConfiguration = new RunInstancesRequest(ami, instanceCount, instanceCount);
         launchConfiguration.setKeyName(getPrivateKeyName());
-        launchConfiguration.setSecurityGroup(Arrays.asList("default", group));
+        launchConfiguration.setSecurityGroups(Arrays.asList("default", group));
         return launchConfiguration;
     }
 
-    public Jec2 createJEc2() {
-        return new Jec2(_accessKeyId, _accessKeySecret);
+    public AmazonEC2 createEc2() {
+        return new AmazonEC2Client(new BasicAWSCredentials(_accessKeyId, _accessKeySecret));
     }
 
     public AmazonS3 createS3Service() {
@@ -171,10 +172,10 @@ public class Ec2Configuration {
     }
 
     public InstanceGroup createInstanceGroup() {
-        return createInstanceGroup(createJEc2());
+        return createInstanceGroup(createEc2());
     }
 
-    public InstanceGroup createInstanceGroup(Jec2 ec2) {
+    public InstanceGroup createInstanceGroup(AmazonEC2 ec2) {
         return new InstanceGroupImpl(ec2);
     }
 

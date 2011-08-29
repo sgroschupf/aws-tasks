@@ -15,7 +15,7 @@
  */
 package datameer.awstasks.aws.ec2;
 
-import com.xerox.amazonws.ec2.GroupDescription.IpPermission;
+import com.amazonaws.services.ec2.model.IpPermission;
 
 public class GroupPermission {
 
@@ -71,6 +71,10 @@ public class GroupPermission {
         _sourceIpOrGroup = sourceIpOrGroup;
     }
 
+    public IpPermission toIpPermission() {
+        return new IpPermission().withIpProtocol(getProtocol()).withFromPort(getFromPort()).withToPort(getToPort()).withIpRanges(getSourceIpOrGroup());
+    }
+
     @Override
     public String toString() {
         String string = _protocol + ":" + _fromPort + "->" + _toPort;
@@ -85,7 +89,7 @@ public class GroupPermission {
     }
 
     public boolean matches(IpPermission ipPermission) {
-        return ipPermission.getFromPort() == getFromPort() && ipPermission.getToPort() == getToPort() && getProtocol().equalsIgnoreCase(ipPermission.getProtocol());
+        return ipPermission.getFromPort() <= getFromPort() && ipPermission.getToPort() >= getToPort() && getProtocol().equalsIgnoreCase(ipPermission.getIpProtocol());
 
     }
 }

@@ -1,4 +1,4 @@
-ABOUT - version 0.2.0
+ABOUT - version 0.3.dev
 =====
 + ant tasks for [amazon web services](http://aws.amazon.com/)
 + for details see [aws-tasks webpage](https://github.com/sgroschupf/aws-tasks)
@@ -42,7 +42,7 @@ ANT API
 			privateKeyName="${ec2.privateKeyName}">
 			<!--
 			optional attributes:
-				- instanceType="default|large|xlarge|medium_hcpu|xlarge_hcpu"
+				- instanceType="t1.micro, m1.small, m1.large, m1.xlarge, m2.xlarge, m2.2xlarge, m2.4xlarge, c1.medium, c1.xlarge, cc1.4xlarge, cg1.4xlarge"
 				- userData="a custom string"
 				- availabilityZone="us-east-1a"
 			-->
@@ -98,12 +98,12 @@ JAVA API
     String _accessKeySecret;
     String _privateKeyName;
 
-    Jec2 ec2 = new Jec2(_accessKeyId, _accessKeySecret);
+    AmazonEC2 ec2 = new AmazonEC2Client(new BasicAWSCredentials(accessKeyId, accessKeySecret));
     InstanceGroup instanceGroup = new InstanceGroupImpl(ec2);
     
     // or alternatively use the Ec2Configuration
     Ec2Configuration ec2Configuration = new Ec2Configuration(); //searches for ec2.properties in classpath
-	Jec2 ec2 = ec2Configuration.createJEc2();
+	AmazonEC2 ec2 = ec2Configuration.createEc2();
     InstanceGroup instanceGroup = ec2Configuration.createInstanceGroup(ec2);
 
     // startup an instance group
@@ -139,13 +139,11 @@ more java examples under src/examples/java/... :
 
 DEPENDENCIES
 =====
- - [typica](http://code.google.com/p/typica/)
- 	- JAXB
+ - [aws sdk](http://aws.amazon.com/sdkforjava/)
  	- commons-logging
  	- commons-httpclient
- 	- commons-codec 
- - [jetS3t](http://bitbucket.org/jmurty/jets3t)
- - [amazon-elasticmapreduce](http://developer.amazonwebservices.com/connect/entry.jspa?externalID=2305&categoryID=262)
+ 	- commons-codec
+ 	- stax 
  - [jsch](http://www.jcraft.com/jsch/)
  - [log4j](http://logging.apache.org/log4j/)
 
@@ -176,4 +174,4 @@ Enable Integration Tests
 ---------------------------
 + copy src/it/resources/ec2.properties.template to src/it/resources/ec2.properties
 + edit the file with you ec2 access-key, access-secret and private key
-+ run the integration tests from your ide or with 'ant it' 
++ run the integration tests from your IDE or with 'ant it' 

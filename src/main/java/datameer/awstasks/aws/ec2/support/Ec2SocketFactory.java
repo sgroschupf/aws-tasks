@@ -108,7 +108,13 @@ public class Ec2SocketFactory extends SocketFactory {
         }
 
         private SocketAddress translateSocketAddress(InetSocketAddress endpoint) {
-            String hostName = endpoint.getAddress().getHostName();
+            InetAddress address = endpoint.getAddress();
+            String hostName;
+            if (address != null) {
+                hostName = address.getHostName();// resolved
+            } else {
+                hostName = endpoint.getHostName();// unresolved
+            }
             String publicHostname = _publicAddressesByPrivateAddresses.get(hostName);
             if (publicHostname != null) {
                 if (LOG.isTraceEnabled()) {

@@ -22,11 +22,13 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.tools.ant.BuildException;
 
+import com.amazonaws.services.ec2.AmazonEC2;
+import com.amazonaws.services.ec2.model.AuthorizeSecurityGroupIngressRequest;
+import com.amazonaws.services.ec2.model.CreateSecurityGroupRequest;
 import com.amazonaws.services.ec2.model.InstanceStateName;
-import com.xerox.amazonws.ec2.InstanceType;
-import com.xerox.amazonws.ec2.Jec2;
-import com.xerox.amazonws.ec2.LaunchConfiguration;
-import com.xerox.amazonws.ec2.GroupDescription.IpPermission;
+import com.amazonaws.services.ec2.model.IpPermission;
+import com.amazonaws.services.ec2.model.Placement;
+import com.amazonaws.services.ec2.model.RunInstancesRequest;
 
 import datameer.awstasks.aws.ec2.GroupPermission;
 import datameer.awstasks.aws.ec2.InstanceGroup;
@@ -145,9 +147,9 @@ public class Ec2StartTask extends AbstractEc2Task {
     @Override
     public void execute() throws BuildException {
         System.out.println("executing " + getClass().getSimpleName() + " with groupName '" + _groupName + "'");
-        Jec2 ec2 = new Jec2(_accessKey, _accessSecret);
+        AmazonEC2 ec2 = createEc2();
         try {
-            boolean instancesRunning = Ec2Util.findByGroup(ec2, _groupName, InstanceStateName.Pending, InstanceStateName.Running) != null;
+            boolean instancesRunning = Ec2Util.findByGroup(ec2, _groupName, false, InstanceStateName.Pending, InstanceStateName.Running) != null;
             if (!isReuseRunningInstances() && instancesRunning) {
                 throw new IllegalStateException("found already running instances for group '" + _groupName + "'");
             }
@@ -157,7 +159,7 @@ public class Ec2StartTask extends AbstractEc2Task {
                 if (groupDescription == null) {
                     throw new BuildException("must specify groupDescription");
                 }
-                ec2.createSecurityGroup(_groupName, groupDescription);
+                ec2.createSecurityGroup(new CreateSecurityGroupRequest(_groupName, groupDescription));
             }
 
             List<String> securityGroups = Arrays.asList("default", _groupName);
@@ -168,12 +170,12 @@ public class Ec2StartTask extends AbstractEc2Task {
                 }
                 if (!permissionExists(groupPermission, existingPermissions)) {
                     System.out.println("did not found permission '" + groupPermission + "' - creating it...");
-                    ec2.authorizeSecurityGroupIngress(_groupName, groupPermission.getProtocol(), groupPermission.getFromPort(), groupPermission.getToPort(), groupPermission.getSourceIpOrGroup());
+                    ec2.authorizeSecurityGroupIngress(new AuthorizeSecurityGroupIngressRequest().withGroupName(_groupName).withIpPermissions(groupPermission.toIpPermission()));
                 }
             }
 
             InstanceGroup instanceGroup = new InstanceGroupImpl(ec2);
-            LaunchConfiguration launchConfiguration = new LaunchConfiguration(_ami, _instanceCount, _instanceCount);
+            RunInstancesRequest launchConfiguration = new RunInstancesRequest(_ami, _instanceCount, _instanceCount);
             if (_kernelId != null) {
                 launchConfiguration.setKernelId(_kernelId);
             }
@@ -181,15 +183,14 @@ public class Ec2StartTask extends AbstractEc2Task {
                 launchConfiguration.setKernelId(_ramDiskId);
             }
             launchConfiguration.setKeyName(_privateKeyName);
-            launchConfiguration.setSecurityGroup(securityGroups);
+            launchConfiguration.setSecurityGroups(securityGroups);
             if (_userData != null) {
-                launchConfiguration.setUserData(_userData.getBytes());
+                launchConfiguration.setUserData(_userData);
             }
             if (_instanceType != null) {
-                InstanceType instanceType = InstanceType.valueOf(_instanceType.toUpperCase());
-                launchConfiguration.setInstanceType(instanceType);
+                launchConfiguration.setInstanceType(_instanceType);
             }
-            launchConfiguration.setAvailabilityZone(_availabilityZone);
+            launchConfiguration.setPlacement(new Placement(_availabilityZone));
             if (instancesRunning) {
                 instanceGroup.connectTo(_groupName);
             } else {
