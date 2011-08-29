@@ -176,7 +176,7 @@ public class JschRunner extends ShellExecutor {
     }
 
     /**
-     * Connects to the host and then closes the connection. Throws an execption if connection cannot
+     * Connects to the host and then closes the connection. Throws an exception if connection cannot
      * be established.
      * 
      * @throws IOException
@@ -205,7 +205,7 @@ public class JschRunner extends ShellExecutor {
                     Thread.interrupted();
                 }
             }
-        } while (!succeed || (System.currentTimeMillis() - startTime) > maxWaitTime);
+        } while (!succeed && (System.currentTimeMillis() - startTime) < maxWaitTime);
         if (!succeed) {
             throw new IOException("failed to establish ssh connection to " + _host);
         }
