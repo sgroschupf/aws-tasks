@@ -20,15 +20,19 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.tools.ant.BuildException;
 
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.model.AuthorizeSecurityGroupIngressRequest;
 import com.amazonaws.services.ec2.model.CreateSecurityGroupRequest;
+import com.amazonaws.services.ec2.model.CreateTagsRequest;
+import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.InstanceStateName;
 import com.amazonaws.services.ec2.model.IpPermission;
 import com.amazonaws.services.ec2.model.Placement;
 import com.amazonaws.services.ec2.model.RunInstancesRequest;
+import com.amazonaws.services.ec2.model.Tag;
 
 import datameer.awstasks.aws.ec2.GroupPermission;
 import datameer.awstasks.aws.ec2.InstanceGroup;
@@ -42,6 +46,7 @@ public class Ec2StartTask extends AbstractEc2Task {
     private String _privateKeyName;
 
     private String _instanceType;
+    private String _instanceName;
     private String _userData;
     private String _availabilityZone;
     private String _kernelId;
@@ -82,6 +87,14 @@ public class Ec2StartTask extends AbstractEc2Task {
 
     public String getInstanceType() {
         return _instanceType;
+    }
+
+    public void setInstanceName(String instanceName) {
+        _instanceName = instanceName;
+    }
+
+    public String getInstanceName() {
+        return _instanceName;
     }
 
     public void setUserData(String userData) {
@@ -185,7 +198,7 @@ public class Ec2StartTask extends AbstractEc2Task {
             launchConfiguration.setKeyName(_privateKeyName);
             launchConfiguration.setSecurityGroups(securityGroups);
             if (_userData != null) {
-                launchConfiguration.setUserData(_userData);
+                launchConfiguration.setUserData(Base64.encodeBase64String(_userData.getBytes()));
             }
             if (_instanceType != null) {
                 launchConfiguration.setInstanceType(_instanceType);
@@ -195,6 +208,17 @@ public class Ec2StartTask extends AbstractEc2Task {
                 instanceGroup.connectTo(_groupName);
             } else {
                 instanceGroup.startup(launchConfiguration, TimeUnit.MINUTES, _maxStartTime);
+                if (_instanceName != null) {
+                    System.out.println("tagging instances with name '" + _instanceName + " [<idx>]'");
+                    int idx = 1;
+                    for (Instance instance : instanceGroup.getInstances(false)) {
+                        CreateTagsRequest createTagsRequest = new CreateTagsRequest();
+                        createTagsRequest.withResources(instance.getInstanceId()) //
+                                .withTags(new Tag("Name", _instanceName + " [" + idx + "]"));
+                        ec2.createTags(createTagsRequest);
+                        idx++;
+                    }
+                }
             }
         } catch (Exception e) {
             throw new BuildException(e);

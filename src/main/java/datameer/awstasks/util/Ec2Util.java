@@ -40,7 +40,7 @@ public class Ec2Util {
     public static List<Instance> findByGroup(AmazonEC2 ec2, String securityGroup, boolean includeMultipleReservations, InstanceStateName... instanceStates) {
         List<Reservation> reservations = ec2.describeInstances(new DescribeInstancesRequest().withFilters(Filters.groupName(securityGroup), Filters.instanceStates(instanceStates))).getReservations();
         if (reservations.size() > 1 && !includeMultipleReservations) {
-            throw new IllegalArgumentException("found more then one (" + reservations.size() + ") running instance group (reservation) for the given security group '" + securityGroup
+            throw new IllegalArgumentException("found more then one (" + reservations.size() + ") running instance groups (/reservations) for the given security group '" + securityGroup
                     + "' with instances in '" + Arrays.asList(instanceStates) + "' mode");
         } else if (reservations.isEmpty()) {
             return null;
