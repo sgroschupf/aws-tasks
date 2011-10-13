@@ -15,6 +15,13 @@
  */
 package datameer.awstasks.ant.ec2.model;
 
+import java.io.IOException;
+import java.util.Map;
+
+import org.apache.tools.ant.Project;
+
+import datameer.awstasks.aws.ec2.ssh.SshClient;
+
 public class ScpDownload extends ScpUpload {
 
     private boolean _recursiv;
@@ -25,5 +32,15 @@ public class ScpDownload extends ScpUpload {
 
     public void setRecursiv(boolean recursiv) {
         _recursiv = recursiv;
+    }
+
+    @Override
+    public void execute(Project project, Map<String, String> propertyMap, SshClient sshClient) throws IOException {
+        sshClient.downloadFile(getRemotePath(), getLocalFile(), isRecursiv());
+    }
+
+    @Override
+    public void execute(Project project, Map<String, String> propertyMap, SshClient sshClient, int[] targetInstances) throws IOException {
+        sshClient.downloadFile(getRemotePath(), getLocalFile(), isRecursiv(), targetInstances);
     }
 }

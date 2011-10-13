@@ -16,6 +16,12 @@
 package datameer.awstasks.ant.ec2.model;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.Map;
+
+import org.apache.tools.ant.Project;
+
+import datameer.awstasks.aws.ec2.ssh.SshClient;
 
 public class ScpUpload extends SshCommand {
 
@@ -36,6 +42,16 @@ public class ScpUpload extends SshCommand {
 
     public void setRemotePath(String remotePath) {
         _remotePath = remotePath;
+    }
+
+    @Override
+    public void execute(Project project, Map<String, String> propertyMap, SshClient sshClient) throws IOException {
+        sshClient.uploadFile(getLocalFile(), getRemotePath());
+    }
+
+    @Override
+    public void execute(Project project, Map<String, String> propertyMap, SshClient sshClient, int[] targetInstances) throws IOException {
+        sshClient.uploadFile(getLocalFile(), getRemotePath(), targetInstances);
     }
 
 }

@@ -15,7 +15,12 @@
  */
 package datameer.awstasks.ant.ec2.model;
 
+import java.io.IOException;
+import java.util.Map;
+
 import org.apache.tools.ant.Project;
+
+import datameer.awstasks.aws.ec2.ssh.SshClient;
 
 public abstract class SshCommand {
 
@@ -50,17 +55,17 @@ public abstract class SshCommand {
         return property != null && "true".equals(property.trim());
     }
 
-    public int[] compileTargetInstances(int instanceCount) {
+    static int[] compileTargetInstances(String targetInstancesString, int instanceCount) {
         int[] targetInstances;
-        _targetInstances = _targetInstances.replaceAll("n", Integer.toString(instanceCount - 1));
-        if (_targetInstances.contains(",")) {
-            String[] split = _targetInstances.split(",");
+        targetInstancesString = targetInstancesString.replaceAll("n", Integer.toString(instanceCount - 1));
+        if (targetInstancesString.contains(",")) {
+            String[] split = targetInstancesString.split(",");
             targetInstances = new int[split.length];
             for (int i = 0; i < split.length; i++) {
                 targetInstances[i] = Integer.parseInt(split[i].trim());
             }
-        } else if (_targetInstances.contains("-")) {
-            String[] split = _targetInstances.split("-");
+        } else if (targetInstancesString.contains("-")) {
+            String[] split = targetInstancesString.split("-");
             int min = Integer.parseInt(split[0]);
             int max = Integer.parseInt(split[1]);
             targetInstances = new int[max - min + 1];
@@ -69,7 +74,7 @@ public abstract class SshCommand {
             }
         } else {
             targetInstances = new int[1];
-            targetInstances[0] = Integer.parseInt(_targetInstances);
+            targetInstances[0] = Integer.parseInt(targetInstancesString);
         }
 
         // check validness
@@ -80,4 +85,30 @@ public abstract class SshCommand {
         }
         return targetInstances;
     }
+
+    public void verify(int instanceCount) {
+        if (!isToAllInstances()) {
+            compileTargetInstances(_targetInstances, instanceCount);
+        }
+    }
+
+    public void execute(Project project, Map<String, String> propertyMap, SshClient sshClient, int instanceCount) throws IOException {
+        if (!isIfFulfilled(project)) {
+            System.out.println("skipping command '" + this + "'");
+            return;
+        }
+
+        if (!isToAllInstances()) {
+            int[] targetInstances = compileTargetInstances(_targetInstances, instanceCount);
+            execute(project, propertyMap, sshClient, targetInstances);
+        } else {
+            execute(project, propertyMap, sshClient);
+        }
+
+    }
+
+    protected abstract void execute(Project project, Map<String, String> propertyMap, SshClient sshClient) throws IOException;
+
+    protected abstract void execute(Project project, Map<String, String> propertyMap, SshClient sshClient, int[] targetInstances) throws IOException;
+
 }

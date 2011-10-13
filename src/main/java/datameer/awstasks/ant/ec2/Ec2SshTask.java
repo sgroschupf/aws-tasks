@@ -15,10 +15,7 @@
  */
 package datameer.awstasks.ant.ec2;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -37,7 +34,6 @@ import datameer.awstasks.ant.ec2.model.SshExec;
 import datameer.awstasks.aws.ec2.InstanceGroup;
 import datameer.awstasks.aws.ec2.InstanceGroupImpl;
 import datameer.awstasks.aws.ec2.ssh.SshClient;
-import datameer.awstasks.util.IoUtil;
 
 public class Ec2SshTask extends AbstractEc2Task implements TaskContainer {
 
@@ -112,30 +108,19 @@ public class Ec2SshTask extends AbstractEc2Task implements TaskContainer {
             // verify targetIndexes specifications
             for (Object command : _commands) {
                 if (command instanceof SshCommand) {
-                    SshCommand sshCommand = (SshCommand) command;
-                    if (!sshCommand.isToAllInstances()) {
-                        sshCommand.compileTargetInstances(instanceCount);
-                    }
+                    ((SshCommand) command).verify(instanceCount);
                 }
             }
 
             // execute the commands
             SshClient sshClient = createSshClient();
             for (Object command : _commands) {
-                if (isCommandEnabled(command)) {
-                    if (command instanceof SshExec) {
-                        doSshExec(sshClient, (SshExec) command, instanceCount);
-                    } else if (command instanceof ScpDownload) {
-                        doDownload(sshClient, (ScpDownload) command, instanceCount);
-                    } else if (command instanceof ScpUpload) {
-                        doUpload(sshClient, (ScpUpload) command, instanceCount);
-                    } else if (command instanceof Task) {
-                        ((Task) command).perform();
-                    } else {
-                        throw new IllegalStateException("type '" + command.getClass().getName() + "' not supported here");
-                    }
+                if (command instanceof SshCommand) {
+                    ((SshCommand) command).execute(getProject(), _propertyMap, sshClient, instanceCount);
+                } else if (command instanceof Task) {
+                    ((Task) command).perform();
                 } else {
-                    System.out.println("skipping command '" + command + "'");
+                    throw new IllegalStateException("type '" + command.getClass().getName() + "' not supported here");
                 }
             }
 
@@ -152,74 +137,6 @@ public class Ec2SshTask extends AbstractEc2Task implements TaskContainer {
             return _instanceGroup.createSshClient(_username, _keyFile);
         }
         return _instanceGroup.createSshClient(_username, _password);
-    }
-
-    private boolean isCommandEnabled(Object command) {
-        if (!(command instanceof SshCommand)) {
-            return true;
-        }
-        return ((SshCommand) command).isIfFulfilled(getProject());
-    }
-
-    private void doSshExec(SshClient sshClient, SshExec sshCommand, int instanceCount) throws IOException {
-        OutputStream outputStream = IoUtil.closeProtectedStream(System.out);
-        boolean pipeResultToProperty = sshCommand.getOutputProperty() != null;
-        if (pipeResultToProperty) {
-            outputStream = new ByteArrayOutputStream();
-        }
-        if (sshCommand.getCommandFile() == null) {
-            substituteVariables(sshCommand);
-            if (sshCommand.isToAllInstances()) {
-                sshClient.executeCommand(sshCommand.getCommand(), outputStream);
-            } else {
-                sshClient.executeCommand(sshCommand.getCommand(), outputStream, sshCommand.compileTargetInstances(instanceCount));
-            }
-        } else {
-            if (sshCommand.isToAllInstances()) {
-                sshClient.executeCommandFile(sshCommand.getCommandFile(), outputStream);
-            } else {
-                sshClient.executeCommandFile(sshCommand.getCommandFile(), outputStream, sshCommand.compileTargetInstances(instanceCount));
-            }
-        }
-        if (pipeResultToProperty) {
-            String result = new String(((ByteArrayOutputStream) outputStream).toByteArray());
-            _propertyMap.put(sshCommand.getOutputProperty(), result);
-            getProject().setProperty(sshCommand.getOutputProperty(), result);
-        }
-    }
-
-    private void substituteVariables(SshExec sshCommand) {
-        String command = sshCommand.getCommand();
-        if (command.contains("$")) {
-            for (String propertyNam : _propertyMap.keySet()) {
-                try {
-                    command = command.replaceAll("\\$" + propertyNam, _propertyMap.get(propertyNam));
-                    command = command.replaceAll("\\$\\{" + propertyNam + "\\}", _propertyMap.get(propertyNam));
-                } catch (Exception e) {
-                    throw new RuntimeException("failed to replace '" + propertyNam + "=" + _propertyMap.get(propertyNam) + "'", e);
-                }
-            }
-        }
-        if (!command.equals(sshCommand.getCommand())) {
-            LOG.debug("substitute '" + sshCommand.getCommand() + "' with '" + command + "'");
-            sshCommand.setCommand(command);
-        }
-    }
-
-    private void doUpload(SshClient scpUploader, ScpUpload upload, int instanceCount) throws IOException {
-        if (upload.isToAllInstances()) {
-            scpUploader.uploadFile(upload.getLocalFile(), upload.getRemotePath());
-        } else {
-            scpUploader.uploadFile(upload.getLocalFile(), upload.getRemotePath(), upload.compileTargetInstances(instanceCount));
-        }
-    }
-
-    private void doDownload(SshClient scpUploader, ScpDownload download, int instanceCount) throws IOException {
-        if (download.isToAllInstances()) {
-            scpUploader.downloadFile(download.getRemotePath(), download.getLocalFile(), download.isRecursiv());
-        } else {
-            scpUploader.downloadFile(download.getRemotePath(), download.getLocalFile(), download.isRecursiv(), download.compileTargetInstances(instanceCount));
-        }
     }
 
 }
