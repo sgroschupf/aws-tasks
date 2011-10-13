@@ -26,7 +26,7 @@
 			accessKey="${ec2.accessKey}"
 			accessSecret="${ec2.accessSecret}"
 			privateKeyName="${ec2.privateKeyName}"
-			instanceType="default" 
+			instanceType="m1.small" 
 			userData="a | b | c"
 			availabilityZone="us-east-1c">
 			<groupPermission protocol="tcp" fromPort="22" toPort="22" sourceIpOrGroup="0.0.0.0/0"/>
