@@ -32,6 +32,7 @@ public class SshCommandTest extends AbstractTest {
 
     SshCommand _sshCommand = new SshCommand() {
 
+        @Override
         protected void execute(Project project, Map<String, String> propertyMap, SshClient sshClient) throws IOException {
             // nothing todo
 

@@ -22,7 +22,7 @@ import org.apache.tools.ant.Project;
 
 import datameer.awstasks.aws.ec2.ssh.SshClient;
 
-public class ScpDownload extends ScpUpload {
+public class ScpDownload extends AbstractScpCommand {
 
     private boolean _recursiv;
 

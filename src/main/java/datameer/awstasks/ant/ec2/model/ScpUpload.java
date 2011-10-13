@@ -23,35 +23,51 @@ import org.apache.tools.ant.Project;
 
 import datameer.awstasks.aws.ec2.ssh.SshClient;
 
-public class ScpUpload extends SshCommand {
+public class ScpUpload extends AbstractScpCommand {
 
-    private File _localFile;
-    private String _remotePath;
+    private String _localFiles;
 
-    public File getLocalFile() {
-        return _localFile;
+    public void setLocalFiles(String localFiles) {
+        _localFiles = localFiles;
     }
 
-    public void setLocalFile(File localFile) {
-        _localFile = localFile;
+    public String getLocalFiles() {
+        return _localFiles;
     }
 
-    public String getRemotePath() {
-        return _remotePath;
-    }
-
-    public void setRemotePath(String remotePath) {
-        _remotePath = remotePath;
+    public File[] getLocalFilesAsFile() {
+        if (getLocalFiles() == null || getLocalFiles().isEmpty()) {
+            return null;
+        }
+        String[] split = getLocalFiles().split(",");
+        File[] files = new File[split.length];
+        for (int i = 0; i < files.length; i++) {
+            files[i] = new File(split[i]);
+        }
+        return files;
     }
 
     @Override
     public void execute(Project project, Map<String, String> propertyMap, SshClient sshClient) throws IOException {
-        sshClient.uploadFile(getLocalFile(), getRemotePath());
+        execute(project, propertyMap, sshClient, null);
     }
 
     @Override
     public void execute(Project project, Map<String, String> propertyMap, SshClient sshClient, int[] targetInstances) throws IOException {
-        sshClient.uploadFile(getLocalFile(), getRemotePath(), targetInstances);
+        if (getLocalFiles() != null && getLocalFile() != null) {
+            throw new IllegalStateException("only one of localFile/localFiles can be set");
+        }
+        File[] localFiles = getLocalFilesAsFile();
+        if (localFiles == null) {
+            localFiles = new File[] { getLocalFile() };
+        }
+        for (File localFile : localFiles) {
+            if (targetInstances == null) {
+                sshClient.uploadFile(localFile, getRemotePath());
+            } else {
+                sshClient.uploadFile(localFile, getRemotePath(), targetInstances);
+            }
+        }
     }
 
 }

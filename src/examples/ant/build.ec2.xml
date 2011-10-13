@@ -46,6 +46,7 @@
 			<echo message="uploading files..."/>
 			<upload localFile="${root.dir}/build.xml" remotePath="uploadedFile" targetInstances="all"/>
 			<upload localFile="${root.dir}/src/build" remotePath="~/" targetInstances="0"/>
+			<upload localFiles="${root.dir}/build.xml,${root.dir}/build.properties" remotePath="~/" targetInstances="0"/>
 			<echo message="doing some ssh exec..."/>
 			<exec command="ls uploadedFile" targetInstances="0,1"/>
 			<exec command="hostname" targetInstances="0-n" outputProperty="instances.hostnames"/>

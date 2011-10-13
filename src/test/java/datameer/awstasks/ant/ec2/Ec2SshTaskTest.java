@@ -97,7 +97,7 @@ public class Ec2SshTaskTest extends AbstractTest {
 
     private ScpDownload createScpDownload(Ec2SshTask sshTask, String from, String to) {
         ScpDownload scpDownload = new ScpDownload();
-        sshTask.addUpload(scpDownload);
+        sshTask.addDownload(scpDownload);
         scpDownload.setLocalFile(new File(from));
         scpDownload.setRemotePath(to);
         return scpDownload;
