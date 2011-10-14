@@ -193,7 +193,7 @@ public class InstanceGroupImpl implements InstanceGroup {
     }
 
     private void checkSshConnection(String username, List<String> instanceDns, File privateKey, String password) {
-        LOG.info("checking ssh connections of " + instanceDns);
+        LOG.info("checking ssh connections of " + username + "@" + instanceDns);
         for (String dns : instanceDns) {
             JschRunner runner = new JschRunner(username, dns);
             if (privateKey != null) {
