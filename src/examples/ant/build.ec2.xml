@@ -29,8 +29,8 @@
 			instanceType="m1.small" 
 			userData="a | b | c"
 			availabilityZone="us-east-1c">
-			<groupPermission protocol="tcp" fromPort="22" toPort="22" sourceIpOrGroup="0.0.0.0/0"/>
-			<groupPermission protocol="tcp" fromPort="10023" sourceIpOrGroup="0.0.0.0/0"/>
+			<groupPermission protocol="tcp" fromPort="22" toPort="22" sourceIp="0.0.0.0/0"/>
+			<groupPermission protocol="tcp" fromPort="10023" sourceIp="0.0.0.0/0"/>
 		</ec2-start>
 	</target>
 	
