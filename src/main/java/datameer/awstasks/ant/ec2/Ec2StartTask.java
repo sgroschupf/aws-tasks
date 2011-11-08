@@ -229,7 +229,7 @@ public class Ec2StartTask extends AbstractEc2Task {
 
     private void validate() {
         for (GroupPermission groupPermission : _groupPermissions) {
-            if (null != groupPermission.getSourceIp() || groupPermission.getSourceIp().trim().length() == 0) {
+            if (null == groupPermission.getSourceIp() || groupPermission.getSourceIp().trim().length() == 0) {
                 throw new BuildException("GroupPermission '" + groupPermission + "' has no attribute 'sourceIp'.");
             }
         }
