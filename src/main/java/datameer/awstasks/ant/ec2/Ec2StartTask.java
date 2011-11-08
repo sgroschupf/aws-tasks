@@ -160,6 +160,7 @@ public class Ec2StartTask extends AbstractEc2Task {
     @Override
     public void execute() throws BuildException {
         System.out.println("executing " + getClass().getSimpleName() + " with groupName '" + _groupName + "'");
+        validate();
         AmazonEC2 ec2 = createEc2();
         try {
             boolean instancesRunning = Ec2Util.findByGroup(ec2, _groupName, false, InstanceStateName.Pending, InstanceStateName.Running) != null;
@@ -222,6 +223,14 @@ public class Ec2StartTask extends AbstractEc2Task {
             }
         } catch (Exception e) {
             throw new BuildException(e);
+        }
+    }
+
+    private void validate() {
+        for (GroupPermission groupPermission : _groupPermissions) {
+            if (null != groupPermission.getSourceIp() || groupPermission.getSourceIp().trim().length() == 0) {
+                throw new BuildException("GroupPermission '" + groupPermission + "' has no attribute 'sourceIp'.");
+            }
         }
     }
 
