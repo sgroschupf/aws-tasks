@@ -32,6 +32,7 @@ public abstract class AbstractEc2ConnectTask extends AbstractEc2Task {
             instanceGroup.connectTo(_groupName);
             execute(ec2, instanceGroup);
         } catch (Exception e) {
+            System.err.println("execution " + getClass().getSimpleName() + " with groupName '" + _groupName + "' failed: " + e.getMessage());
             throw new BuildException(e);
         }
     }

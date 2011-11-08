@@ -221,6 +221,7 @@ public class Ec2StartTask extends AbstractEc2Task {
                 }
             }
         } catch (Exception e) {
+            System.err.println("execution " + getClass().getSimpleName() + " with groupName '" + _groupName + "' failed: " + e.getMessage());
             throw new BuildException(e);
         }
     }
