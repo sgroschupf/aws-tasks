@@ -22,21 +22,17 @@ public class GroupPermission {
     private String _protocol;
     private int _fromPort;
     private int _toPort = -1;
-    private String _sourceIpOrGroup;
+    private String _sourceIp;
 
     public GroupPermission() {
         // default constructor for ant
-    }
-
-    public GroupPermission(String protocol, int fromPort, int toPort) {
-        this(protocol, fromPort, toPort, null);
     }
 
     public GroupPermission(String protocol, int fromPort, int toPort, String sourceIpOrGroup) {
         _protocol = protocol;
         _fromPort = fromPort;
         _toPort = toPort;
-        _sourceIpOrGroup = sourceIpOrGroup;
+        _sourceIp = sourceIpOrGroup;
     }
 
     public void setProtocol(String protocol) {
@@ -63,33 +59,40 @@ public class GroupPermission {
         return _toPort;
     }
 
-    public String getSourceIpOrGroup() {
-        return _sourceIpOrGroup;
+    public String getSourceIp() {
+        return _sourceIp;
     }
 
-    public void setSourceIpOrGroup(String sourceIpOrGroup) {
-        _sourceIpOrGroup = sourceIpOrGroup;
+    public void setSourceIp(String sourceIpOrGroup) {
+        _sourceIp = sourceIpOrGroup;
     }
 
     public IpPermission toIpPermission() {
-        return new IpPermission().withIpProtocol(getProtocol()).withFromPort(getFromPort()).withToPort(getToPort()).withIpRanges(getSourceIpOrGroup());
+        return new IpPermission().withIpProtocol(getProtocol()).withFromPort(getFromPort()).withToPort(getToPort()).withIpRanges(getSourceIp());
     }
 
     @Override
     public String toString() {
         String string = _protocol + ":" + _fromPort + "->" + _toPort;
-        if (_sourceIpOrGroup != null) {
-            string += " | " + _sourceIpOrGroup;
+        if (_sourceIp != null) {
+            string += " | " + _sourceIp;
         }
         return string;
     }
 
     public static GroupPermission createStandardSsh() {
-        return new GroupPermission("tcp", 22, 22);
+        return new GroupPermission("tcp", 22, 22, "0.0.0.0/0");
     }
 
     public boolean matches(IpPermission ipPermission) {
-        return ipPermission.getFromPort() <= getFromPort() && ipPermission.getToPort() >= getToPort() && getProtocol().equalsIgnoreCase(ipPermission.getIpProtocol());
+        boolean sourceAllowed = false;
+        if (!ipPermission.getIpRanges().isEmpty()) {
+            sourceAllowed = ipPermission.getIpRanges().contains(_sourceIp);
+        } else if (!ipPermission.getUserIdGroupPairs().isEmpty()) {
+            sourceAllowed = false;
+        }
+
+        return ipPermission.getFromPort() <= getFromPort() && ipPermission.getToPort() >= getToPort() && getProtocol().equalsIgnoreCase(ipPermission.getIpProtocol()) && sourceAllowed;
 
     }
 }
