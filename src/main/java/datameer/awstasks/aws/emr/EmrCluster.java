@@ -419,6 +419,15 @@ public class EmrCluster {
         return jobFlows.get(0);
     }
 
+    protected int getCurrentStepCount(String jobFlowId) {
+        DescribeJobFlowsResult describeJobFlows = _emrWebService.describeJobFlows(new DescribeJobFlowsRequest().withJobFlowIds(jobFlowId));
+        List<JobFlowDetail> jobFlows = describeJobFlows.getJobFlows();
+        if (jobFlows.isEmpty()) {
+            throw new IllegalArgumentException("no job flow with id '" + _jobFlowId + "' found");
+        }
+        return jobFlows.get(0).getSteps().size();
+    }
+
     protected List<JobFlowDetail> getRunningJobFlowDetailsByName(String name) {
         DescribeJobFlowsResult describeJobFlows = _emrWebService.describeJobFlows(new DescribeJobFlowsRequest().withJobFlowStates(JobFlowState.STARTING.name(), JobFlowState.BOOTSTRAPPING.name(),
                 JobFlowState.WAITING.name(), JobFlowState.RUNNING.name()));
