@@ -419,7 +419,7 @@ public class EmrCluster {
         return jobFlows.get(0);
     }
 
-    protected int getCurrentStepCount(String jobFlowId) {
+    public int getCurrentStepCount(String jobFlowId) {
         DescribeJobFlowsResult describeJobFlows = _emrWebService.describeJobFlows(new DescribeJobFlowsRequest().withJobFlowIds(jobFlowId));
         List<JobFlowDetail> jobFlows = describeJobFlows.getJobFlows();
         if (jobFlows.isEmpty()) {
