@@ -15,6 +15,11 @@
  */
 package datameer.awstasks.aws.emr;
 
+import com.amazonaws.services.elasticmapreduce.model.JobFlowExecutionStatusDetail;
+
+/**
+ * @see JobFlowExecutionStatusDetail#getState()
+ */
 public enum JobFlowState {
 
     COMPLETED(false), FAILED(false), TERMINATED(false), RUNNING(true), SHUTTING_DOWN(false), STARTING(false), WAITING(true), BOOTSTRAPPING(true);

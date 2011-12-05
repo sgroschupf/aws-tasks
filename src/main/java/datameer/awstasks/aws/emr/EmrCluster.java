@@ -142,7 +142,7 @@ public class EmrCluster {
                 throw new NullPointerException("privateKeyName must not be null please configure settings properly");
             }
             LOG.info("Starting job flow '" + getName() + "' ...");
-            if (!getRunningJobFlowDetailsByName(getName()).isEmpty()) {
+            if (getRunningJobFlowDetails(false) != null) {
                 throw new IllegalStateException("Job flow with name '" + getName() + "' already running.");
             }
             boolean keepAlive = true;
@@ -205,14 +205,8 @@ public class EmrCluster {
      */
     public void connectByName() throws InterruptedException {
         checkConnection(false);
-        List<JobFlowDetail> jobFlows = getRunningJobFlowDetailsByName(getName());
-        if (jobFlows.isEmpty()) {
-            throw new IllegalStateException("No job flow with name '" + getName() + "' running.");
-        }
-        if (jobFlows.size() > 1) {
-            throw new IllegalStateException("More than one job flow with name '" + getName() + "' running.");
-        }
-        connectById(jobFlows.get(0).getJobFlowId());
+        JobFlowDetail jobFlow = getRunningJobFlowDetails(true);
+        connectById(jobFlow.getJobFlowId());
     }
 
     /**
@@ -266,6 +260,13 @@ public class EmrCluster {
 
     public ClusterState getState() {
         return _clusterState;
+    }
+
+    public boolean isIdle() {
+        if (_clusterState != ClusterState.CONNECTED) {
+            return false;
+        }
+        return getRunningJobFlowDetails(true).getExecutionStatusDetail().getState().equals(JobFlowState.WAITING);
     }
 
     public String getJobFlowId() {
@@ -420,25 +421,40 @@ public class EmrCluster {
     }
 
     public int getCurrentStepCount(String jobFlowId) {
+        if (_clusterState != ClusterState.CONNECTED) {
+            return 0;
+        }
+
         DescribeJobFlowsResult describeJobFlows = _emrWebService.describeJobFlows(new DescribeJobFlowsRequest().withJobFlowIds(jobFlowId));
         List<JobFlowDetail> jobFlows = describeJobFlows.getJobFlows();
         if (jobFlows.isEmpty()) {
             throw new IllegalArgumentException("no job flow with id '" + _jobFlowId + "' found");
         }
-        return jobFlows.get(0).getSteps().size();
+        return getRunningJobFlowDetails(true).getSteps().size();
     }
 
-    protected List<JobFlowDetail> getRunningJobFlowDetailsByName(String name) {
+    protected JobFlowDetail getRunningJobFlowDetails(boolean hasToExist) {
         DescribeJobFlowsResult describeJobFlows = _emrWebService.describeJobFlows(new DescribeJobFlowsRequest().withJobFlowStates(JobFlowState.STARTING.name(), JobFlowState.BOOTSTRAPPING.name(),
                 JobFlowState.WAITING.name(), JobFlowState.RUNNING.name()));
+        String jobFlowName = getName();
         List<JobFlowDetail> jobFlows = describeJobFlows.getJobFlows();
         for (Iterator<JobFlowDetail> iterator = jobFlows.iterator(); iterator.hasNext();) {
             JobFlowDetail jobFlowDetail = iterator.next();
-            if (!name.equals(jobFlowDetail.getName())) {
+            if (!jobFlowDetail.getName().equals(jobFlowName)) {
                 iterator.remove();
             }
         }
-        return jobFlows;
+
+        if (jobFlows.size() > 1) {
+            throw new IllegalStateException("More than one job flow with name '" + jobFlowName + "' running.");
+        }
+        if (jobFlows.size() == 0) {
+            if (hasToExist) {
+                throw new IllegalStateException("No job flow with name '" + jobFlowName + "' running.");
+            }
+            return null;
+        }
+        return jobFlows.get(0);
     }
 
     protected StepDetail getStepDetail(JobFlowDetail flowDetail, String stepName) {
