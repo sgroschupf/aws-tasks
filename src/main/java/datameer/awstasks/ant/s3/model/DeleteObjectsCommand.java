@@ -45,6 +45,9 @@ public class DeleteObjectsCommand extends S3Command {
 
     @Override
     public void execute(Project project, AmazonS3 s3Service) {
+        if (_prefix.startsWith("/")) {
+            _prefix = _prefix.substring(1);
+        }
         System.out.println("deleting all keys with '" + _prefix + "' in bucket '" + _bucket + "'");
         List<S3ObjectSummary> objectListing = s3Service.listObjects(_bucket, _prefix).getObjectSummaries();
         long size = 0;
