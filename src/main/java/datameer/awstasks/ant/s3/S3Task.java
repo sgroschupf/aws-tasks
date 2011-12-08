@@ -26,7 +26,7 @@ import com.amazonaws.services.s3.AmazonS3Client;
 import datameer.awstasks.ant.AbstractAwsTask;
 import datameer.awstasks.ant.s3.model.CreateBucketCommand;
 import datameer.awstasks.ant.s3.model.DeleteBucketCommand;
-import datameer.awstasks.ant.s3.model.DeleteObjectCommand;
+import datameer.awstasks.ant.s3.model.DeleteObjectsCommand;
 import datameer.awstasks.ant.s3.model.ListBucketsCommand;
 import datameer.awstasks.ant.s3.model.S3Command;
 
@@ -60,7 +60,7 @@ public class S3Task extends AbstractAwsTask {
         _s3Commands.add(command);
     }
 
-    public void addDeleteObject(DeleteObjectCommand command) {
+    public void addDeleteObjects(DeleteObjectsCommand command) {
         _s3Commands.add(command);
     }
 

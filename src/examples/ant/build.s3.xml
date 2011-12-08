@@ -20,8 +20,8 @@
 	<target name="basic-s3" description="--> setup fresh ec2 instance groups">
 		<s3 accessKey="${ec2.accessKey}"
 			accessSecret="${ec2.accessSecret}">
-			<createBucket name="aws.test.bucket" emptyIfExistent="true"/>
-			<deleteObject bucket="aws.test.bucket" key="/folders"/>
+			<createBucket name="aws.test.bucket" emptyIfExistent="false"/>
+			<deleteObjects bucket="aws.test.bucket" prefix="folders"/>
 			<listBuckets/>
 			<deleteBucket name="aws.test.bucket"/>
 		</s3>
