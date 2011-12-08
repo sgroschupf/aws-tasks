@@ -21,6 +21,7 @@
 		<s3 accessKey="${ec2.accessKey}"
 			accessSecret="${ec2.accessSecret}">
 			<createBucket name="aws.test.bucket" emptyIfExistent="true"/>
+			<deleteObject bucket="aws.test.bucket" key="/folders"/>
 			<listBuckets/>
 			<deleteBucket name="aws.test.bucket"/>
 		</s3>
