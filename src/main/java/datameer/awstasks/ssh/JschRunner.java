@@ -198,7 +198,7 @@ public class JschRunner extends ShellExecutor {
                 testConnect();
                 succeed = true;
             } catch (IOException e) {
-                LOG.warn("failed to connect with " + _host + ": " + e.getMessage());
+                LOG.warn("failed to connect with " + _user + "@" + _host + ":" + _port + " :" + e.getMessage());
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e1) {
