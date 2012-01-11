@@ -94,8 +94,8 @@ public class Ec2SshTask extends AbstractEc2Task implements TaskContainer {
     }
 
     @Override
-    public void execute() throws BuildException {
-        System.out.println("executing " + getClass().getSimpleName() + " for group '" + _groupName + "'");
+    public void doExecute() throws BuildException {
+        LOG.info("executing " + getClass().getSimpleName() + " for group '" + _groupName + "'");
         if (_instanceGroup == null) {
             AmazonEC2 ec2 = createEc2();
             _instanceGroup = new InstanceGroupImpl(ec2);

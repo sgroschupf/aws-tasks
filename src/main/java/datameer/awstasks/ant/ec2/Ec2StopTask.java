@@ -23,7 +23,7 @@ public class Ec2StopTask extends AbstractEc2ConnectTask {
 
     @Override
     protected void execute(AmazonEC2 ec2, InstanceGroup instanceGroup) throws Exception {
-        System.out.println("executing " + getClass().getSimpleName() + " with groupName '" + _groupName + "'");
+        LOG.info("executing " + getClass().getSimpleName() + " with groupName '" + _groupName + "'");
         instanceGroup.shutdown();
     }
 }

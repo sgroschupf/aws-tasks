@@ -158,8 +158,8 @@ public class Ec2StartTask extends AbstractEc2Task {
     }
 
     @Override
-    public void execute() throws BuildException {
-        System.out.println("executing " + getClass().getSimpleName() + " with groupName '" + _groupName + "'");
+    public void doExecute() throws BuildException {
+        LOG.info("executing " + getClass().getSimpleName() + " with groupName '" + _groupName + "'");
         validate();
         AmazonEC2 ec2 = createEc2();
         try {
@@ -168,7 +168,7 @@ public class Ec2StartTask extends AbstractEc2Task {
                 throw new IllegalStateException("found already running instances for group '" + _groupName + "'");
             }
             if (!Ec2Util.groupExists(ec2, _groupName)) {
-                System.out.println("group '" + _groupName + "' does not exists - creating it");
+                LOG.info("group '" + _groupName + "' does not exists - creating it");
                 String groupDescription = getGroupDescription();
                 if (groupDescription == null) {
                     throw new BuildException("must specify groupDescription");
@@ -183,7 +183,7 @@ public class Ec2StartTask extends AbstractEc2Task {
                     groupPermission.setToPort(groupPermission.getFromPort());
                 }
                 if (!permissionExists(groupPermission, existingPermissions)) {
-                    System.out.println("did not found permission '" + groupPermission + "' - creating it...");
+                    LOG.info("did not found permission '" + groupPermission + "' - creating it...");
                     ec2.authorizeSecurityGroupIngress(new AuthorizeSecurityGroupIngressRequest().withGroupName(_groupName).withIpPermissions(groupPermission.toIpPermission()));
                 }
             }
@@ -210,7 +210,7 @@ public class Ec2StartTask extends AbstractEc2Task {
             } else {
                 instanceGroup.startup(launchConfiguration, TimeUnit.MINUTES, _maxStartTime);
                 if (_instanceName != null) {
-                    System.out.println("tagging instances with name '" + _instanceName + " [<idx>]'");
+                    LOG.info("tagging instances with name '" + _instanceName + " [<idx>]'");
                     int idx = 1;
                     for (Instance instance : instanceGroup.getInstances(false)) {
                         CreateTagsRequest createTagsRequest = new CreateTagsRequest();
@@ -222,7 +222,7 @@ public class Ec2StartTask extends AbstractEc2Task {
                 }
             }
         } catch (Exception e) {
-            System.err.println("execution " + getClass().getSimpleName() + " with groupName '" + _groupName + "' failed: " + e.getMessage());
+            LOG.error("execution " + getClass().getSimpleName() + " with groupName '" + _groupName + "' failed: " + e.getMessage());
             throw new BuildException(e);
         }
     }

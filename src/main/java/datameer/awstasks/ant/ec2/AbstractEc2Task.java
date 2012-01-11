@@ -15,13 +15,16 @@
  */
 package datameer.awstasks.ant.ec2;
 
+import org.apache.log4j.NDC;
+import org.apache.tools.ant.BuildException;
+
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2Client;
 
 import datameer.awstasks.ant.AbstractAwsTask;
 
-public class AbstractEc2Task extends AbstractAwsTask {
+public abstract class AbstractEc2Task extends AbstractAwsTask {
 
     protected String _groupName;
 
@@ -36,5 +39,14 @@ public class AbstractEc2Task extends AbstractAwsTask {
     public AmazonEC2 createEc2() {
         return new AmazonEC2Client(new BasicAWSCredentials(_accessKey, _accessSecret));
     }
+
+    @Override
+    public final void execute() throws BuildException {
+        NDC.push(_groupName);
+        doExecute();
+        NDC.pop();
+    }
+
+    protected abstract void doExecute();
 
 }
