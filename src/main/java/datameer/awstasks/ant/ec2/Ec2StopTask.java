@@ -15,8 +15,6 @@
  */
 package datameer.awstasks.ant.ec2;
 
-import org.apache.tools.ant.BuildException;
-
 import com.amazonaws.services.ec2.AmazonEC2;
 
 import datameer.awstasks.aws.ec2.InstanceGroup;
@@ -24,13 +22,8 @@ import datameer.awstasks.aws.ec2.InstanceGroup;
 public class Ec2StopTask extends AbstractEc2ConnectTask {
 
     @Override
-    protected void execute(AmazonEC2 ec2, InstanceGroup instanceGroup) throws Exception {
+    protected void doExecute(AmazonEC2 ec2, InstanceGroup instanceGroup) throws Exception {
         LOG.info("executing " + getClass().getSimpleName() + " with groupName '" + _groupName + "'");
-        try {
-            instanceGroup.shutdown();
-        } catch (Exception e) {
-            LOG.error("execution " + getClass().getSimpleName() + " with groupName '" + _groupName + "' failed: " + e.getMessage());
-            throw new BuildException(e);
-        }
+        instanceGroup.shutdown();
     }
 }

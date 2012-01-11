@@ -35,7 +35,7 @@ public class Ec2InfoTask extends AbstractEc2ConnectTask {
     }
 
     @Override
-    protected void execute(AmazonEC2 ec2, InstanceGroup instanceGroup) throws Exception {
+    protected void doExecute(AmazonEC2 ec2, InstanceGroup instanceGroup) throws Exception {
         LOG.info("executing " + getClass().getSimpleName() + " for group '" + _groupName + "'");
         List<Instance> instances = instanceGroup.getInstances(false);
         getProject().setProperty("instances.count", instances.size() + "");

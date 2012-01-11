@@ -30,12 +30,12 @@ public abstract class AbstractEc2ConnectTask extends AbstractEc2Task {
         InstanceGroup instanceGroup = new InstanceGroupImpl(ec2);
         try {
             instanceGroup.connectTo(_groupName);
-            execute(ec2, instanceGroup);
+            doExecute(ec2, instanceGroup);
         } catch (Exception e) {
-            System.err.println("execution " + getClass().getSimpleName() + " with groupName '" + _groupName + "' failed: " + e.getMessage());
+            LOG.info("execution " + getClass().getSimpleName() + " with groupName '" + _groupName + "' failed: " + e.getMessage());
             throw new BuildException(e);
         }
     }
 
-    protected abstract void execute(AmazonEC2 ec2, InstanceGroup instanceGroup) throws Exception;
+    protected abstract void doExecute(AmazonEC2 ec2, InstanceGroup instanceGroup) throws Exception;
 }

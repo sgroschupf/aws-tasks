@@ -42,14 +42,10 @@ public abstract class AbstractEc2Task extends AbstractAwsTask {
 
     @Override
     public final void execute() throws BuildException {
-        if (NDC.getDepth() == 0) {
+        if (NDC.getDepth() <= 0) {
             NDC.push(_groupName);
         }
-        try {
-            doExecute();
-        } finally {
-            NDC.pop();
-        }
+        doExecute();
     }
 
     protected abstract void doExecute();
