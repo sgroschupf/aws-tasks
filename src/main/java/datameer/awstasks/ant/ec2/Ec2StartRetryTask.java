@@ -36,6 +36,7 @@ public class Ec2StartRetryTask extends Ec2StartTask {
             try {
                 tryCount++;
                 super.doExecute();
+                return;
             } catch (BuildException startException) {
                 LOG.warn("failed to start '" + _groupName + "' in try " + tryCount);
                 try {
