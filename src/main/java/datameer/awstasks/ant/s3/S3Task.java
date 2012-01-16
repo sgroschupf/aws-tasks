@@ -48,7 +48,7 @@ public class S3Task extends AbstractAwsTask {
                 s3Command.execute(getProject(), s3Service);
             }
         } catch (Exception e) {
-            throw new BuildException(e);
+            throw new BuildException("failed to execute s3 command with accessKey: " + _accessKey, e);
         }
     }
 
