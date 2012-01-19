@@ -40,14 +40,15 @@ public class S3Task extends AbstractAwsTask {
 
     @Override
     public void execute() throws BuildException {
-        System.out.println("executing " + getClass().getSimpleName());
+        LOG.info("executing " + getClass().getSimpleName());
         try {
             AmazonS3Client s3Service = createS3Service();
             for (S3Command s3Command : _s3Commands) {
-                System.out.println("executing " + s3Command);
+                LOG.info("executing " + s3Command);
                 s3Command.execute(getProject(), s3Service);
             }
         } catch (Exception e) {
+            LOG.error("failed to execute s3 command", e);
             throw new BuildException("failed to execute s3 command with accessKey: " + _accessKey, e);
         }
     }

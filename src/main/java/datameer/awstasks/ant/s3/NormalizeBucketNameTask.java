@@ -15,6 +15,7 @@
  */
 package datameer.awstasks.ant.s3;
 
+import org.apache.log4j.Logger;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Task;
 
@@ -22,6 +23,7 @@ import datameer.awstasks.util.S3Util;
 
 public class NormalizeBucketNameTask extends Task {
 
+    private static final Logger LOG = Logger.getLogger(NormalizeBucketNameTask.class);
     private String _name;
     private String _targetProperty;
 
@@ -48,7 +50,7 @@ public class NormalizeBucketNameTask extends Task {
     @Override
     public void execute() throws BuildException {
         String normalizedName = S3Util.normalizeBucketName(getName());
-        System.out.println("normalized '" + getName() + "' to '" + normalizedName + "'");
+        LOG.info("normalized '" + getName() + "' to '" + normalizedName + "'");
         getProject().setProperty(getTargetProperty(), normalizedName);
     }
 
