@@ -51,7 +51,7 @@ public class Ec2Example {
         // startup an instance group
         RunInstancesRequest launchConfiguration = new RunInstancesRequest("ami-5059be39", 5, 5);
         launchConfiguration.setKeyName(privateKeyName);
-        instanceGroup.startup(launchConfiguration, TimeUnit.MINUTES, 5);
+        instanceGroup.launch(launchConfiguration, TimeUnit.MINUTES, 5);
 
         // or connect to a running one
         instanceGroup.connectTo("securityGroup");
@@ -70,7 +70,7 @@ public class Ec2Example {
         sshClient.executeCommand("start-nodes.sh -v", IoUtil.closeProtectedStream(System.out), new int[] { 1, 2, 3, 4 });
 
         // shutdown ec2 instances
-        instanceGroup.shutdown();
+        instanceGroup.terminate();
 
     }
 }

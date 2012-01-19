@@ -10,8 +10,8 @@
 	<!-- AWS TASKS DEFINITION	                                            -->
 	<!-- ================================================================== -->
 	
-	<taskdef name="ec2-start" classname="datameer.awstasks.ant.ec2.Ec2StartTask" classpathref="task.classpath"/>
-	<taskdef name="ec2-stop" classname="datameer.awstasks.ant.ec2.Ec2StopTask" classpathref="task.classpath"/>
+	<taskdef name="ec2-launch" classname="datameer.awstasks.ant.ec2.Ec2LaunchTask" classpathref="task.classpath"/>
+	<taskdef name="ec2-shutdown" classname="datameer.awstasks.ant.ec2.Ec2ShutdownTask" classpathref="task.classpath"/>
 	<taskdef name="ec2-ssh" classname="datameer.awstasks.ant.ec2.Ec2SshTask" classpathref="task.classpath"/>
 	<taskdef name="ec2-info" classname="datameer.awstasks.ant.ec2.Ec2InfoTask" classpathref="task.classpath"/>
 
@@ -20,7 +20,7 @@
 	<!-- START EC2 TASK	                       			                     -->
 	<!-- ================================================================== -->
 	<target name="start-ec2" description="--> start ec2 instance groups">
-		<ec2-start groupName="aws-tasks.test" groupDescription="test group fow aws-tasks"
+		<ec2-launch groupName="aws-tasks.test" groupDescription="test group fow aws-tasks"
 			ami="ami-5059be39"
 			instanceCount="2"
 			accessKey="${ec2.accessKey}"
@@ -31,7 +31,7 @@
 			availabilityZone="us-east-1c">
 			<groupPermission protocol="tcp" fromPort="22" toPort="22" sourceIp="0.0.0.0/0"/>
 			<groupPermission protocol="tcp" fromPort="10023" sourceIp="0.0.0.0/0"/>
-		</ec2-start>
+		</ec2-launch>
 	</target>
 	
 	<!-- ================================================================== -->
@@ -90,10 +90,11 @@
 	<!-- STOP EC2 TASK			                                            -->
 	<!-- ================================================================== -->
 	<target name="stop-ec2" description="--> stop ec2 instance groups">
-		<ec2-stop groupName="aws-tasks.test"
+		<ec2-shutdown groupName="aws-tasks.test"
 			accessKey="${ec2.accessKey}"
-			accessSecret="${ec2.accessSecret}">
-		</ec2-stop>
+			accessSecret="${ec2.accessSecret}"
+			stopOnly="false">
+		</ec2-shutdown>
 	</target>
 	
 	<!-- ================================================================== -->

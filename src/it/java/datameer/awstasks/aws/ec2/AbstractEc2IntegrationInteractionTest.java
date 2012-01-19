@@ -50,7 +50,7 @@ public class AbstractEc2IntegrationInteractionTest extends AbstractEc2Integratio
             }
         }
         if (!_instanceGroup.isAssociated()) {
-            _instanceGroup.startup(createLaunchConfiguration(INSTANCE_COUNT), TimeUnit.MINUTES, 5);
+            _instanceGroup.launch(createLaunchConfiguration(INSTANCE_COUNT), TimeUnit.MINUTES, 5);
         }
     }
 
@@ -59,7 +59,7 @@ public class AbstractEc2IntegrationInteractionTest extends AbstractEc2Integratio
         if (CLUSTER_ALREADY_RUNNING) {
             LOG.info("don't shutdown instance group");
         } else {
-            _instanceGroup.shutdown();
+            _instanceGroup.terminate();
         }
     }
 

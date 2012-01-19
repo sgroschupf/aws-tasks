@@ -38,7 +38,7 @@ public class Ec2UtilTest extends AbstractEc2IntegrationInteractionTest {
 
         // start a second instance-group within the same security group
         InstanceGroup scndInstanceGroup = _ec2Conf.createInstanceGroup(_ec2);
-        scndInstanceGroup.startup(createLaunchConfiguration(1));
+        scndInstanceGroup.launch(createLaunchConfiguration(1));
         try {
             instances = Ec2Util.findByGroup(_ec2, TEST_SECURITY_GROUP, false, InstanceStateName.Running, InstanceStateName.Pending);
             fail("should throw exception");
@@ -48,7 +48,7 @@ public class Ec2UtilTest extends AbstractEc2IntegrationInteractionTest {
 
         instances = Ec2Util.findByGroup(_ec2, TEST_SECURITY_GROUP, true, InstanceStateName.Running, InstanceStateName.Pending);
         assertThat(instances).hasSize(INSTANCE_COUNT + 1);
-        scndInstanceGroup.shutdown();
+        scndInstanceGroup.terminate();
     }
 
 }

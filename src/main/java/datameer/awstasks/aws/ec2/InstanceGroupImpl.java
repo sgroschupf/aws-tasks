@@ -17,7 +17,7 @@ package datameer.awstasks.aws.ec2;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -29,6 +29,9 @@ import com.amazonaws.services.ec2.model.InstanceStateName;
 import com.amazonaws.services.ec2.model.IpPermission;
 import com.amazonaws.services.ec2.model.Reservation;
 import com.amazonaws.services.ec2.model.RunInstancesRequest;
+import com.amazonaws.services.ec2.model.StartInstancesRequest;
+import com.amazonaws.services.ec2.model.StopInstancesRequest;
+import com.amazonaws.services.ec2.model.StopInstancesResult;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
 import com.amazonaws.services.ec2.model.TerminateInstancesResult;
 
@@ -78,19 +81,33 @@ public class InstanceGroupImpl implements InstanceGroup {
     }
 
     @Override
-    public Reservation startup(RunInstancesRequest launchConfiguration) {
-        return startup(launchConfiguration, null, 0);
+    public Reservation launch(RunInstancesRequest launchConfiguration) {
+        return launch(launchConfiguration, null, 0);
     }
 
     @Override
-    public Reservation startup(RunInstancesRequest launchConfiguration, TimeUnit timeUnit, long time) {
+    public Reservation launch(RunInstancesRequest launchConfiguration, TimeUnit timeUnit, long time) {
         checkEc2Association(false);
-        LOG.info(String.format("starting %d to %d instances with %s in groups %s...", launchConfiguration.getMinCount(), launchConfiguration.getMaxCount(), launchConfiguration.getImageId(),
+        LOG.info(String.format("launching %d to %d instances with %s in groups %s...", launchConfiguration.getMinCount(), launchConfiguration.getMaxCount(), launchConfiguration.getImageId(),
                 launchConfiguration.getSecurityGroups()));
         Reservation reservation = _ec2.runInstances(launchConfiguration).getReservation();
         _instances = reservation.getInstances();
         List<String> instanceIds = Ec2Util.toIds(_instances);
-        LOG.info(String.format("triggered start of %d instances: %s", instanceIds.size(), instanceIds));
+        LOG.info(String.format("triggered launch of %d instances: %s", instanceIds.size(), instanceIds));
+        if (timeUnit != null) {
+            waitUntilServerUp(timeUnit, time);
+            LOG.info(String.format("launched %d instances: %s / %s", instanceIds.size(), instanceIds, Ec2Util.toPublicDns(_instances)));
+        }
+        return Ec2Util.reloadReservation(_ec2, reservation);
+    }
+
+    @Override
+    public Reservation start(List<String> instanceIds, TimeUnit timeUnit, long time) {
+        checkEc2Association(false);
+        LOG.info(String.format("starting %s instances ...", instanceIds));
+        _ec2.startInstances(new StartInstancesRequest(instanceIds));
+        Reservation reservation = Ec2Util.getReservation(_ec2, instanceIds);
+        _instances = reservation.getInstances();
         if (timeUnit != null) {
             waitUntilServerUp(timeUnit, time);
             LOG.info(String.format("started %d instances: %s / %s", instanceIds.size(), instanceIds, Ec2Util.toPublicDns(_instances)));
@@ -119,40 +136,23 @@ public class InstanceGroupImpl implements InstanceGroup {
     }
 
     @Override
-    public void shutdown() {
+    public void terminate() {
         checkEc2Association(true);
         TerminateInstancesResult result = _ec2.terminateInstances(new TerminateInstancesRequest(Ec2Util.toIds(_instances)));
         _instances = null;
-        LOG.info("stopped " + result.getTerminatingInstances().size() + " instances");
+        LOG.info("terminated " + result.getTerminatingInstances().size() + " instances");
+    }
+
+    @Override
+    public void stop() {
+        checkEc2Association(true);
+        StopInstancesResult result = _ec2.stopInstances(new StopInstancesRequest(Ec2Util.toIds(_instances)));
+        _instances = null;
+        LOG.info("stopped " + result.getStoppingInstances().size() + " instances");
     }
 
     private List<Instance> waitUntilServerUp(TimeUnit timeUnit, long waitTime) {
-        long end = System.currentTimeMillis() + timeUnit.toMillis(waitTime);
-        List<String> unexpectedStates = new ArrayList<String>();
-        do {
-            unexpectedStates.clear();
-            try {
-                long sleepTime = 10000;
-                LOG.info(String.format("wait on instances %s to enter 'running' mode. Sleeping %d ms. zzz...", Ec2Util.getSecurityGroups(_instances), sleepTime));
-                Thread.sleep(sleepTime);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-
-            updateInstanceDescriptions();
-            List<Instance> startingInstances = _instances;
-            for (Instance instance : startingInstances) {
-                if (!InstanceStateName.Running.name().equalsIgnoreCase(instance.getState().getName())) {
-                    unexpectedStates.add(instance.getState().getName());
-                }
-                if (InstanceStateName.Terminated.name().equalsIgnoreCase(instance.getState().getName())) {
-                    throw new IllegalStateException("instance for " + instance.getSecurityGroups() + " terminated:" + instance.getStateTransitionReason());
-                }
-            }
-        } while (!unexpectedStates.isEmpty() && System.currentTimeMillis() < end);
-        if (!unexpectedStates.isEmpty()) {
-            throw new IllegalStateException("not all instance of group '" + Ec2Util.getSecurityGroups(_instances) + "' are in state 'running', some are in: " + unexpectedStates);
-        }
+        _instances = Ec2Util.waitUntil(_ec2, _instances, EnumSet.of(InstanceStateName.Pending), InstanceStateName.Running, timeUnit, waitTime);
         return _instances;
     }
 

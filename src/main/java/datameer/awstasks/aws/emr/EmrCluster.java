@@ -17,6 +17,7 @@ package datameer.awstasks.aws.emr;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -47,6 +48,9 @@ import com.amazonaws.services.simpledb.AmazonSimpleDBClient;
 import com.amazonaws.services.simpledb.model.Attribute;
 import com.amazonaws.services.simpledb.model.Item;
 import com.amazonaws.services.simpledb.model.SelectRequest;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
 
 import datameer.awstasks.aws.concurrent.ObjectLock;
 import datameer.awstasks.util.S3Util;
@@ -436,25 +440,18 @@ public class EmrCluster {
     protected JobFlowDetail getRunningJobFlowDetails(boolean hasToExist) {
         DescribeJobFlowsResult describeJobFlows = _emrWebService.describeJobFlows(new DescribeJobFlowsRequest().withJobFlowStates(JobFlowState.STARTING.name(), JobFlowState.BOOTSTRAPPING.name(),
                 JobFlowState.WAITING.name(), JobFlowState.RUNNING.name()));
-        String jobFlowName = getName();
-        List<JobFlowDetail> jobFlows = describeJobFlows.getJobFlows();
-        for (Iterator<JobFlowDetail> iterator = jobFlows.iterator(); iterator.hasNext();) {
-            JobFlowDetail jobFlowDetail = iterator.next();
-            if (!jobFlowDetail.getName().equals(jobFlowName)) {
-                iterator.remove();
-            }
-        }
+        final String jobFlowName = getName();
+        Collection<JobFlowDetail> matchingJobFlows = Collections2.filter(describeJobFlows.getJobFlows(), new Predicate<JobFlowDetail>() {
 
-        if (jobFlows.size() > 1) {
-            throw new IllegalStateException("More than one job flow with name '" + jobFlowName + "' running.");
-        }
-        if (jobFlows.size() == 0) {
-            if (hasToExist) {
-                throw new IllegalStateException("No job flow with name '" + jobFlowName + "' running.");
+            @Override
+            public boolean apply(JobFlowDetail input) {
+                return input.getName().equals(jobFlowName);
             }
-            return null;
-        }
-        return jobFlows.get(0);
+
+        });
+        Preconditions.checkState(matchingJobFlows.size() > 0, "More than one job flow with name '%s' running.", jobFlowName);
+        Preconditions.checkState(!hasToExist || matchingJobFlows.size() < 2, "No job flow with name '%s' running.", jobFlowName);
+        return matchingJobFlows.iterator().next();
     }
 
     protected StepDetail getStepDetail(JobFlowDetail flowDetail, String stepName) {

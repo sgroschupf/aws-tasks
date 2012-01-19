@@ -16,21 +16,46 @@
 package datameer.awstasks.aws.ec2;
 
 import java.util.Arrays;
+import java.util.List;
 
+import com.amazonaws.services.ec2.AmazonEC2;
+import com.amazonaws.services.ec2.model.DescribeVolumesRequest;
+import com.amazonaws.services.ec2.model.DescribeVolumesResult;
+import com.amazonaws.services.ec2.model.Filter;
+import com.amazonaws.services.ec2.model.Placement;
 import com.amazonaws.services.ec2.model.RunInstancesRequest;
+import com.amazonaws.services.ec2.model.Volume;
+import com.google.common.base.Preconditions;
 
 import datameer.awstasks.aws.AbstractAwsIntegrationTest;
 
 public abstract class AbstractEc2IntegrationTest extends AbstractAwsIntegrationTest {
 
     public static final String TEST_SECURITY_GROUP = "aws-tasks.test";
+    public static final String TEST_EBS = "aws-test-ebs";
+    public static final String TEST_AMI = "ami-5059be39";
+    public static final String TEST_AMI_WITH_EBS = "ami-01a56668";
 
     protected static RunInstancesRequest createLaunchConfiguration(int instanceCount) {
-        String imageId = "ami-5059be39";
+        return createLaunchConfiguration(TEST_AMI, instanceCount);
+    }
+
+    protected static RunInstancesRequest createEbsLaunchConfiguration(int instanceCount) {
+        return createLaunchConfiguration(TEST_AMI_WITH_EBS, instanceCount);
+    }
+
+    protected static RunInstancesRequest createLaunchConfiguration(String imageId, int instanceCount) {
         RunInstancesRequest runRequest = new RunInstancesRequest(imageId, instanceCount, instanceCount);
         runRequest.setKeyName(_ec2Conf.getPrivateKeyName());
+        runRequest.setPlacement(new Placement("us-east-1b"));
         runRequest.setSecurityGroups(Arrays.asList(TEST_SECURITY_GROUP, "default"));
         return runRequest;
     }
 
+    protected Volume findEbsVolume(AmazonEC2 ec2) {
+        DescribeVolumesResult describeVolumes = ec2.describeVolumes(new DescribeVolumesRequest().withFilters(new Filter().withName("tag:Name").withValues(TEST_EBS)));
+        List<Volume> volumes = describeVolumes.getVolumes();
+        Preconditions.checkArgument(volumes.size() == 1, "expected 1 EBS volume with name tag '%s' but got %s", TEST_EBS, volumes);
+        return volumes.get(0);
+    }
 }

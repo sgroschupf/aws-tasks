@@ -15,130 +15,32 @@
  */
 package datameer.awstasks.ant.ec2;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.tools.ant.BuildException;
 
 import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.model.AuthorizeSecurityGroupIngressRequest;
-import com.amazonaws.services.ec2.model.CreateSecurityGroupRequest;
-import com.amazonaws.services.ec2.model.CreateTagsRequest;
 import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.InstanceStateName;
-import com.amazonaws.services.ec2.model.IpPermission;
-import com.amazonaws.services.ec2.model.Placement;
-import com.amazonaws.services.ec2.model.RunInstancesRequest;
-import com.amazonaws.services.ec2.model.Tag;
+import com.google.common.base.Preconditions;
 
-import datameer.awstasks.aws.ec2.GroupPermission;
 import datameer.awstasks.aws.ec2.InstanceGroup;
 import datameer.awstasks.aws.ec2.InstanceGroupImpl;
 import datameer.awstasks.util.Ec2Util;
 
 public class Ec2StartTask extends AbstractEc2Task {
 
-    private String _ami;
-    private int _instanceCount;
-    private String _privateKeyName;
-
-    private String _instanceType;
-    private String _instanceName;
-    private String _userData;
-    private String _availabilityZone;
-    private String _kernelId;
-    private String _ramDiskId;
-    private String _groupDescription;
+    private String _instanceIds;
     private int _maxStartTime = 10;// in minutes
     private boolean _reuseRunningInstances = false;
 
-    private List<GroupPermission> _groupPermissions = new ArrayList<GroupPermission>();
-
-    public void setAmi(String ami) {
-        _ami = ami;
+    public void setInstanceIds(String instanceIds) {
+        _instanceIds = instanceIds;
     }
 
-    public String getAmi() {
-        return _ami;
-    }
-
-    public void setInstanceCount(int instanceCount) {
-        _instanceCount = instanceCount;
-    }
-
-    public int getInstanceCount() {
-        return _instanceCount;
-    }
-
-    public void setPrivateKeyName(String privateKeyName) {
-        _privateKeyName = privateKeyName;
-    }
-
-    public String getPrivateKeyName() {
-        return _privateKeyName;
-    }
-
-    public void setInstanceType(String instanceType) {
-        _instanceType = instanceType;
-    }
-
-    public String getInstanceType() {
-        return _instanceType;
-    }
-
-    public void setInstanceName(String instanceName) {
-        _instanceName = instanceName;
-    }
-
-    public String getInstanceName() {
-        return _instanceName;
-    }
-
-    public void setUserData(String userData) {
-        _userData = userData;
-    }
-
-    public String getUserData() {
-        return _userData;
-    }
-
-    public void setAvailabilityZone(String availabilityZone) {
-        _availabilityZone = availabilityZone;
-    }
-
-    public String getAvailabilityZone() {
-        return _availabilityZone;
-    }
-
-    public void setKernelId(String kernelId) {
-        _kernelId = kernelId;
-    }
-
-    public String getKernelId() {
-        return _kernelId;
-    }
-
-    public void setRamDiskId(String ramDiskId) {
-        _ramDiskId = ramDiskId;
-    }
-
-    public String getRamDiskId() {
-        return _ramDiskId;
-    }
-
-    public void setGroupDescription(String groupDescription) {
-        _groupDescription = groupDescription;
-    }
-
-    public String getGroupDescription() {
-        return _groupDescription;
-    }
-
-    public void addGroupPermission(GroupPermission groupPermission) {
-        _groupPermissions.add(groupPermission);
+    public String getInstanceIds() {
+        return _instanceIds;
     }
 
     public int getMaxStartTime() {
@@ -160,66 +62,24 @@ public class Ec2StartTask extends AbstractEc2Task {
     @Override
     public void doExecute() throws BuildException {
         LOG.info("executing " + getClass().getSimpleName() + " with groupName '" + _groupName + "'");
-        validate();
         AmazonEC2 ec2 = createEc2();
+        Preconditions.checkArgument(_instanceIds != null && _instanceIds.length() > 0, "no instance ids set");
+        List<String> instanceIds = Arrays.asList(_instanceIds.split(","));
         try {
-            boolean instancesRunning = Ec2Util.findByGroup(ec2, _groupName, false, InstanceStateName.Pending, InstanceStateName.Running) != null;
+            List<Instance> instances = Ec2Util.getReservation(ec2, instanceIds).getInstances();
+            boolean instancesRunning = checkForRunningState(instances);
             if (!isReuseRunningInstances() && instancesRunning) {
                 throw new IllegalStateException("found already running instances for group '" + _groupName + "'");
             }
             if (!Ec2Util.groupExists(ec2, _groupName)) {
-                LOG.info("group '" + _groupName + "' does not exists - creating it");
-                String groupDescription = getGroupDescription();
-                if (groupDescription == null) {
-                    throw new BuildException("must specify groupDescription");
-                }
-                ec2.createSecurityGroup(new CreateSecurityGroupRequest(_groupName, groupDescription));
-            }
-
-            List<String> securityGroups = Arrays.asList("default", _groupName);
-            List<IpPermission> existingPermissions = Ec2Util.getPermissions(ec2, securityGroups);
-            for (GroupPermission groupPermission : _groupPermissions) {
-                if (groupPermission.getToPort() == -1) {
-                    groupPermission.setToPort(groupPermission.getFromPort());
-                }
-                if (!permissionExists(groupPermission, existingPermissions)) {
-                    LOG.info("did not found permission '" + groupPermission + "' - creating it...");
-                    ec2.authorizeSecurityGroupIngress(new AuthorizeSecurityGroupIngressRequest().withGroupName(_groupName).withIpPermissions(groupPermission.toIpPermission()));
-                }
+                throw new BuildException("group '" + _groupName + "' does not exists");
             }
 
             InstanceGroup instanceGroup = new InstanceGroupImpl(ec2);
-            RunInstancesRequest launchConfiguration = new RunInstancesRequest(_ami, _instanceCount, _instanceCount);
-            if (_kernelId != null) {
-                launchConfiguration.setKernelId(_kernelId);
-            }
-            if (_ramDiskId != null) {
-                launchConfiguration.setKernelId(_ramDiskId);
-            }
-            launchConfiguration.setKeyName(_privateKeyName);
-            launchConfiguration.setSecurityGroups(securityGroups);
-            if (_userData != null) {
-                launchConfiguration.setUserData(Base64.encodeBase64String(_userData.getBytes()));
-            }
-            if (_instanceType != null) {
-                launchConfiguration.setInstanceType(_instanceType);
-            }
-            launchConfiguration.setPlacement(new Placement(_availabilityZone));
             if (instancesRunning) {
                 instanceGroup.connectTo(_groupName);
             } else {
-                instanceGroup.startup(launchConfiguration, TimeUnit.MINUTES, _maxStartTime);
-                if (_instanceName != null) {
-                    LOG.info("tagging instances with name '" + _instanceName + " [<idx>]'");
-                    int idx = 1;
-                    for (Instance instance : instanceGroup.getInstances(false)) {
-                        CreateTagsRequest createTagsRequest = new CreateTagsRequest();
-                        createTagsRequest.withResources(instance.getInstanceId()) //
-                                .withTags(new Tag("Name", _instanceName + " [" + idx + "]"));
-                        ec2.createTags(createTagsRequest);
-                        idx++;
-                    }
-                }
+                instanceGroup.start(instanceIds, TimeUnit.MINUTES, _maxStartTime);
             }
         } catch (Exception e) {
             LOG.error("execution " + getClass().getSimpleName() + " with groupName '" + _groupName + "' failed: " + e.getMessage());
@@ -227,20 +87,18 @@ public class Ec2StartTask extends AbstractEc2Task {
         }
     }
 
-    private void validate() {
-        for (GroupPermission groupPermission : _groupPermissions) {
-            if (null == groupPermission.getSourceIp() || groupPermission.getSourceIp().trim().length() == 0) {
-                throw new BuildException("GroupPermission '" + groupPermission + "' has no attribute 'sourceIp'.");
+    private boolean checkForRunningState(List<Instance> instances) {
+        int aliveCount = 0;
+        int terminatedCount = 0;
+        for (Instance instance : instances) {
+            if (Ec2Util.isAlive(instance)) {
+                aliveCount++;
+            } else {
+                terminatedCount++;
             }
         }
-    }
-
-    private boolean permissionExists(GroupPermission groupPermission, List<IpPermission> existingPermissions) {
-        for (IpPermission ipPermission : existingPermissions) {
-            if (groupPermission.matches(ipPermission)) {
-                return true;
-            }
-        }
+        Preconditions.checkState(aliveCount == 0 || terminatedCount == 0, "Instances %s in mixed state: " + Ec2Util.toStates(instances));
         return false;
     }
+
 }

@@ -31,19 +31,19 @@ import datameer.awstasks.aws.ec2.ssh.SshClient;
 public interface InstanceGroup {
 
     /**
-     * Starts the configured {@linkplain InstanceGroup}. After a call of this method, the concerning
-     * instances are likely to be in 'pending' mode.
+     * Launches the configured {@linkplain InstanceGroup}. After a call of this method, the
+     * concerning instances are likely to be in 'pending' mode.
      * 
      * @param launchConfiguration
      * @return a {@link ReservationDescription} with (snapshot) information about the running
      *         instances
      */
-    Reservation startup(RunInstancesRequest launchConfiguration);
+    Reservation launch(RunInstancesRequest launchConfiguration);
 
     /**
-     * Starts the configured {@linkplain InstanceGroup} and waits until all instances are in
+     * Launches the configured {@linkplain InstanceGroup} and waits until all instances are in
      * 'running' mode. If after the specified waiting time the instances are still not running a
-     * {@link EC2Exception} is thrown.
+     * {@link IllegalStateException} is thrown.
      * 
      * @param launchConfiguration
      * @param timeUnit
@@ -53,13 +53,27 @@ public interface InstanceGroup {
      * @return a {@link ReservationDescription} with (snapshot) information about the running
      *         instances
      */
-    Reservation startup(RunInstancesRequest launchConfiguration, TimeUnit timeUnit, long time);
+    Reservation launch(RunInstancesRequest launchConfiguration, TimeUnit timeUnit, long time);
+
+    /**
+     * Starts instances in stopped mode and waits until all instances are in 'running' mode. If
+     * after the specified waiting time the instances are still not running a
+     * {@link IllegalStateException} is thrown.
+     * 
+     * @param launchConfiguration
+     * @param timeUnit
+     *            the unit of the time parameter
+     * @param time
+     *            maximum time to wait (average startup time depends on image but is around 1 min)
+     * @return a {@link ReservationDescription} with (snapshot) information about the running
+     *         instances
+     */
+    Reservation start(List<String> instanceIds, TimeUnit timeUnit, long time);
 
     /**
      * Connect to already running instances of a reservation.
      * 
      * @param reservationDescription
-     * @throws EC2Exception
      */
     void connectTo(Reservation reservationDescription);
 
@@ -68,16 +82,18 @@ public interface InstanceGroup {
      * with instances in mode 'running' exists, a {@link EC2Exception} is thrown.
      * 
      * @param groupName
-     * @throws EC2Exception
      */
     void connectTo(String groupName);
 
     /**
-     * Shut all ec2 instances in this group down.
-     * 
-     * @throws EC2Exception
+     * Terminates all ec2 instances in this group.
      */
-    void shutdown();
+    void terminate();
+
+    /**
+     * Stops all ec2 instances in this group.
+     */
+    void stop();
 
     /**
      * 

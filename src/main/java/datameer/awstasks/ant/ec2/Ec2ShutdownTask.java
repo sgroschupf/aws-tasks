@@ -19,11 +19,25 @@ import com.amazonaws.services.ec2.AmazonEC2;
 
 import datameer.awstasks.aws.ec2.InstanceGroup;
 
-public class Ec2StopTask extends AbstractEc2ConnectTask {
+public class Ec2ShutdownTask extends AbstractEc2ConnectTask {
+
+    private boolean _stopOnly = false;
+
+    public boolean isStopOnly() {
+        return _stopOnly;
+    }
+
+    public void setStopOnly(boolean stopOnly) {
+        _stopOnly = stopOnly;
+    }
 
     @Override
     protected void doExecute(AmazonEC2 ec2, InstanceGroup instanceGroup) throws Exception {
         LOG.info("executing " + getClass().getSimpleName() + " with groupName '" + _groupName + "'");
-        instanceGroup.shutdown();
+        if (_stopOnly) {
+            instanceGroup.stop();
+        } else {
+            instanceGroup.terminate();
+        }
     }
 }

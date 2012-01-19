@@ -18,9 +18,13 @@ package datameer.awstasks.util;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.log4j.Logger;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.ec2.AmazonEC2;
@@ -34,8 +38,12 @@ import com.amazonaws.services.ec2.model.InstanceStateName;
 import com.amazonaws.services.ec2.model.IpPermission;
 import com.amazonaws.services.ec2.model.Reservation;
 import com.amazonaws.services.ec2.model.SecurityGroup;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 
 public class Ec2Util {
+
+    private static final Logger LOG = Logger.getLogger(Ec2Util.class);
 
     public static List<Instance> findByGroup(AmazonEC2 ec2, String securityGroup, boolean includeMultipleReservations, InstanceStateName... instanceStates) {
         List<Reservation> reservations = ec2.describeInstances(new DescribeInstancesRequest().withFilters(Filters.groupName(securityGroup), Filters.instanceStates(instanceStates))).getReservations();
@@ -88,6 +96,14 @@ public class Ec2Util {
         return ids;
     }
 
+    public static List<String> toStates(List<Instance> instances) {
+        List<String> states = Lists.newArrayList();
+        for (Instance instance : instances) {
+            states.add(instance.getState().getName());
+        }
+        return states;
+    }
+
     public static List<String> toPublicDns(List<Instance> instances) {
         List<String> dns = new ArrayList<String>(instances.size());
         for (Instance instance : instances) {
@@ -113,6 +129,14 @@ public class Ec2Util {
         return reservations.get(0);
     }
 
+    public static Reservation getReservation(AmazonEC2 ec2, List<String> instanceIds) {
+        List<Reservation> reservations = ec2.describeInstances(new DescribeInstancesRequest().withInstanceIds(instanceIds)).getReservations();
+        if (reservations.size() != 1) {
+            throw new IllegalStateException("do not found resevervation for instances '" + instanceIds + "': " + reservations);
+        }
+        return reservations.get(0);
+    }
+
     public static List<String> getInstanceIds(Reservation reservationDescription) {
         List<Instance> instances = reservationDescription.getInstances();
         List<String> instanceIds = new ArrayList<String>(instances.size());
@@ -132,6 +156,52 @@ public class Ec2Util {
             }
             throw e;
         }
+    }
+
+    public static boolean isAlive(Instance instance) {
+        switch (InstanceStateName.fromValue(instance.getState().getName())) {
+        case Pending:
+        case Running:
+            return true;
+        case ShuttingDown:
+        case Stopping:
+        case Terminated:
+        case Stopped:
+            return false;
+        default:
+            throw new UnsupportedOperationException(instance.getState().getName());
+        }
+    }
+
+    public static List<Instance> waitUntil(AmazonEC2 ec2, List<Instance> instances, EnumSet<InstanceStateName> allowedPreTargetStates, InstanceStateName targetState) {
+        return waitUntil(ec2, instances, allowedPreTargetStates, targetState, TimeUnit.MINUTES, 10);
+    }
+
+    public static List<Instance> waitUntil(AmazonEC2 ec2, List<Instance> instances, EnumSet<InstanceStateName> allowedPreTargetStates, InstanceStateName targetState, TimeUnit timeUnit, long waitTime) {
+        long end = System.currentTimeMillis() + timeUnit.toMillis(waitTime);
+        List<InstanceStateName> undesiredStates = new ArrayList<InstanceStateName>();
+        do {
+            try {
+                long sleepTime = 10000;
+                LOG.info(String.format("wait on instances %s to enter '" + targetState + "' mode. Sleeping %d ms. zzz...", Ec2Util.getSecurityGroups(instances), sleepTime));
+                Thread.sleep(sleepTime);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            instances = Ec2Util.reloadInstanceDescriptions(ec2, instances);
+            undesiredStates.clear();
+            for (Instance instance : instances) {
+                InstanceStateName state = InstanceStateName.fromValue(instance.getState().getName());
+                boolean instanceInTargetState = state.equals(targetState);
+                Preconditions.checkState(instanceInTargetState || allowedPreTargetStates.contains(state), "Unexpected instance state '%s' for instance %s", state, instance.getInstanceId());
+                if (!instanceInTargetState) {
+                    undesiredStates.add(state);
+                }
+            }
+        } while (!undesiredStates.isEmpty() && System.currentTimeMillis() < end);
+
+        Preconditions.checkState(undesiredStates.isEmpty(), "not all instance of group '" + Ec2Util.getSecurityGroups(instances) + "' are in state 'running', some are in: " + undesiredStates);
+        return instances;
     }
 
 }

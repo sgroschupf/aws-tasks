@@ -17,7 +17,7 @@ package datameer.awstasks.ant.ec2;
 
 import org.apache.tools.ant.BuildException;
 
-public class Ec2StartRetryTask extends Ec2StartTask {
+public class Ec2LaunchRetryTask extends Ec2LaunchTask {
 
     private int _retryCount = 3;
 
@@ -40,7 +40,7 @@ public class Ec2StartRetryTask extends Ec2StartTask {
             } catch (BuildException startException) {
                 LOG.warn("failed to start '" + _groupName + "' in try " + tryCount);
                 try {
-                    Ec2StopTask stopTask = new Ec2StopTask();
+                    Ec2ShutdownTask stopTask = new Ec2ShutdownTask();
                     stopTask.setAccessKey(_accessKey);
                     stopTask.setAccessSecret(_accessSecret);
                     stopTask.setGroupName(_groupName);

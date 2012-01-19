@@ -17,11 +17,11 @@ package datameer.awstasks.ant.ec2;
 
 import org.junit.Test;
 
-public class Ec2StartRetryTaskTest {
+public class Ec2LaunchRetryTaskTest {
 
     @Test
     public void testRetry() throws Exception {
-        Ec2StartRetryTask ec2StartRetryTask = new Ec2StartRetryTask();
+        Ec2LaunchRetryTask ec2StartRetryTask = new Ec2LaunchRetryTask();
         ec2StartRetryTask.execute();
     }
 }
