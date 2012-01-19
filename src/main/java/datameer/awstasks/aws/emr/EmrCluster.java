@@ -449,8 +449,11 @@ public class EmrCluster {
             }
 
         });
-        Preconditions.checkState(matchingJobFlows.size() > 0, "More than one job flow with name '%s' running.", jobFlowName);
-        Preconditions.checkState(!hasToExist || matchingJobFlows.size() < 2, "No job flow with name '%s' running.", jobFlowName);
+        if (matchingJobFlows.isEmpty() && !hasToExist) {
+            return null;
+        }
+        Preconditions.checkState(matchingJobFlows.size() <= 1, "More than one job flow with name '%s' running.", jobFlowName);
+        Preconditions.checkState(matchingJobFlows.size() > 0, "No job flow with name '%s' running.", jobFlowName);
         return matchingJobFlows.iterator().next();
     }
 
