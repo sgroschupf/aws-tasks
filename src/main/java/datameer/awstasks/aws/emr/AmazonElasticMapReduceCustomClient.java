@@ -163,9 +163,13 @@ public class AmazonElasticMapReduceCustomClient extends AmazonElasticMapReduceCl
                 return true;
             }
         }
-
-        if (e.getMessage() != null && e.getMessage().contains("Unable to execute HTTP request") && failCount < getMaxRetriesOnConnectionErrors()) {
-            return true;
+        if (failCount < getMaxRetriesOnConnectionErrors() && e.getMessage() != null) {
+            if (e.getMessage().contains("Unable to execute HTTP request")) {
+                return true;
+            }
+            if (e.getMessage().contains("Unable to unmarshall response")) {
+                return true;
+            }
         }
 
         return false;
