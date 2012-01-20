@@ -270,7 +270,8 @@ public class EmrCluster {
         if (_clusterState != ClusterState.CONNECTED) {
             return false;
         }
-        return getRunningJobFlowDetails(true).getExecutionStatusDetail().getState().equals(JobFlowState.WAITING);
+        JobFlowState state = JobFlowState.valueOf(getRunningJobFlowDetails(true).getExecutionStatusDetail().getState());
+        return state.equals(JobFlowState.WAITING);
     }
 
     public String getJobFlowId() {

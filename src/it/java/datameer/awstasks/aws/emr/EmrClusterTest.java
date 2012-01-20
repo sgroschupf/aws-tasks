@@ -15,6 +15,8 @@
  */
 package datameer.awstasks.aws.emr;
 
+import static org.fest.assertions.Assertions.*;
+
 import static org.junit.Assert.*;
 
 import java.io.BufferedReader;
@@ -79,6 +81,7 @@ public class EmrClusterTest extends AbstractAwsIntegrationTest {
         };
         thread.start();
         _emrCluster.startup();
+        assertThat(_emrCluster.isIdle()).isEqualTo(false);
         assertTrue(clusterStates.toString(), clusterStates.contains(ClusterState.STARTING));
         assertEquals(ClusterState.CONNECTED, _emrCluster.getState());
         _jobFlowId = _emrCluster.getJobFlowId();
@@ -180,13 +183,17 @@ public class EmrClusterTest extends AbstractAwsIntegrationTest {
         _emrCluster.setRequestInterval(oldRequestInterval);
     }
 
-    @Test
+    @Test(timeout = 60000 * 5)
     public void testShutdown() throws Exception {
         EmrCluster cluster2 = createEmrCluster();
         cluster2.connectByName();
         _emrCluster.connectByName();
         assertEquals(ClusterState.CONNECTED, _emrCluster.getState());
         assertEquals(ClusterState.CONNECTED, cluster2.getState());
+        while (!_emrCluster.isIdle()) {
+            Thread.sleep(10000);
+        }
+
         _emrCluster.shutdown();
         assertEquals(ClusterState.UNCONNECTED, _emrCluster.getState());
         assertEquals(ClusterState.CONNECTED, cluster2.getState());
