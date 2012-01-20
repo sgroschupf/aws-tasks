@@ -29,7 +29,7 @@ public class EmrSettings {
     private final String _s3Bucket;
     private int _instanceCount;
 
-    private String _hadoopVersion;
+    private String _hadoopVersion = "0.20";
     private String _additionalStartInfo;
     private final Collection<BootstrapActionConfig> _bootstrapActions = new ArrayList<BootstrapActionConfig>(3);
     private InstanceType _masterInstanceType = InstanceType.M1Small;

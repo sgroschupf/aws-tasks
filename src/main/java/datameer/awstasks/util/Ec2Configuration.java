@@ -167,8 +167,10 @@ public class Ec2Configuration {
         return new AmazonS3Client(new BasicAWSCredentials(_accessKeyId, _accessKeySecret));
     }
 
-    public EmrCluster createEmrCluster(String name, String s3Bucket, int instanceCount) {
-        return new EmrCluster(new EmrSettings(name, _accessKeyId, _privateKeyName, s3Bucket, instanceCount), _accessKeySecret);
+    public EmrCluster createEmrCluster(String name, String hadoopVersion, String s3Bucket, int instanceCount) {
+        EmrSettings settings = new EmrSettings(name, _accessKeyId, _privateKeyName, s3Bucket, instanceCount);
+        settings.setHadoopVersion(hadoopVersion);
+        return new EmrCluster(settings, _accessKeySecret);
     }
 
     public InstanceGroup createInstanceGroup() {

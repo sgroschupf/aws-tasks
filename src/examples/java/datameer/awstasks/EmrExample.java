@@ -36,7 +36,7 @@ public class EmrExample {
 
         // or alternatively use the Ec2Configuration
         Ec2Configuration ec2Configuration = new Ec2Configuration(); // searches for ec2.properties
-        EmrCluster emrCluster = ec2Configuration.createEmrCluster(clusterName, s3Bucket, 5);
+        EmrCluster emrCluster = ec2Configuration.createEmrCluster(clusterName, "0.20", s3Bucket, 5);
 
         // start a new flow
         emrCluster.startup();
@@ -44,7 +44,7 @@ public class EmrExample {
         // or connect to an existing
         // emrCluster.setName("myCluster"); //by name
         // emrCluster.connect();
-        //        
+        //
         // emrCluster.connect("j-9RFYACO46O2Z");//by id
 
         // execute a flow step
