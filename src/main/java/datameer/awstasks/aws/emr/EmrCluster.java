@@ -53,6 +53,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 
 import datameer.awstasks.aws.concurrent.ObjectLock;
+import datameer.awstasks.aws.emr.JobFlowState.StateCategory;
 import datameer.awstasks.util.S3Util;
 
 /**
@@ -171,7 +172,7 @@ public class EmrCluster {
             }
             RunJobFlowResult startResponse = _emrWebService.runJobFlow(startRequest);
             _jobFlowId = startResponse.getJobFlowId();
-            waitUntilClusterStarted(_jobFlowId);
+            waitUntilClusterStateChange(_jobFlowId, StateCategory.OPERATIONAL);
             LOG.info("elastic cluster '" + getName() + "/" + _jobFlowId + "' started, master-host is " + _masterHost);
             successful = true;
         } finally {
@@ -198,7 +199,7 @@ public class EmrCluster {
         checkConnection(true);
         _clusterState = ClusterState.STOPPING;
         _emrWebService.terminateJobFlows(new TerminateJobFlowsRequest().withJobFlowIds(_jobFlowId));
-        waitUntilClusterShutdown(_jobFlowId);
+        waitUntilClusterStateChange(_jobFlowId, StateCategory.DEAD);
         disconnect();
     }
 
@@ -222,21 +223,10 @@ public class EmrCluster {
     public void connectById(String jobFlowId) throws InterruptedException {
         checkConnection(false);
         _jobFlowId = jobFlowId;
-        waitUntilClusterStarted(jobFlowId);
+        waitUntilClusterStateChange(_jobFlowId, StateCategory.OPERATIONAL);
         LOG.info("connected to elastic cluster '" + getName() + "/" + _jobFlowId + "', master-host is " + _masterHost);
         _clusterState = ClusterState.CONNECTED;
     }
-
-    // private void shutdownS3Service() {
-    // jz: not in verion 0.6
-    // if (_s3Service != null) {
-    // try {
-    // _s3Service.shutdown();
-    // } catch (S3ServiceException e) {
-    // throw new RuntimeException(e);
-    // }
-    // }
-    // }
 
     /**
      * Connects to EMR cluster and equilibrate the local state with the remote state.
@@ -270,8 +260,8 @@ public class EmrCluster {
         if (_clusterState != ClusterState.CONNECTED) {
             return false;
         }
-        JobFlowState state = JobFlowState.valueOf(getRunningJobFlowDetails(true).getExecutionStatusDetail().getState());
-        return state.equals(JobFlowState.WAITING);
+        JobFlowState state = JobFlowState.valueOf(getJobFlowDetail(_jobFlowId).getExecutionStatusDetail().getState());
+        return state.isIdle();
     }
 
     public String getJobFlowId() {
@@ -339,35 +329,27 @@ public class EmrCluster {
         }
     }
 
-    private void waitUntilClusterStarted(final String jobFlowId) throws InterruptedException {
+    private void waitUntilClusterStateChange(final String jobFlowId, final StateCategory targetState) throws InterruptedException {
         doWhileNot(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
                 JobFlowDetail jobFlowDetail = getJobFlowDetail(jobFlowId);
                 JobFlowState state = JobFlowState.valueOf(jobFlowDetail.getExecutionStatusDetail().getState());
                 LOG.info("elastic cluster '" + jobFlowDetail.getName() + "/" + jobFlowId + "' in state '" + state + "'");
-                boolean finished = state != JobFlowState.STARTING && state != JobFlowState.BOOTSTRAPPING;
+                boolean finished = !state.isChangingState();
                 if (finished) {
-                    _masterHost = jobFlowDetail.getInstances().getMasterPublicDnsName();
-                    _instanceCount = jobFlowDetail.getInstances().getInstanceCount();
-                    if (!state.isOperational()) {
-                        throw new IllegalStateException("starting of job flow '" + jobFlowId + "' failed with state '" + state + "'");
+                    Preconditions.checkState(state.isIn(targetState), "State transition to %s of job flow '%s' failed with state %s", targetState, jobFlowId, state);
+                    if (state.isOperational()) {
+                        _masterHost = jobFlowDetail.getInstances().getMasterPublicDnsName();
+                        _instanceCount = jobFlowDetail.getInstances().getInstanceCount();
+                        _startTime = jobFlowDetail.getExecutionStatusDetail().getStartDateTime().getTime();
+                    } else {
+                        _masterHost = null;
+                        _instanceCount = 0;
+                        _startTime = 0;
                     }
-                    _startTime = jobFlowDetail.getExecutionStatusDetail().getStartDateTime().getTime();
                 }
                 return finished;
-            }
-        }, getRequestInterval());
-    }
-
-    private void waitUntilClusterShutdown(final String jobFlowId) throws InterruptedException {
-        doWhileNot(new Callable<Boolean>() {
-            @Override
-            public Boolean call() throws Exception {
-                JobFlowDetail jobFlowDetail = getJobFlowDetail(jobFlowId);
-                JobFlowState state = JobFlowState.valueOf(jobFlowDetail.getExecutionStatusDetail().getState());
-                LOG.info("elastic cluster '" + jobFlowId + "' in state '" + state + "'");
-                return !state.isOperational();
             }
         }, getRequestInterval());
     }
@@ -401,6 +383,7 @@ public class EmrCluster {
     protected static void doWhileNot(Callable<Boolean> callable, long requestInterval) throws InterruptedException {
         boolean finished = false;
         do {
+            Thread.sleep(requestInterval);
             try {
                 finished = callable.call();
             } catch (InterruptedException e) {
@@ -410,18 +393,14 @@ public class EmrCluster {
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-            if (!finished) {
-                Thread.sleep(requestInterval);
-            }
         } while (!finished);
     }
 
     protected JobFlowDetail getJobFlowDetail(String jobFlowId) {
         DescribeJobFlowsResult describeJobFlows = _emrWebService.describeJobFlows(new DescribeJobFlowsRequest().withJobFlowIds(jobFlowId));
         List<JobFlowDetail> jobFlows = describeJobFlows.getJobFlows();
-        if (jobFlows.isEmpty()) {
-            throw new IllegalArgumentException("no job flow with id '" + _jobFlowId + "' found");
-        }
+        Preconditions.checkArgument(jobFlows.size() > 0, "No job flow with id '%s' found", jobFlowId);
+        Preconditions.checkState(jobFlows.size() < 2, "More then one job flow with id '%s' found", jobFlowId);
         return jobFlows.get(0);
     }
 
@@ -429,13 +408,8 @@ public class EmrCluster {
         if (_clusterState != ClusterState.CONNECTED) {
             return 0;
         }
-
-        DescribeJobFlowsResult describeJobFlows = _emrWebService.describeJobFlows(new DescribeJobFlowsRequest().withJobFlowIds(jobFlowId));
-        List<JobFlowDetail> jobFlows = describeJobFlows.getJobFlows();
-        if (jobFlows.isEmpty()) {
-            throw new IllegalArgumentException("no job flow with id '" + _jobFlowId + "' found");
-        }
-        return getRunningJobFlowDetails(true).getSteps().size();
+        JobFlowDetail jobFlowDetail = getJobFlowDetail(jobFlowId);
+        return jobFlowDetail.getSteps().size();
     }
 
     protected JobFlowDetail getRunningJobFlowDetails(boolean hasToExist) {

@@ -26,6 +26,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -50,6 +52,7 @@ public class EmrClusterTest extends AbstractAwsIntegrationTest {
 
     @Before
     public void before() {
+        Logger.getLogger("datameer.awstasks").setLevel(Level.DEBUG);
         _s3Service = _ec2Conf.createS3Service();
         _s3Bucket = _s3Service.createBucket(S3BucketTest.AWS_TEST_BUCKET);
         List<S3ObjectSummary> s3Objects = _s3Service.listObjects(_s3Bucket.getName()).getObjectSummaries();
@@ -71,17 +74,18 @@ public class EmrClusterTest extends AbstractAwsIntegrationTest {
         Thread thread = new Thread() {
             @Override
             public void run() {
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                    // nothing todo
-                }
-                clusterStates.add(_emrCluster.getState());
+                do {
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                        // nothing todo
+                    }
+                    clusterStates.add(_emrCluster.getState());
+                } while (_emrCluster.getState() != ClusterState.CONNECTED);
             }
         };
         thread.start();
         _emrCluster.startup();
-        assertThat(_emrCluster.isIdle()).isEqualTo(false);
         assertTrue(clusterStates.toString(), clusterStates.contains(ClusterState.STARTING));
         assertEquals(ClusterState.CONNECTED, _emrCluster.getState());
         _jobFlowId = _emrCluster.getJobFlowId();
@@ -103,6 +107,8 @@ public class EmrClusterTest extends AbstractAwsIntegrationTest {
     @Test
     public void testConnectById() throws Exception {
         assertNull(_emrCluster.getJobFlowId());
+        assertThat(_emrCluster.getJobFlowId()).isNull();
+        assertThat(_jobFlowId).isNotNull();
         _emrCluster.connectById(_jobFlowId);
         assertEquals(ClusterState.CONNECTED, _emrCluster.getState());
         assertEquals(_jobFlowId, _emrCluster.getJobFlowId());

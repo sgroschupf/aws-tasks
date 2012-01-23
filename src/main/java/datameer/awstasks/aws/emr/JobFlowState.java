@@ -15,23 +15,60 @@
  */
 package datameer.awstasks.aws.emr;
 
+import java.util.EnumSet;
+
 import com.amazonaws.services.elasticmapreduce.model.JobFlowExecutionStatusDetail;
 
 /**
  * @see JobFlowExecutionStatusDetail#getState()
  */
-public enum JobFlowState {
+enum JobFlowState {
 
-    COMPLETED(false), FAILED(false), TERMINATED(false), RUNNING(true), SHUTTING_DOWN(false), STARTING(false), WAITING(true), BOOTSTRAPPING(true);
+    /***/
+    COMPLETED(EnumSet.of(StateCategory.DEAD)),
+    /***/
+    FAILED(EnumSet.of(StateCategory.DEAD)),
+    /***/
+    TERMINATED(EnumSet.of(StateCategory.DEAD)),
+    /***/
+    RUNNING(EnumSet.of(StateCategory.OPERATIONAL)),
+    /***/
+    SHUTTING_DOWN(EnumSet.of(StateCategory.CHANGING_STATE)),
+    /***/
+    STARTING(EnumSet.of(StateCategory.CHANGING_STATE)),
+    /***/
+    WAITING(EnumSet.of(StateCategory.OPERATIONAL)),
+    /***/
+    BOOTSTRAPPING(EnumSet.of(StateCategory.CHANGING_STATE));
 
-    private final boolean _operational;
+    private final EnumSet<StateCategory> _basicStates;
 
-    private JobFlowState(boolean operational) {
-        _operational = operational;
+    private JobFlowState(EnumSet<StateCategory> basicStates) {
+        _basicStates = basicStates;
+    }
+
+    public boolean isIn(StateCategory category) {
+        return _basicStates.contains(category);
     }
 
     public boolean isOperational() {
-        return _operational;
+        return isIn(StateCategory.OPERATIONAL);
+    }
+
+    public boolean isDead() {
+        return isIn(StateCategory.DEAD);
+    }
+
+    public boolean isChangingState() {
+        return isIn(StateCategory.CHANGING_STATE);
+    }
+
+    public boolean isIdle() {
+        return this == WAITING;
+    }
+
+    static enum StateCategory {
+        CHANGING_STATE, OPERATIONAL, DEAD;
     }
 
 }

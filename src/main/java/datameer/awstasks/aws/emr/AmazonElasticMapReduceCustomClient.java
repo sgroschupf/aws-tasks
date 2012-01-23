@@ -15,8 +15,6 @@
  */
 package datameer.awstasks.aws.emr;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -34,6 +32,8 @@ import com.amazonaws.services.elasticmapreduce.model.DescribeJobFlowsResult;
 import com.amazonaws.services.elasticmapreduce.model.RunJobFlowRequest;
 import com.amazonaws.services.elasticmapreduce.model.RunJobFlowResult;
 import com.amazonaws.services.elasticmapreduce.model.TerminateJobFlowsRequest;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 import datameer.awstasks.aws.emr.EmrCluster.InterruptedRuntimeException;
 import datameer.awstasks.util.ExceptionUtil;
@@ -177,8 +177,8 @@ public class AmazonElasticMapReduceCustomClient extends AmazonElasticMapReduceCl
 
     static class JobFlowDescriptionCache {
 
-        private final Map<Integer, DescribeJobFlowsResult> _cachedJobFlowsDescriptionsByRequestHash = new HashMap<Integer, DescribeJobFlowsResult>();
-        private final Map<Integer, Long> _lastRetrievalTimeByRequestHash = new HashMap<Integer, Long>();
+        private final Map<String, DescribeJobFlowsResult> _cachedJobFlowsDescriptionsByRequestHash = Maps.newHashMap();
+        private final Map<String, Long> _lastRetrievalTimeByRequestHash = Maps.newHashMap();
         private long _maxCacheTime;
 
         public JobFlowDescriptionCache(long maxCacheTime) {
@@ -190,15 +190,23 @@ public class AmazonElasticMapReduceCustomClient extends AmazonElasticMapReduceCl
         }
 
         public void addResponse(DescribeJobFlowsRequest request, DescribeJobFlowsResult response) {
-            int hashCode = calculateHashCode(request);
+            String hashCode = calculateHashString(request);
             _cachedJobFlowsDescriptionsByRequestHash.put(hashCode, response);
             _lastRetrievalTimeByRequestHash.put(hashCode, System.currentTimeMillis());
         }
 
         public DescribeJobFlowsResult getResponse(DescribeJobFlowsRequest request) {
-            int hashCode = calculateHashCode(request);
+            String hash = calculateHashString(request);
             cleanupOutdatedResponses();
-            return _cachedJobFlowsDescriptionsByRequestHash.get(hashCode);
+            DescribeJobFlowsResult describeJobFlowsResult = _cachedJobFlowsDescriptionsByRequestHash.get(hash);
+            if (LOG.isDebugEnabled()) {
+                if (describeJobFlowsResult != null) {
+                    LOG.debug("Cache hit for: " + hash);
+                } else {
+                    LOG.debug("Cache miss for: " + hash);
+                }
+            }
+            return describeJobFlowsResult;
         }
 
         public void clear() {
@@ -207,33 +215,28 @@ public class AmazonElasticMapReduceCustomClient extends AmazonElasticMapReduceCl
         }
 
         private void cleanupOutdatedResponses() {
-            List<Integer> hashsToRemove = new ArrayList<Integer>(3);
-            for (Entry<Integer, Long> entry : _lastRetrievalTimeByRequestHash.entrySet()) {
+            List<String> hashsToRemove = Lists.newArrayList();
+            for (Entry<String, Long> entry : _lastRetrievalTimeByRequestHash.entrySet()) {
                 Long retrievalTime = entry.getValue();
                 if (_maxCacheTime <= (System.currentTimeMillis() - retrievalTime)) {
                     hashsToRemove.add(entry.getKey());
                 }
             }
-            for (Integer hash : hashsToRemove) {
+            for (String hash : hashsToRemove) {
                 _lastRetrievalTimeByRequestHash.remove(hash);
                 _cachedJobFlowsDescriptionsByRequestHash.remove(hash);
             }
         }
 
-        private int calculateHashCode(DescribeJobFlowsRequest request) {
+        private String calculateHashString(DescribeJobFlowsRequest request) {
             StringBuilder hashBuilder = new StringBuilder();
-            addIfNotNull(hashBuilder, request.getCreatedAfter());
-            addIfNotNull(hashBuilder, request.getCreatedBefore());
-            addIfNotNull(hashBuilder, request.getJobFlowIds());
-            addIfNotNull(hashBuilder, request.getJobFlowStates());
-            return hashBuilder.toString().hashCode();
+            hashBuilder.append("createdAfter=").append(request.getCreatedAfter());
+            hashBuilder.append(", createdBefore=").append(request.getCreatedBefore());
+            hashBuilder.append(", jobFlowIds=").append(request.getJobFlowIds());
+            hashBuilder.append(", jobFlowStates=").append(request.getJobFlowStates());
+            return hashBuilder.toString();
         }
 
-        private void addIfNotNull(StringBuilder hashBuilder, Object object) {
-            if (object != null) {
-                hashBuilder.append(object.toString());
-            }
-        }
     }
 
 }
