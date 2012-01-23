@@ -334,11 +334,13 @@ public class EmrCluster {
             @Override
             public Boolean call() throws Exception {
                 JobFlowDetail jobFlowDetail = getJobFlowDetail(jobFlowId);
+                String lastStateChangeReason = jobFlowDetail.getExecutionStatusDetail().getLastStateChangeReason();
                 JobFlowState state = JobFlowState.valueOf(jobFlowDetail.getExecutionStatusDetail().getState());
                 LOG.info("elastic cluster '" + jobFlowDetail.getName() + "/" + jobFlowId + "' in state '" + state + "'");
                 boolean finished = !state.isChangingState();
                 if (finished) {
-                    Preconditions.checkState(state.isIn(targetState), "State transition to %s of job flow '%s' failed with state %s", targetState, jobFlowId, state);
+                    Preconditions.checkState(state.isIn(targetState), "State transition to %s of job flow '%s' failed with state '%s' and reason '%s'", targetState, jobFlowId, state,
+                            lastStateChangeReason);
                     if (state.isOperational()) {
                         _masterHost = jobFlowDetail.getInstances().getMasterPublicDnsName();
                         _instanceCount = jobFlowDetail.getInstances().getInstanceCount();
