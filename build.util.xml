@@ -25,5 +25,40 @@
 			<createBucket name="${name}" location="${location}"/>
 		</s3>
 	</target>
+	
+	
+	<!-- ================================================================== -->
+	<!-- Build jar/source-jar                                               -->
+	<!-- ================================================================== -->
+	
+	<macrodef name="buildJar">
+        <attribute name="jarName" />
+        <attribute name="mainClasses" />
+        <sequential>
+            <tstamp>
+                <format property="timestamp" timezone="UTC" locale="en" pattern="MMM dd yyyy, HH:mm:ss" />
+            </tstamp>
+
+            <!-- git version -->
+            <exec outputproperty="build.current.revision" executable="git">
+                <arg line=" log -1 --pretty=format:%H" />
+            </exec>
+            <echo>Git Revision: ${build.current.revision}</echo>
+
+            <echo>Building jar ${build.dir}/${jar.name}</echo>
+            <jar jarfile="${build.dir}/@{jarName}" basedir="@{mainClasses}">
+                <manifest>
+                    <section name="datameer/aws-tasks">
+                        <attribute name="Implementation-Vendor" value="Datameer Inc." />
+                        <attribute name="Implementation-Title" value="${ant.project.name}" />
+                        <attribute name="Implementation-Version" value="${version}" />
+                        <attribute name="Compile-Time" value="${timestamp}" />
+                        <attribute name="Compiled-By" value="${user.name}" />
+                        <attribute name="Git-Revision" value="${build.current.revision}" />
+                    </section>
+                </manifest>
+            </jar>
+        </sequential>
+    </macrodef>
 
 </project>

@@ -189,35 +189,16 @@
 	<!-- Build jar from sources                                             -->
 	<!-- ================================================================== -->
 
-	<target name="jar" depends="compile">
-
-		<tstamp>
-			<format property="timestamp" pattern="MMM dd yyyy, HH:mm:ss" />
-		</tstamp>
-
-		<!-- git version -->
-		<exec outputproperty="build.current.revision" executable="git">
-          <arg line=" log -1 --pretty=format:%H" />
-		</exec>
-		<echo>Git Revision: ${build.current.revision}</echo>
-
-		<jar jarfile="${build.dir}/${jar.name}" basedir="${build.dir.main-classes}">
-		    <fileset dir="${main.src.dir}" includes="**/*.java" />
-			<manifest>
-				<section name="datameer/aws-tasks">
-					<attribute name="Implementation-Vendor" value="Datameer Inc." />
-					<attribute name="Implementation-Title" value="${ant.project.name}" />
-					<attribute name="Implementation-Version" value="${version}" />
-					<attribute name="Compile-Time" value="${timestamp}" />
-					<attribute name="Compiled-By" value="${user.name}" />
-					<attribute name="Git-Revision" value="${build.current.revision}" />
-				</section>
-			</manifest>
-		</jar>
+	<target name="jars" depends="jar,jar-sources" description="--> create the aws-tasks + source jar"/>
+	
+	<target name="jar" depends="compile" description="--> create the aws-tasks jar">
+		<buildJar jarname="${jar.name}" mainclasses="${build.dir.main-classes}"/>
 	</target>
-
-
-
+	
+	<target name="jar-sources" description="--> create the aws-tasks sources jar">
+        <buildJar jarname="${jar.sources.name}" mainclasses="${main.src.dir}" />
+    </target>
+	
 	<!-- ================================================================== -->
 	<!-- Java Doc                                                           -->
 	<!-- ================================================================== -->
