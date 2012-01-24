@@ -48,13 +48,13 @@ import com.amazonaws.services.simpledb.AmazonSimpleDBClient;
 import com.amazonaws.services.simpledb.model.Attribute;
 import com.amazonaws.services.simpledb.model.Item;
 import com.amazonaws.services.simpledb.model.SelectRequest;
-import datameer.com.google.common.base.Preconditions;
-import datameer.com.google.common.base.Predicate;
-import datameer.com.google.common.collect.Collections2;
 
 import datameer.awstasks.aws.concurrent.ObjectLock;
 import datameer.awstasks.aws.emr.JobFlowState.StateCategory;
 import datameer.awstasks.util.S3Util;
+import datameer.com.google.common.base.Preconditions;
+import datameer.com.google.common.base.Predicate;
+import datameer.com.google.common.collect.Collections2;
 
 /**
  * Allows access and management of amazons elastic map-reduce. One emr cluster maps to one job flow.
@@ -146,7 +146,7 @@ public class EmrCluster {
             if (settings.getPrivateKeyName() == null) {
                 throw new NullPointerException("privateKeyName must not be null please configure settings properly");
             }
-            LOG.info("Starting job flow '" + getName() + "' ...");
+            LOG.info("Starting job flow '" + getName() + "' with hadoop version '" + settings.getHadoopVersion() + "' and " + settings.getInstanceCount() + " instances ...");
             if (getRunningJobFlowDetails(false) != null) {
                 throw new IllegalStateException("Job flow with name '" + getName() + "' already running.");
             }
