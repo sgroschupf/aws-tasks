@@ -48,9 +48,9 @@ import com.amazonaws.services.simpledb.AmazonSimpleDBClient;
 import com.amazonaws.services.simpledb.model.Attribute;
 import com.amazonaws.services.simpledb.model.Item;
 import com.amazonaws.services.simpledb.model.SelectRequest;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Collections2;
+import datameer.com.google.common.base.Preconditions;
+import datameer.com.google.common.base.Predicate;
+import datameer.com.google.common.collect.Collections2;
 
 import datameer.awstasks.aws.concurrent.ObjectLock;
 import datameer.awstasks.aws.emr.JobFlowState.StateCategory;

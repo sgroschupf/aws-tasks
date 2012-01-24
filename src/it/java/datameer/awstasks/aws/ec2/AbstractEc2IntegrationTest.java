@@ -25,7 +25,7 @@ import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Placement;
 import com.amazonaws.services.ec2.model.RunInstancesRequest;
 import com.amazonaws.services.ec2.model.Volume;
-import com.google.common.base.Preconditions;
+import datameer.com.google.common.base.Preconditions;
 
 import datameer.awstasks.aws.AbstractAwsIntegrationTest;
 
