@@ -146,7 +146,7 @@ public class EmrCluster {
             if (settings.getPrivateKeyName() == null) {
                 throw new NullPointerException("privateKeyName must not be null please configure settings properly");
             }
-            LOG.info("Starting job flow '" + getName() + "' ...");
+            LOG.info("Starting job flow '" + getName() + "' with hadoop version '" + settings.getHadoopVersion() + "' and " + settings.getInstanceCount() + " instances ...");
             if (getRunningJobFlowDetails(false) != null) {
                 throw new IllegalStateException("Job flow with name '" + getName() + "' already running.");
             }
