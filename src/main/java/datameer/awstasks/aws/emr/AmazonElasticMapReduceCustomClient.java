@@ -32,8 +32,8 @@ import com.amazonaws.services.elasticmapreduce.model.DescribeJobFlowsResult;
 import com.amazonaws.services.elasticmapreduce.model.RunJobFlowRequest;
 import com.amazonaws.services.elasticmapreduce.model.RunJobFlowResult;
 import com.amazonaws.services.elasticmapreduce.model.TerminateJobFlowsRequest;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import datameer.com.google.common.collect.Lists;
+import datameer.com.google.common.collect.Maps;
 
 import datameer.awstasks.aws.emr.EmrCluster.InterruptedRuntimeException;
 import datameer.awstasks.util.ExceptionUtil;
