@@ -38,8 +38,8 @@ import com.amazonaws.services.ec2.model.InstanceStateName;
 import com.amazonaws.services.ec2.model.IpPermission;
 import com.amazonaws.services.ec2.model.Reservation;
 import com.amazonaws.services.ec2.model.SecurityGroup;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
+import datameer.com.google.common.base.Preconditions;
+import datameer.com.google.common.collect.Lists;
 
 public class Ec2Util {
 

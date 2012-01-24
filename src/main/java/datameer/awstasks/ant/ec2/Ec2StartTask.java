@@ -23,7 +23,7 @@ import org.apache.tools.ant.BuildException;
 
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.model.Instance;
-import com.google.common.base.Preconditions;
+import datameer.com.google.common.base.Preconditions;
 
 import datameer.awstasks.aws.ec2.InstanceGroup;
 import datameer.awstasks.aws.ec2.InstanceGroupImpl;
