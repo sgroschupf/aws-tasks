@@ -272,12 +272,11 @@
 	<!-- ================================================================== -->
 
 	<target name="eclipse" depends="clean-eclipse" description="--> create Eclipse project files">
-
 		<taskdef name="eclipse" classname="prantl.ant.eclipse.EclipseTask" classpathref="build.classpath" />
 		<mkdir dir="${build.dir.main-classes-eclipse}" />
 		<mkdir dir="${build.dir.test-classes-eclipse}" />
 		<mkdir dir="${build.dir.it-classes-eclipse}" />
-		<eclipse>
+		<eclipse updatealways="true">
 			<settings>
 				<jdtcore compilercompliance="6.0" />
 				<resources encoding="UTF-8" />
