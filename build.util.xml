@@ -35,6 +35,7 @@
         <attribute name="jarName" />
         <attribute name="mainClasses" />
         <sequential>
+        	<!--<echo-classpath classpathid="task.classpath"/>-->
             <tstamp>
                 <format property="timestamp" timezone="UTC" locale="en" pattern="MMM dd yyyy, HH:mm:ss" />
             </tstamp>
@@ -60,5 +61,13 @@
             </jar>
         </sequential>
     </macrodef>
+	
+	<macrodef name="echo-classpath">
+		<attribute name="classpathId"/>
+		<sequential>
+			<property name="classpathToEcho" refid="@{classpathId}"/>
+			<echo message="Classpath[@{classpathId}] = ${classpathToEcho}"/>
+		</sequential>
+	</macrodef>
 
 </project>

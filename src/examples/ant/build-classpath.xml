@@ -10,7 +10,7 @@
 	<!-- ================================================================== -->
 	
 	<path id="task.classpath">
-		<pathelement location="${build.dir.main-classes}" />
+		<pathelement location="${root.dir}/${build.dir.main-classes}" />
 		<pathelement location="${main.res.dir}" />
 		<fileset dir="${lib.dir}/compile">
 			<include name="**/*.jar" />
@@ -19,6 +19,5 @@
 			<include name="**/*.jar" />
 		</fileset>
 	</path>
-	
 	
 </project>
