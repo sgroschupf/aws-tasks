@@ -18,6 +18,7 @@
 
 	<property name="root.dir" value="${basedir}" />
 	<property file="${root.dir}/build.properties" />
+	<import file="${root.dir}/build.util.xml" />
 
 
 
