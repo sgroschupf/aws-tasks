@@ -15,6 +15,8 @@
  */
 package datameer.awstasks.aws.s3;
 
+import static org.fest.assertions.Assertions.*;
+
 import static org.junit.Assert.*;
 
 import java.io.File;
@@ -37,13 +39,16 @@ public class S3BucketTest extends AbstractAwsIntegrationTest {
         AmazonS3 s3Service = _ec2Conf.createS3Service();
         String bucketName = AWS_TEST_BUCKET;
         removeBucket(s3Service, bucketName);
-        assertFalse(s3Service.doesBucketExist(bucketName));
+        Thread.sleep(500);
+        assertThat(s3Service.doesBucketExist(bucketName)).isFalse();
 
         s3Service.createBucket(bucketName);
-        assertTrue(s3Service.doesBucketExist(bucketName));
+        Thread.sleep(500);
+        assertThat(s3Service.doesBucketExist(bucketName)).isTrue();
 
         s3Service.deleteBucket(bucketName);
-        assertFalse(s3Service.doesBucketExist(bucketName));
+        Thread.sleep(500);
+        assertThat(s3Service.doesBucketExist(bucketName)).isFalse();
     }
 
     private void removeBucket(AmazonS3 s3Service, String bucketName) {
