@@ -14,6 +14,7 @@
 	<taskdef name="ec2-shutdown" classname="datameer.awstasks.ant.ec2.Ec2ShutdownTask" classpathref="task.classpath"/>
 	<taskdef name="ec2-ssh" classname="datameer.awstasks.ant.ec2.Ec2SshTask" classpathref="task.classpath"/>
 	<taskdef name="ec2-info" classname="datameer.awstasks.ant.ec2.Ec2InfoTask" classpathref="task.classpath"/>
+	<taskdef name="ec2-list" classname="datameer.awstasks.ant.ec2.Ec2ListRunningInstances" classpathref="task.classpath"/>
 
 	
 	<!-- ================================================================== -->
@@ -68,6 +69,16 @@
 		<echo message="printing some stats:"/>
 		<echo message="instanceCount: ${instances.count}"/>
 		<echo message="master: ${instance.host.1} ${tab} ${instance.state.1} ${tab} ${instance.type.1}"/>
+	</target>
+	
+	<target name="list-ec2" description="--> list all running ec2 instances">
+		<ec2-list 
+			accessKey="${ec2.accessKey}"
+			accessSecret="${ec2.accessSecret}">
+			<filter name="instance-state-name" value="pending"/>
+			<filter name="instance-state-name" value="running"/>
+			<filter name="tag:Name" value="Joerg*"/>
+		</ec2-list>
 	</target>
 	
 	<!-- ================================================================== -->

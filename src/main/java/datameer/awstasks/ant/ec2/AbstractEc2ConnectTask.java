@@ -25,8 +25,7 @@ import datameer.awstasks.aws.ec2.InstanceGroupImpl;
 public abstract class AbstractEc2ConnectTask extends AbstractEc2Task {
 
     @Override
-    public final void doExecute() throws BuildException {
-        AmazonEC2 ec2 = createEc2();
+    public final void doExecute(AmazonEC2 ec2) throws BuildException {
         InstanceGroup instanceGroup = new InstanceGroupImpl(ec2);
         try {
             instanceGroup.connectTo(_groupName);

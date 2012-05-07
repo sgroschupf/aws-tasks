@@ -1,31 +1,11 @@
 <!-- run with (from project root): 
 	ant -f build.util.xml  
 -->
-<project name="aws-tasks-example-s3" >
+<project name="aws-tasks-util" >
     
 	<property name="root.dir" value="${basedir}" />
 	<import file="src/examples/ant/build-classpath.xml"/>
 
-	<!-- ================================================================== -->
-	<!-- AWS TASKS DEFINITION	                                            -->
-	<!-- ================================================================== -->
-	
-	<taskdef name="s3" classname="datameer.awstasks.ant.s3.S3Task" classpathref="task.classpath"/>
-
-	
-	<!-- ================================================================== -->
-	<!-- S3 COMMANDS 			                                            -->
-	<!-- ================================================================== -->
-	
-	<target name="createBucket" description="--> create s3 bucket">
-		<fail unless="bucketName"/>
-		<fail unless="location"/>
-		<s3 accessKey="${ec2.accessKey}"
-			accessSecret="${ec2.accessSecret}">
-			<createBucket name="${name}" location="${location}"/>
-		</s3>
-	</target>
-	
 	
 	<!-- ================================================================== -->
 	<!-- Build jar/source-jar                                               -->

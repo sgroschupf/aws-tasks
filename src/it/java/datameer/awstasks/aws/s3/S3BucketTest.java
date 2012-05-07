@@ -39,7 +39,7 @@ public class S3BucketTest extends AbstractAwsIntegrationTest {
         AmazonS3 s3Service = _ec2Conf.createS3Service();
         String bucketName = AWS_TEST_BUCKET;
         removeBucket(s3Service, bucketName);
-        Thread.sleep(500);
+        Thread.sleep(1500);
         assertThat(s3Service.doesBucketExist(bucketName)).isFalse();
 
         s3Service.createBucket(bucketName);

@@ -36,7 +36,7 @@ public abstract class AbstractEc2Task extends AbstractAwsTask {
         return _groupName;
     }
 
-    public AmazonEC2 createEc2() {
+    private AmazonEC2 createEc2() {
         return new AmazonEC2Client(new BasicAWSCredentials(_accessKey, _accessSecret));
     }
 
@@ -45,9 +45,14 @@ public abstract class AbstractEc2Task extends AbstractAwsTask {
         if (NDC.getDepth() <= 0) {
             NDC.push(_groupName);
         }
-        doExecute();
+        validate();
+        doExecute(createEc2());
     }
 
-    protected abstract void doExecute();
+    protected abstract void doExecute(AmazonEC2 ec2);
+
+    protected void validate() {
+        // subclasses may override
+    }
 
 }

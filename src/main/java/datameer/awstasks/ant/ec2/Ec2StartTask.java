@@ -23,11 +23,11 @@ import org.apache.tools.ant.BuildException;
 
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.model.Instance;
-import datameer.com.google.common.base.Preconditions;
 
 import datameer.awstasks.aws.ec2.InstanceGroup;
 import datameer.awstasks.aws.ec2.InstanceGroupImpl;
 import datameer.awstasks.util.Ec2Util;
+import datameer.com.google.common.base.Preconditions;
 
 public class Ec2StartTask extends AbstractEc2Task {
 
@@ -60,10 +60,14 @@ public class Ec2StartTask extends AbstractEc2Task {
     }
 
     @Override
-    public void doExecute() throws BuildException {
-        LOG.info("executing " + getClass().getSimpleName() + " with groupName '" + _groupName + "'");
-        AmazonEC2 ec2 = createEc2();
+    protected void validate() {
+        super.validate();
         Preconditions.checkArgument(_instanceIds != null && _instanceIds.length() > 0, "no instance ids set");
+    }
+
+    @Override
+    public void doExecute(AmazonEC2 ec2) throws BuildException {
+        LOG.info("executing " + getClass().getSimpleName() + " with groupName '" + _groupName + "'");
         List<String> instanceIds = Arrays.asList(_instanceIds.split(","));
         try {
             List<Instance> instances = Ec2Util.getReservation(ec2, instanceIds).getInstances();
