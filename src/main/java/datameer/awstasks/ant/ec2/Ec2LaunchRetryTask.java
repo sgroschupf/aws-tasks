@@ -17,6 +17,8 @@ package datameer.awstasks.ant.ec2;
 
 import org.apache.tools.ant.BuildException;
 
+import com.amazonaws.services.ec2.AmazonEC2;
+
 public class Ec2LaunchRetryTask extends Ec2LaunchTask {
 
     private int _retryCount = 3;
@@ -30,12 +32,12 @@ public class Ec2LaunchRetryTask extends Ec2LaunchTask {
     }
 
     @Override
-    public void doExecute() throws BuildException {
+    public void doExecute(AmazonEC2 ec2) throws BuildException {
         int tryCount = 0;
         do {
             try {
                 tryCount++;
-                super.doExecute();
+                super.doExecute(ec2);
                 return;
             } catch (BuildException startException) {
                 LOG.warn("failed to start '" + _groupName + "' in try " + tryCount);
