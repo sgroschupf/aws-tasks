@@ -40,6 +40,7 @@ public class Ec2SshTask extends AbstractEc2Task implements TaskContainer {
     private String _username;
     private String _password;
     private File _keyFile;
+    private boolean _connectRetries;
     private List<Object> _commands = new ArrayList<Object>();
     private Map<String, String> _propertyMap = new HashMap<String, String>();
     private InstanceGroup _instanceGroup;
@@ -74,6 +75,14 @@ public class Ec2SshTask extends AbstractEc2Task implements TaskContainer {
 
     public void setKeyFile(File keyFile) {
         _keyFile = keyFile;
+    }
+
+    public void setConnectRetries(boolean connectRetries) {
+        _connectRetries = connectRetries;
+    }
+
+    public boolean isConnectRetries() {
+        return _connectRetries;
     }
 
     @Override

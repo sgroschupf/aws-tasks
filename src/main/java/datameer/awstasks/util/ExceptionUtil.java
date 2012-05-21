@@ -20,6 +20,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import datameer.com.google.common.base.Predicate;
+
 public class ExceptionUtil {
 
     /**
@@ -69,6 +71,38 @@ public class ExceptionUtil {
             }
         }
         return threadsToStacktraceMap;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T extends Throwable> T findCause(Throwable throwable, Predicate<Object> predicate) {
+        while (throwable != null) {
+            if (predicate.apply(throwable)) {
+                return (T) throwable;
+            }
+            throwable = throwable.getCause();
+        }
+        return null;
+    }
+
+    /**
+     * @param predicate
+     * @return true if the given predicate applies to the given exception or on one of its causes
+     */
+    public static Predicate<Throwable> orOnExceptionAndCauses(final Predicate<Throwable> predicate) {
+        return new Predicate<Throwable>() {
+            @Override
+            public boolean apply(Throwable input) {
+                while (input != null) {
+                    if (predicate.apply(input)) {
+                        return true;
+                    }
+                    input = input.getCause();
+                }
+                return false;
+            }
+
+        };
+
     }
 
 }

@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.net.NoRouteToHostException;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -40,6 +41,8 @@ import com.jcraft.jsch.UserInfo;
 import datameer.awstasks.exec.ExecOutputHandler;
 import datameer.awstasks.exec.ShellCommand;
 import datameer.awstasks.exec.ShellExecutor;
+import datameer.awstasks.util.ExceptionUtil;
+import datameer.awstasks.util.Retry;
 
 public class JschRunner extends ShellExecutor {
 
@@ -56,6 +59,7 @@ public class JschRunner extends ShellExecutor {
     protected int _connectTimeout = (int) TimeUnit.SECONDS.toMillis(80);
     private int _timeout = 0;
     private boolean _debug;
+    private boolean _enableConnectionRetries;
 
     public JschRunner(String user, String host) {
         _user = user;
@@ -130,6 +134,14 @@ public class JschRunner extends ShellExecutor {
 
     public boolean isDebug() {
         return _debug;
+    }
+
+    public void setEnableConnectionRetries(boolean enableConnectionRetries) {
+        _enableConnectionRetries = enableConnectionRetries;
+    }
+
+    public boolean isEnableConnectionRetries() {
+        return _enableConnectionRetries;
     }
 
     public void run(JschCommand command) throws IOException {
@@ -211,6 +223,7 @@ public class JschRunner extends ShellExecutor {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public Session openSession() throws JSchException {
         JSch jsch = new JSch();
         if (isDebug()) {
@@ -229,13 +242,28 @@ public class JschRunner extends ShellExecutor {
             jsch.setKnownHosts(_knownHosts);
         }
 
-        Session session = jsch.getSession(_user, _host, _port);
+        final Session session = jsch.getSession(_user, _host, _port);
         session.setSocketFactory(new SocketFactoryWithConnectTimeout());
         session.setUserInfo(new UserInfoImpl(_password));
         session.setTimeout(_timeout);
         session.setDaemonThread(true);
         LOG.debug("Connecting to " + _host + ":" + _port);
-        session.connect();
+        if (_enableConnectionRetries) {
+            // experimental
+            Retry retry = Retry.onExceptions(NoRouteToHostException.class).withMaxRetries(3).withWaitTime(2500);
+            retry.execute(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        session.connect();
+                    } catch (JSchException e) {
+                        throw ExceptionUtil.convertToRuntimeException(e.getCause());
+                    }
+                }
+            });
+        } else {
+            session.connect();
+        }
         return session;
     }
 

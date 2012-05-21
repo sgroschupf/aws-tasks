@@ -37,6 +37,8 @@ public class SshClientImpl implements SshClient {
     protected final String _username;
     protected final List<String> _hostnames;
 
+    private boolean _enableConnectRetries;
+
     public SshClientImpl(String username, File privateKey, List<String> hostnames) {
         _username = username;
         _privateKey = privateKey;
@@ -47,6 +49,11 @@ public class SshClientImpl implements SshClient {
         _username = username;
         _password = password;
         _hostnames = hostnames;
+    }
+
+    @Override
+    public void setEnableConnectRetries(boolean enable) {
+        _enableConnectRetries = enable;
     }
 
     @Override
@@ -133,6 +140,7 @@ public class SshClientImpl implements SshClient {
             runner.setPassword(_password);
         }
         runner.setTrust(true);
+        runner.setEnableConnectionRetries(_enableConnectRetries);
         return runner;
     }
 

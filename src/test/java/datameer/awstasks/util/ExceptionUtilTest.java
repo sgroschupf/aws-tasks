@@ -15,6 +15,8 @@
  */
 package datameer.awstasks.util;
 
+import static org.fest.assertions.Assertions.*;
+
 import static org.junit.Assert.*;
 
 import java.io.BufferedReader;
@@ -25,6 +27,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 import org.junit.Test;
+
+import datameer.com.google.common.base.Predicate;
+import datameer.com.google.common.base.Predicates;
 
 public class ExceptionUtilTest {
 
@@ -74,6 +79,17 @@ public class ExceptionUtilTest {
         } catch (Exception e) {
             ExceptionUtil.throwIfInstance(e, IOException.class);
         }
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testOrOnExceptionAndCauses() {
+        Predicate<?> instanceOf = Predicates.instanceOf(IOException.class);
+        Predicate<Throwable> predicate = ExceptionUtil.orOnExceptionAndCauses((Predicate<Throwable>) instanceOf);
+
+        assertThat(predicate.apply(new IOException())).isTrue();
+        assertThat(predicate.apply(new RuntimeException(new IOException()))).isTrue();
+        assertThat(predicate.apply(new RuntimeException())).isFalse();
     }
 
 }

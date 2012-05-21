@@ -36,4 +36,6 @@ public interface SshClient {
     void downloadFile(String remoteFile, File localPath, boolean recursiv) throws IOException;
 
     void downloadFile(String remoteFile, File localPath, boolean recursiv, int[] targetedInstances) throws IOException;
+
+    void setEnableConnectRetries(boolean enable);
 }
