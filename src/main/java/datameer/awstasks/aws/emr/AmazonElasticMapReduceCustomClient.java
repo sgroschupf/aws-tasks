@@ -32,11 +32,11 @@ import com.amazonaws.services.elasticmapreduce.model.DescribeJobFlowsResult;
 import com.amazonaws.services.elasticmapreduce.model.RunJobFlowRequest;
 import com.amazonaws.services.elasticmapreduce.model.RunJobFlowResult;
 import com.amazonaws.services.elasticmapreduce.model.TerminateJobFlowsRequest;
-import datameer.com.google.common.collect.Lists;
-import datameer.com.google.common.collect.Maps;
 
 import datameer.awstasks.aws.emr.EmrCluster.InterruptedRuntimeException;
 import datameer.awstasks.util.ExceptionUtil;
+import datameer.com.google.common.collect.Lists;
+import datameer.com.google.common.collect.Maps;
 
 /**
  * 
@@ -167,7 +167,7 @@ public class AmazonElasticMapReduceCustomClient extends AmazonElasticMapReduceCl
             if (e.getMessage().contains("Unable to execute HTTP request")) {
                 return true;
             }
-            if (e.getMessage().contains("Unable to unmarshall response")) {
+            if (e.getMessage().contains("Unable to unmarshall")) {
                 return true;
             }
         }
