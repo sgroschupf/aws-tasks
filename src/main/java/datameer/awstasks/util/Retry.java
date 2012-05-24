@@ -55,10 +55,14 @@ public class Retry {
                 runnable.run();
                 return;
             } catch (Exception e) {
+                System.out.println(e.getMessage());
                 if (_failedTries >= _maxRetries || !_retryPredicate.apply(e)) {
                     throw ExceptionUtil.convertToRuntimeException(e);
                 }
                 LOG.warn("Failed retry " + (_failedTries + 1) + "/" + _maxRetries + " with '" + e.getMessage() + "' - retrying after " + _maxRetries + " ms");
+                
+                //TODO jz: remove debug output
+                System.out.println("Failed retry " + (_failedTries + 1) + "/" + _maxRetries + " with '" + e.getMessage() + "' - retrying after " + _maxRetries + " ms");
                 if (_waitTime > 0) {
                     try {
                         Thread.sleep(_waitTime);
