@@ -18,6 +18,7 @@ package datameer.awstasks.exec.handler;
 import java.util.List;
 
 import datameer.awstasks.exec.ExecOutputHandler;
+import datameer.com.google.common.base.Preconditions;
 
 public class ExecCaptureLineHandler implements ExecOutputHandler<String> {
 
@@ -33,9 +34,7 @@ public class ExecCaptureLineHandler implements ExecOutputHandler<String> {
         if (readLines.isEmpty()) {
             return null;
         }
-        if (readLines.size() > 2) {
-            throw new IllegalStateException("output contain more then 2 lines: " + readLines);
-        }
+        Preconditions.checkState(readLines.size() == 1, "Output contain more then 1 line: %s", readLines);
         return readLines.get(0);
     }
 }
