@@ -47,23 +47,23 @@ public class InstanceGroupImpl implements InstanceGroup {
     private static Logger LOG = Logger.getLogger(InstanceGroupImpl.class);
 
     private final AmazonEC2 _ec2;
-    private final boolean _inlcudeMultipleReservations;
+    private final boolean _includeMultipleReservations;
     private List<com.amazonaws.services.ec2.model.Instance> _instances;
 
     public InstanceGroupImpl(AmazonEC2 ec2) {
         this(ec2, false);
     }
 
-    public InstanceGroupImpl(AmazonEC2 ec2, boolean inlcudeMultipleReservations) {
+    public InstanceGroupImpl(AmazonEC2 ec2, boolean includeMultipleReservations) {
         _ec2 = ec2;
-        _inlcudeMultipleReservations = inlcudeMultipleReservations;
+        _includeMultipleReservations = includeMultipleReservations;
     }
 
     @Override
     public void connectTo(String groupName) {
         checkEc2Association(false);
         LOG.info(String.format("connecting to instances of group '%s'", groupName));
-        _instances = Ec2Util.findByGroup(_ec2, groupName, _inlcudeMultipleReservations, InstanceStateName.Pending, InstanceStateName.Running);
+        _instances = Ec2Util.findByGroup(_ec2, groupName, _includeMultipleReservations, InstanceStateName.Pending, InstanceStateName.Running);
         if (_instances == null) {
             throw new IllegalArgumentException("no instances of group '" + groupName + "' running");
         }
