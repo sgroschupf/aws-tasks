@@ -107,6 +107,10 @@ public interface InstanceGroup {
     SshClient createSshClient(String username, File privateKey);
 
     SshClient createSshClient(String username, String password);
+    
+    SshClient createSshClient(String username, String password, boolean usePublicDNS);
+    
+    SshClient createSshClient(String username, File privateKey, boolean userPublicDNS);
 
     int instanceCount();
 

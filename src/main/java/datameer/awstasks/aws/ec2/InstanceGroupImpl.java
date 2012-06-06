@@ -171,23 +171,33 @@ public class InstanceGroupImpl implements InstanceGroup {
 
     @Override
     public SshClient createSshClient(String username, File privateKey) {
-        List<String> instanceDns = checkSshPreconditions();
+        return createSshClient(username, privateKey, true);
+    }
+
+    @Override
+    public SshClient createSshClient(String username, File privateKey, boolean usePublicDNS) {
+        List<String> instanceDns = checkSshPreconditions(usePublicDNS);
         checkSshConnection(username, instanceDns, privateKey, null);
         return new SshClientImpl(username, privateKey, instanceDns);
     }
-
-    private List<String> checkSshPreconditions() {
+    
+    private List<String> checkSshPreconditions(boolean usePublicDNS) {
         checkEc2Association(true);
         updateInstanceDescriptions();
         checkInstanceMode(_instances, InstanceStateName.Running);
-        List<String> instanceDns = Ec2Util.toPublicDns(_instances);
+        List<String> instanceDns = usePublicDNS ? Ec2Util.toPublicDns(_instances):Ec2Util.toPrivateDns(_instances);
         checkSshPermissions();
         return instanceDns;
     }
 
     @Override
     public SshClient createSshClient(String username, String password) {
-        List<String> instanceDns = checkSshPreconditions();
+        return createSshClient(username, password, true);
+    }
+    
+    @Override
+    public SshClient createSshClient(String username, String password, boolean usePublicDNS) {
+        List<String> instanceDns = checkSshPreconditions(usePublicDNS);
         checkSshConnection(username, instanceDns, null, password);
         return new SshClientImpl(username, password, instanceDns);
     }
