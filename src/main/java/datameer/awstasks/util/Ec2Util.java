@@ -111,6 +111,14 @@ public class Ec2Util {
         }
         return dns;
     }
+    
+    public static List<String> toPrivateDns(List<Instance> instances) {
+        List<String> dns = new ArrayList<String>(instances.size());
+        for (Instance instance : instances) {
+            dns.add(instance.getPrivateDnsName());
+        }
+        return dns;
+    }
 
     public static List<Instance> reloadInstanceDescriptions(AmazonEC2 ec2, List<Instance> instances) {
         List<Reservation> reservations = ec2.describeInstances(new DescribeInstancesRequest().withInstanceIds(toIds(instances))).getReservations();

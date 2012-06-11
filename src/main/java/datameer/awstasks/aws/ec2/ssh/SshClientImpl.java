@@ -1,17 +1,17 @@
 /**
  * Copyright 2010 the original author or authors.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package datameer.awstasks.aws.ec2.ssh;
 
@@ -27,16 +27,15 @@ import datameer.awstasks.ssh.JschRunner;
 import datameer.awstasks.ssh.ScpDownloadCommand;
 import datameer.awstasks.ssh.ScpUploadCommand;
 import datameer.awstasks.ssh.SshExecCommand;
+import java.util.concurrent.*;
 
 public class SshClientImpl implements SshClient {
 
     protected static final Logger LOG = Logger.getLogger(SshClientImpl.class);
-
     protected File _privateKey;
     protected String _password;
     protected final String _username;
     protected final List<String> _hostnames;
-
     private boolean _enableConnectRetries;
 
     public SshClientImpl(String username, File privateKey, List<String> hostnames) {
@@ -66,12 +65,23 @@ public class SshClientImpl implements SshClient {
         executeCommand(getHosts(targetedInstances), command, outputStream);
     }
 
-    private void executeCommand(List<String> hostnames, String command, OutputStream outputStream) throws IOException {
-        for (String host : hostnames) {
-            LOG.info(String.format("executing command '%s' on '%s'", command, host));
-            JschRunner jschRunner = createJschRunner(host);
-            jschRunner.run(new SshExecCommand(command, outputStream));
+    private void executeCommand(List<String> hostnames, final String command, final OutputStream outputStream) throws IOException {
+        ArrayList<Future<?>> futureList = new ArrayList<Future<?>>(hostnames.size());
+        ExecutorService e = Executors.newCachedThreadPool();
+        for (final String host : hostnames) {
+            Callable c = new Callable() {
+
+                @Override
+                public Object call() throws Exception {
+                    LOG.info(String.format("executing command '%s' on '%s'", command, host));
+                    JschRunner jschRunner = createJschRunner(host);
+                    jschRunner.run(new SshExecCommand(command, outputStream));
+                    return null;
+                }
+            };
+            futureList.add(e.submit(c));
         }
+        waitFor(futureList);
     }
 
     @Override
@@ -84,14 +94,43 @@ public class SshClientImpl implements SshClient {
         executeCommandFile(getHosts(targetedInstances), commandFile, outputStream);
     }
 
-    private void executeCommandFile(List<String> hostnames, File commandFile, OutputStream outputStream) throws IOException {
-        for (String host : hostnames) {
-            LOG.info(String.format("executing command-file '%s' on '%s'", commandFile.getAbsolutePath(), host));
-            JschRunner jschRunner = createJschRunner(host);
-            jschRunner.run(new SshExecCommand(commandFile, outputStream));
+    private void executeCommandFile(List<String> hostnames, final File commandFile, final OutputStream outputStream) throws IOException {
+        ArrayList<Future<?>> futureList = new ArrayList<Future<?>>(hostnames.size());
+        ExecutorService e = Executors.newCachedThreadPool();
+        for (final String host : hostnames) {
+            Callable c = new Callable() {
+
+                @Override
+                public Object call() throws Exception {
+                    LOG.info(String.format("executing command-file '%s' on '%s'", commandFile.getAbsolutePath(), host));
+                    JschRunner jschRunner = createJschRunner(host);
+                    jschRunner.run(new SshExecCommand(commandFile, outputStream));
+                    return null;
+                }
+            };
+            futureList.add(e.submit(c));
+        }
+        waitFor(futureList);
+    }
+
+    private static void waitFor(List<Future<?>> futureList) throws IOException {
+        boolean interrupted = false;
+        for (Future<?> future : futureList) {
+            try {
+                if (interrupted) {
+                    future.cancel(true);
+                } else {
+                    future.get();
+                }
+            } catch (InterruptedException ex) {
+                interrupted = true;
+            } catch (ExecutionException ex) {
+                throw (IOException) ex.getCause();
+            }
         }
     }
 
+    @Override
     public void uploadFile(File localFile, String targetPath) throws IOException {
         uploadFile(_hostnames, localFile, targetPath);
     }
@@ -102,14 +141,26 @@ public class SshClientImpl implements SshClient {
         uploadFile(hostnames, localFile, targetPath);
     }
 
-    private void uploadFile(List<String> hosts, File localFile, String targetPath) throws IOException {
-        for (String host : hosts) {
-            LOG.info(String.format("uploading file '%s' to '%s'", localFile.getAbsolutePath(), constructRemotePath(host, targetPath)));
-            JschRunner jschRunner = createJschRunner(host);
-            jschRunner.run(new ScpUploadCommand(localFile, targetPath));
+    private void uploadFile(List<String> hostnames, final File localFile, final String targetPath) throws IOException {
+        ArrayList<Future<?>> futureList = new ArrayList<Future<?>>(hostnames.size());
+        ExecutorService e = Executors.newCachedThreadPool();
+        for (final String host : hostnames) {
+            Callable c = new Callable() {
+
+                @Override
+                public Object call() throws Exception {
+                    LOG.info(String.format("uploading file '%s' to '%s'", localFile.getAbsolutePath(), constructRemotePath(host, targetPath)));
+                    JschRunner jschRunner = createJschRunner(host);
+                    jschRunner.run(new ScpUploadCommand(localFile, targetPath));
+                    return null;
+                }
+            };
+            futureList.add(e.submit(c));
         }
+        waitFor(futureList);
     }
 
+    @Override
     public void downloadFile(String remoteFile, File localPath, boolean recursiv) throws IOException {
         downloadFiles(_hostnames, remoteFile, localPath, recursiv);
     }
@@ -151,5 +202,4 @@ public class SshClientImpl implements SshClient {
         }
         return hostnames;
     }
-
 }
