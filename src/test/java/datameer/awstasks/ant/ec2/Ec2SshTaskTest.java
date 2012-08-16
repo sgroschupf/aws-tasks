@@ -52,6 +52,8 @@ public class Ec2SshTaskTest extends AbstractTest {
         when(_instanceGroup.createSshClient(null, (String) null)).thenReturn(_sshClient);
         _sshTask.setGroupName("testGroup");
         _sshTask.setProject(new Project());
+        _sshTask.setAccessKey("");
+        _sshTask.setAccessSecret("");
     }
 
     @Test
