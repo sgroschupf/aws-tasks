@@ -26,10 +26,10 @@ public class Retry {
     private static final Logger LOG = Logger.getLogger(Retry.class);
     private long _waitTime = 0;
     private int _maxRetries = 3;
-    private final Predicate<Exception> _retryPredicate;
+    private final Predicate<Throwable> _retryPredicate;
     private int _failedTries;
 
-    private Retry(Predicate<Exception> retryPredicate) {
+    private Retry(Predicate<Throwable> retryPredicate) {
         _retryPredicate = retryPredicate;
     }
 
@@ -54,15 +54,11 @@ public class Retry {
             try {
                 runnable.run();
                 return;
-            } catch (Exception e) {
-                System.out.println(e.getMessage());
+            } catch (Throwable e) {
                 if (_failedTries >= _maxRetries || !_retryPredicate.apply(e)) {
                     throw ExceptionUtil.convertToRuntimeException(e);
                 }
                 LOG.warn("Failed retry " + (_failedTries + 1) + "/" + _maxRetries + " with '" + e.getMessage() + "' - retrying after " + _maxRetries + " ms");
-                
-                //TODO jz: remove debug output
-                System.out.println("Failed retry " + (_failedTries + 1) + "/" + _maxRetries + " with '" + e.getMessage() + "' - retrying after " + _maxRetries + " ms");
                 if (_waitTime > 0) {
                     try {
                         Thread.sleep(_waitTime);

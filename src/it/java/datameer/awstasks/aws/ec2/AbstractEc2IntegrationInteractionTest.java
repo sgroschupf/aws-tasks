@@ -50,7 +50,7 @@ public class AbstractEc2IntegrationInteractionTest extends AbstractEc2Integratio
             }
         }
         if (!_instanceGroup.isAssociated()) {
-            _instanceGroup.launch(createLaunchConfiguration(INSTANCE_COUNT), TimeUnit.MINUTES, 5);
+            _instanceGroup.launch(createLaunchConfiguration(INSTANCE_COUNT), TimeUnit.MINUTES, 15);
         }
     }
 
