@@ -29,7 +29,8 @@ public class EmrSettings {
     private final String _s3Bucket;
     private int _instanceCount;
 
-    private String _hadoopVersion = "0.20";
+    private String _amiVersion;
+    private String _hadoopVersion;
     private String _additionalStartInfo;
     private final Collection<BootstrapActionConfig> _bootstrapActions = new ArrayList<BootstrapActionConfig>(3);
     private InstanceType _masterInstanceType = InstanceType.M1Small;
@@ -136,6 +137,14 @@ public class EmrSettings {
 
     public void setDebugEnabled(boolean debugEnabled) {
         _debugEnabled = debugEnabled;
+    }
+
+    public String getAmiVersion() {
+        return _amiVersion;
+    }
+
+    public void setAmiVersion(String amiVersion) {
+        _amiVersion = amiVersion;
     }
 
     public String getHadoopVersion() {

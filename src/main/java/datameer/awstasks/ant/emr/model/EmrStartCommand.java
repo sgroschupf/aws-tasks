@@ -19,13 +19,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import datameer.awstasks.aws.emr.EmrCluster;
-import datameer.awstasks.aws.emr.EmrSettings;
 import datameer.awstasks.aws.emr.EmrCluster.ClusterState;
+import datameer.awstasks.aws.emr.EmrSettings;
 
 public class EmrStartCommand implements EmrCommand {
 
     private String _privateKeyName;
     private int _instanceCount;
+    private String _amiVersion;
     private String _hadoopVersion;
     private boolean _reuseRunningCluster;
     private List<BootstrapConfig> _bootstrapConfigs = new ArrayList<BootstrapConfig>();
@@ -50,6 +51,14 @@ public class EmrStartCommand implements EmrCommand {
         return _hadoopVersion;
     }
 
+    public String getAmiVersion() {
+        return _amiVersion;
+    }
+
+    public void setAmiVersion(String amiVersion) {
+        _amiVersion = amiVersion;
+    }
+
     public void setHadoopVersion(String hadoopVersion) {
         _hadoopVersion = hadoopVersion;
     }
@@ -69,7 +78,12 @@ public class EmrStartCommand implements EmrCommand {
     @Override
     public void execute(EmrCluster cluster) throws Exception {
         EmrSettings settings = cluster.getSettings();
-        settings.setHadoopVersion(_hadoopVersion);
+        if (_amiVersion != null) {
+            settings.setAmiVersion(_amiVersion);
+        }
+        if (_hadoopVersion != null) {
+            settings.setHadoopVersion(_hadoopVersion);
+        }
         settings.setInstanceCount(_instanceCount);
         settings.setPrivateKeyName(_privateKeyName);
         for (BootstrapConfig bootstrapConfig : _bootstrapConfigs) {
