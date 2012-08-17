@@ -25,8 +25,9 @@
 			<startCluster 	privateKeyName="${ec2.privateKeyName}" 
 							instanceCount="1" 
 							amiVersion="2.2"
-							hadoopVersion="1.0.3">
-				<bootstrapConfig name="fix native compression" path="s3://beta.elasticmapreduce/fix-gzip.sh"/>
+							hadoopVersion="1.0.3"
+							debugEnabled="true">
+				<!--<bootstrapConfig name="fix native compression" path="s3://beta.elasticmapreduce/fix-gzip.sh"/>-->
 			</startCluster>
 		</emr>
 	</target>

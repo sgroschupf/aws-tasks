@@ -29,6 +29,7 @@ public class EmrStartCommand implements EmrCommand {
     private String _amiVersion;
     private String _hadoopVersion;
     private boolean _reuseRunningCluster;
+    private boolean _debugEnabled;
     private List<BootstrapConfig> _bootstrapConfigs = new ArrayList<BootstrapConfig>();
 
     public String getPrivateKeyName() {
@@ -75,17 +76,22 @@ public class EmrStartCommand implements EmrCommand {
         return _reuseRunningCluster;
     }
 
+    public boolean isDebugEnabled() {
+        return _debugEnabled;
+    }
+
+    public void setDebugEnabled(boolean debugEnabled) {
+        _debugEnabled = debugEnabled;
+    }
+
     @Override
     public void execute(EmrCluster cluster) throws Exception {
         EmrSettings settings = cluster.getSettings();
-        if (_amiVersion != null) {
-            settings.setAmiVersion(_amiVersion);
-        }
-        if (_hadoopVersion != null) {
-            settings.setHadoopVersion(_hadoopVersion);
-        }
+        settings.setAmiVersion(_amiVersion);
+        settings.setHadoopVersion(_hadoopVersion);
         settings.setInstanceCount(_instanceCount);
         settings.setPrivateKeyName(_privateKeyName);
+        settings.setDebugEnabled(_debugEnabled);
         for (BootstrapConfig bootstrapConfig : _bootstrapConfigs) {
             settings.getBootstrapActions().add(bootstrapConfig.createBootstrapActionConfig());
         }
