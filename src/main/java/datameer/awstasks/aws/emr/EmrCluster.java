@@ -160,6 +160,7 @@ public class EmrCluster {
             jobConfig.setEc2KeyName(settings.getPrivateKeyName());
             jobConfig.setPlacement(new PlacementType());
             jobConfig.setKeepJobFlowAliveWhenNoSteps(keepAlive);
+            jobConfig.setEc2SubnetId(settings.getSubnetId());
 
             final RunJobFlowRequest startRequest = new RunJobFlowRequest();
             startRequest.setAmiVersion(settings.getAmiVersion());
@@ -592,4 +593,5 @@ public class EmrCluster {
     public static enum ClusterState {
         CONNECTED, UNCONNECTED, STARTING, STOPPING;
     }
+
 }

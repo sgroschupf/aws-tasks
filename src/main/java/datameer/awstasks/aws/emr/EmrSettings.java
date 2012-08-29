@@ -38,6 +38,7 @@ public class EmrSettings {
     private String _s3LogPath = "/emr/logs";
     private String _s3JobJarBasePath = "/emr/jobjars";
     private boolean _debugEnabled = true;
+    private String _subnetId;
 
     /**
      * Constructs settings with all must have parameter for a {@link EmrCluster} start.
@@ -165,6 +166,14 @@ public class EmrSettings {
 
     public Collection<BootstrapActionConfig> getBootstrapActions() {
         return _bootstrapActions;
+    }
+
+    public void setSubnetId(String subnetId) {
+        _subnetId = subnetId;
+    }
+
+    public String getSubnetId() {
+        return _subnetId;
     }
 
 }
