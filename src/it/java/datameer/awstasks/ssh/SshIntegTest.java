@@ -93,7 +93,7 @@ public class SshIntegTest extends AbstractEc2IntegrationInteractionTest {
     }
 
     private JschRunner createJschRunner() throws IOException {
-        JschRunner jschRunner = new JschRunner("ubuntu", _instanceGroup.getInstances(false).get(0).getPublicDnsName());
+        JschRunner jschRunner = new JschRunner(TEST_USERNAME, _instanceGroup.getInstances(false).get(0).getPublicDnsName());
         jschRunner.setKeyfile(new File(_ec2Conf.getPrivateKeyFile()));
         jschRunner.setTrust(true);
 

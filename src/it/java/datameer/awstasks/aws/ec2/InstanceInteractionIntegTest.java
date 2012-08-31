@@ -34,7 +34,7 @@ public class InstanceInteractionIntegTest extends AbstractEc2IntegrationInteract
     @Test
     public void testScpUploadToAllInstances() throws Exception {
         File privateKeyFile = new File(_ec2Conf.getPrivateKeyFile());
-        SshClient sshClient = _instanceGroup.createSshClient("ubuntu", privateKeyFile);
+        SshClient sshClient = _instanceGroup.createSshClient(TEST_USERNAME, privateKeyFile);
         File localFile = new File("README.markdown");
         String remoteDir = "~/";
         sshClient.uploadFile(localFile, remoteDir);
@@ -48,7 +48,7 @@ public class InstanceInteractionIntegTest extends AbstractEc2IntegrationInteract
     @Test
     public void testScpUploadToSpecificInstances() throws Exception {
         File privateKeyFile = new File(_ec2Conf.getPrivateKeyFile());
-        SshClient sshClient = _instanceGroup.createSshClient("ubuntu", privateKeyFile);
+        SshClient sshClient = _instanceGroup.createSshClient(TEST_USERNAME, privateKeyFile);
         File localFile = new File("build.xml");
         String remoteDir = "~/";
         sshClient.uploadFile(localFile, remoteDir, new int[] { 0 });
@@ -69,7 +69,7 @@ public class InstanceInteractionIntegTest extends AbstractEc2IntegrationInteract
     @Test
     public void testSshExecutionToAllInstances() throws Exception {
         File privateKeyFile = new File(_ec2Conf.getPrivateKeyFile());
-        SshClient sshClient = _instanceGroup.createSshClient("ubuntu", privateKeyFile);
+        SshClient sshClient = _instanceGroup.createSshClient(TEST_USERNAME, privateKeyFile);
         sshClient.executeCommand("ls -l", _sysOutStream);
         String noneExistingFile = "abcfi";
         try {
@@ -85,7 +85,7 @@ public class InstanceInteractionIntegTest extends AbstractEc2IntegrationInteract
     @Test
     public void testSshExecutionToSpecificInstances() throws Exception {
         File privateKeyFile = new File(_ec2Conf.getPrivateKeyFile());
-        SshClient sshClient1 = _instanceGroup.createSshClient("ubuntu", privateKeyFile);
+        SshClient sshClient1 = _instanceGroup.createSshClient(TEST_USERNAME, privateKeyFile);
 
         String noneExistingFile = "abcfi";
         sshClient1.executeCommand("touch " + noneExistingFile, _sysOutStream, new int[] { 0 });
@@ -101,7 +101,7 @@ public class InstanceInteractionIntegTest extends AbstractEc2IntegrationInteract
     @Test
     public void testSshExecutionFromFile() throws Exception {
         File privateKeyFile = new File(_ec2Conf.getPrivateKeyFile());
-        SshClient sshClient = _instanceGroup.createSshClient("ubuntu", privateKeyFile);
+        SshClient sshClient = _instanceGroup.createSshClient(TEST_USERNAME, privateKeyFile);
         File commandFile = _tempFolder.newFile("commands.txt");
         FileWriter fileWriter = new FileWriter(commandFile);
         fileWriter.write("ls -l\n");
