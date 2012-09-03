@@ -40,5 +40,9 @@ public abstract class AbstractAwsTask extends Task {
     public void setAccessSecret(String accessSecret) {
         _accessSecret = accessSecret;
     }
+    
+    public void setProperty(String name, String value){
+        getProject().setProperty(name, value);
+    }
 
 }
