@@ -87,50 +87,70 @@ public class SshClientImpl implements SshClient {
         executeSshCommand(getHosts(targetedInstances), null, commandFile, outputStream);
     }
 
-    private void executeSshCommand(List<String> hostnames, final String command, final File commandFile, final OutputStream outputStream) throws IOException {
-        ArrayList<Future<SshTask>> futureList = Lists.newArrayListWithCapacity(hostnames.size());
-        ExecutorService e = Executors.newCachedThreadPool();
-        for (final String host : hostnames) {
-            SshTask c = new SshTask() {
-
-                ByteArrayOutputStream _byteArrayOutputStream;
-
+    private void executeSshCommand(final List<String> hostnames, final String command, final File commandFile, final OutputStream outputStream) throws IOException {
+        List<SshCallable> sshCallables = Lists.newArrayList();
+        if (hostnames.size() == 1) {
+            // don't cache the outputstream
+            sshCallables.add(new SshCallable() {
                 @Override
                 protected void execute() throws IOException {
-                    _byteArrayOutputStream = new ByteArrayOutputStream();
-                    JschRunner jschRunner = createJschRunner(host);
-                    if (command != null) {
-                        LOG.info(String.format("executing command '%s' on '%s'", command, host));
-                        jschRunner.run(new SshExecCommand(command, _byteArrayOutputStream));
-                    } else {
-                        LOG.info(String.format("executing command-file '%s' on '%s'", commandFile.getAbsolutePath(), host));
-                        jschRunner.run(new SshExecCommand(commandFile, _byteArrayOutputStream));
-                    }
+                    executeCommandOrCommandFile(hostnames.get(0), command, commandFile, outputStream);
                 }
+            });
+        } else {
+            // cache the outputstream for ordering the results
+            for (final String host : hostnames) {
+                sshCallables.add(new SshCallable() {
+                    ByteArrayOutputStream _byteArrayOutputStream;
 
-                @Override
-                protected void close() {
-                    try {
-                        outputStream.write(_byteArrayOutputStream.toByteArray());
-                    } catch (IOException e) {
-                        throw ExceptionUtil.convertToRuntimeException(e);
+                    @Override
+                    protected void execute() throws IOException {
+                        _byteArrayOutputStream = new ByteArrayOutputStream();
+                        executeCommandOrCommandFile(host, command, commandFile, _byteArrayOutputStream);
                     }
-                }
 
-            };
-            futureList.add(e.submit(c));
+                    @Override
+                    protected void close() {
+                        try {
+                            outputStream.write(_byteArrayOutputStream.toByteArray());
+                        } catch (IOException e) {
+                            throw ExceptionUtil.convertToRuntimeException(e);
+                        }
+                    }
+                });
+            }
+        }
+        executeCallables(sshCallables);
+    }
+
+    private void executeCallables(List<SshCallable> sshCallables) throws IOException {
+        ExecutorService e = Executors.newCachedThreadPool();
+        List<Future<SshCallable>> futureList = Lists.newArrayListWithCapacity(sshCallables.size());
+        for (SshCallable sshCallable : sshCallables) {
+            futureList.add(e.submit(sshCallable));
         }
         waitForSshCommandCompletion(futureList);
     }
 
-    private static void waitForSshCommandCompletion(ArrayList<Future<SshTask>> futureList) throws IOException {
+    private void executeCommandOrCommandFile(final String host, final String command, final File commandFile, OutputStream outputStream) throws IOException {
+        JschRunner jschRunner = createJschRunner(host);
+        if (command != null) {
+            LOG.info(String.format("executing command '%s' on '%s'", command, host));
+            jschRunner.run(new SshExecCommand(command, outputStream));
+        } else {
+            LOG.info(String.format("executing command-file '%s' on '%s'", commandFile.getAbsolutePath(), host));
+            jschRunner.run(new SshExecCommand(commandFile, outputStream));
+        }
+    }
+
+    private static void waitForSshCommandCompletion(List<Future<SshCallable>> futureList) throws IOException {
         boolean interrupted = false;
-        for (Future<SshTask> future : futureList) {
+        for (Future<SshCallable> future : futureList) {
             try {
                 if (interrupted) {
                     future.cancel(true);
                 } else {
-                    SshTask sshTask = future.get();
+                    SshCallable sshTask = future.get();
                     sshTask.close();
                 }
             } catch (InterruptedException ex) {
@@ -154,27 +174,19 @@ public class SshClientImpl implements SshClient {
     }
 
     private void uploadFile(List<String> hostnames, final File localFile, final String targetPath) throws IOException {
-        ArrayList<Future<SshTask>> futureList = Lists.newArrayListWithExpectedSize(hostnames.size());
-        ExecutorService e = Executors.newCachedThreadPool();
+        List<SshCallable> callables = Lists.newArrayList();
         for (final String host : hostnames) {
-            SshTask c = new SshTask() {
-
+            callables.add(new SshCallable() {
                 @Override
                 protected void execute() throws IOException {
                     LOG.info(String.format("uploading file '%s' to '%s'", localFile.getAbsolutePath(), constructRemotePath(host, targetPath)));
                     JschRunner jschRunner = createJschRunner(host);
                     jschRunner.run(new ScpUploadCommand(localFile, targetPath));
                 }
+            });
 
-                @Override
-                protected void close() {
-                    // do nothing
-                }
-            };
-
-            futureList.add(e.submit(c));
         }
-        waitForSshCommandCompletion(futureList);
+        executeCallables(callables);
     }
 
     @Override
@@ -220,16 +232,19 @@ public class SshClientImpl implements SshClient {
         return hostnames;
     }
 
-    private static abstract class SshTask implements Callable<SshTask> {
+    private static abstract class SshCallable implements Callable<SshCallable> {
 
         @Override
-        public final SshTask call() throws Exception {
+        public final SshCallable call() throws Exception {
             execute();
             return this;
         }
 
         protected abstract void execute() throws IOException;
 
-        protected abstract void close();
+        protected void close() {
+            // subclasses may override
+        };
     }
+
 }
