@@ -16,6 +16,7 @@
 package datameer.awstasks.aws.ec2.ssh;
 
 import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -27,6 +28,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import org.apache.hadoop.io.IOUtils;
 import org.apache.log4j.Logger;
 
 import datameer.awstasks.ssh.JschRunner;
@@ -110,7 +112,7 @@ public class SshClientImpl implements SshClient {
                     }
 
                     @Override
-                    protected void close() {
+                    public void close() {
                         try {
                             outputStream.write(_byteArrayOutputStream.toByteArray());
                         } catch (IOException e) {
@@ -150,8 +152,12 @@ public class SshClientImpl implements SshClient {
                 if (interrupted) {
                     future.cancel(true);
                 } else {
-                    SshCallable sshTask = future.get();
-                    sshTask.close();
+                    SshCallable sshTask = null;
+                    try {
+                        sshTask = future.get();
+                    } finally {
+                        IOUtils.closeStream(sshTask);
+                    }
                 }
             } catch (InterruptedException ex) {
                 interrupted = true;
@@ -232,7 +238,7 @@ public class SshClientImpl implements SshClient {
         return hostnames;
     }
 
-    private static abstract class SshCallable implements Callable<SshCallable> {
+    private static abstract class SshCallable implements Callable<SshCallable>, Closeable {
 
         @Override
         public final SshCallable call() throws Exception {
@@ -242,7 +248,8 @@ public class SshClientImpl implements SshClient {
 
         protected abstract void execute() throws IOException;
 
-        protected void close() {
+        @Override
+        public void close() {
             // subclasses may override
         };
     }
