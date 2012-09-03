@@ -16,7 +16,9 @@
 package datameer.awstasks.util;
 
 import java.io.BufferedWriter;
+import java.io.DataInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -75,6 +77,32 @@ public class IoUtil {
             oStream.write(bytes, 0, pieceLength);
             length -= pieceLength;
         }
+    }
+    
+    /**
+     * Returns raw file content as String in the current folder
+     * 
+     * @param filename
+     */
+    public static String readFile(String file) throws IOException {
+        String result = null;
+        DataInputStream in = null;
+
+        try {
+            File f = new File(file);
+            byte[] buffer = new byte[(int) f.length()];
+            in = new DataInputStream(new FileInputStream(f));
+            in.readFully(buffer);
+            result = new String(buffer);
+        } catch (IOException e) {
+            throw new RuntimeException("IO problem in fileToString", e);
+        } finally {
+            try {
+                in.close();
+            } catch (IOException e) { /* ignore it */
+            }
+        }
+        return result;
     }
 
     public static void writeFile(File file, String... lines) throws IOException {
