@@ -28,7 +28,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import org.apache.hadoop.io.IOUtils;
 import org.apache.log4j.Logger;
 
 import datameer.awstasks.ssh.JschRunner;
@@ -36,6 +35,7 @@ import datameer.awstasks.ssh.ScpDownloadCommand;
 import datameer.awstasks.ssh.ScpUploadCommand;
 import datameer.awstasks.ssh.SshExecCommand;
 import datameer.awstasks.util.ExceptionUtil;
+import datameer.awstasks.util.IoUtil;
 import datameer.com.google.common.base.Throwables;
 import datameer.com.google.common.collect.Lists;
 
@@ -156,7 +156,7 @@ public class SshClientImpl implements SshClient {
                     try {
                         sshTask = future.get();
                     } finally {
-                        IOUtils.closeStream(sshTask);
+                        IoUtil.closeQuietly(sshTask);
                     }
                 }
             } catch (InterruptedException ex) {

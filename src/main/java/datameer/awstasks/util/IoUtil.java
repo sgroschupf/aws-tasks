@@ -16,18 +16,21 @@
 package datameer.awstasks.util;
 
 import java.io.BufferedWriter;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import org.apache.log4j.Logger;
 
 /**
  * Util class providing some file-/stream operations and some units of measurement.
  */
 public class IoUtil {
 
+    private static final Logger LOG = Logger.getLogger(IoUtil.class);
     /**
      * A default buffer size, could be used f.e. by copying bytes from stream to stream.
      */
@@ -100,4 +103,13 @@ public class IoUtil {
         };
     }
 
+    public static void closeQuietly(Closeable closeable) {
+        if (closeable != null) {
+            try {
+                closeable.close();
+            } catch (Throwable e) {
+                LOG.warn("failed to close '" + closeable + "'", e);
+            }
+        }
+    }
 }
