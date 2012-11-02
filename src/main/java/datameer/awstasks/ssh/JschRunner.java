@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
+import com.jcraft.jsch.CachedSession;
 import com.jcraft.jsch.Identity;
 import com.jcraft.jsch.IdentityKeyString;
 import com.jcraft.jsch.JSch;
@@ -43,6 +44,11 @@ import datameer.awstasks.exec.ShellCommand;
 import datameer.awstasks.exec.ShellExecutor;
 import datameer.awstasks.util.ExceptionUtil;
 import datameer.awstasks.util.Retry;
+import datameer.com.google.common.cache.CacheBuilder;
+import datameer.com.google.common.cache.CacheLoader;
+import datameer.com.google.common.cache.LoadingCache;
+import datameer.com.google.common.cache.RemovalListener;
+import datameer.com.google.common.cache.RemovalNotification;
 
 public class JschRunner extends ShellExecutor {
 
@@ -61,9 +67,27 @@ public class JschRunner extends ShellExecutor {
     private boolean _debug;
     private boolean _enableConnectionRetries;
 
+    private static final RemovalListener<String, CachedSession> SESSION_REMOVAL_LISTENER = new RemovalListener<String, CachedSession>() {
+        @Override
+        public void onRemoval(RemovalNotification<String, CachedSession> notification) {
+            LOG.info("Removing Session with Key:" + notification.getKey());
+            notification.getValue().cleanSession();
+        }
+    };
+
+    private static LoadingCache<String, CachedSession> cachedSession = null;
+
     public JschRunner(String user, String host) {
         _user = user;
         _host = host;
+        if (null == cachedSession) {
+            cachedSession = CacheBuilder.newBuilder().maximumSize(20).expireAfterWrite(30, TimeUnit.MINUTES).removalListener(SESSION_REMOVAL_LISTENER).build(new CacheLoader<String, CachedSession>() {
+                public CachedSession load(String key) throws JSchException {
+                    LOG.info("Key is:" + key);
+                    return (CachedSession) createFreshSession();
+                }
+            });
+        }
     }
 
     public String getHost() {
@@ -223,8 +247,12 @@ public class JschRunner extends ShellExecutor {
         }
     }
 
-    @SuppressWarnings("unchecked")
     public Session openSession() throws JSchException {
+        return cachedSession.getUnchecked(CachedSession.generateKey(_host, _port, _user));
+    }
+
+    @SuppressWarnings("unchecked")
+    private Session createFreshSession() throws JSchException {
         JSch jsch = new JSch();
         if (isDebug()) {
             JSch.setLogger(DEBUG_LOGGER);
@@ -242,7 +270,11 @@ public class JschRunner extends ShellExecutor {
             jsch.setKnownHosts(_knownHosts);
         }
 
-        final Session session = jsch.getSession(_user, _host, _port);
+        // final Session session = jsch.getSession(_user, _host, _port);
+        final CachedSession session = new CachedSession(jsch);
+        session.setUserName(_user);
+        session.setHost(_host);
+        session.setPort(_port);
         session.setSocketFactory(new SocketFactoryWithConnectTimeout());
         session.setUserInfo(new UserInfoImpl(_password));
         session.setTimeout(_timeout);
@@ -264,6 +296,7 @@ public class JschRunner extends ShellExecutor {
         } else {
             session.connect();
         }
+        LOG.info("Create Cached SSH session for Host:" + _host + ":" + _port + " with user:" + _user);
         return session;
     }
 
