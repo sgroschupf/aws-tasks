@@ -67,27 +67,34 @@ public class JschRunner extends ShellExecutor {
     private boolean _debug;
     private boolean _enableConnectionRetries;
 
-    private static final RemovalListener<String, CachedSession> SESSION_REMOVAL_LISTENER = new RemovalListener<String, CachedSession>() {
+    private final RemovalListener<String, CachedSession> SESSION_REMOVAL_LISTENER = new RemovalListener<String, CachedSession>() {
         @Override
         public void onRemoval(RemovalNotification<String, CachedSession> notification) {
             LOG.info("Removing Session with Key:" + notification.getKey());
-            notification.getValue().cleanSession();
+            notification.getValue().forcedDisconnect();
         }
     };
 
-    private static LoadingCache<String, CachedSession> cachedSession = null;
+    private LoadingCache<String, CachedSession> cachedSession;
 
-    public JschRunner(String user, String host) {
+    private boolean _sessionCachingEnabled;
+
+    public JschRunner(String user, String host, boolean sessionCachingEnabled) {
         _user = user;
         _host = host;
-        if (null == cachedSession) {
-            cachedSession = CacheBuilder.newBuilder().maximumSize(20).expireAfterWrite(30, TimeUnit.MINUTES).removalListener(SESSION_REMOVAL_LISTENER).build(new CacheLoader<String, CachedSession>() {
+        _sessionCachingEnabled = sessionCachingEnabled;
+        if (null == cachedSession && _sessionCachingEnabled) {
+            cachedSession = CacheBuilder.newBuilder().maximumSize(20).expireAfterAccess(30, TimeUnit.MINUTES).removalListener(SESSION_REMOVAL_LISTENER).build(new CacheLoader<String, CachedSession>() {
                 public CachedSession load(String key) throws JSchException {
                     LOG.info("Key is:" + key);
                     return (CachedSession) createFreshSession();
                 }
             });
         }
+    }
+
+    public JschRunner(String user, String host) {
+        this(user, host, false);
     }
 
     public String getHost() {
@@ -248,7 +255,11 @@ public class JschRunner extends ShellExecutor {
     }
 
     public Session openSession() throws JSchException {
-        return cachedSession.getUnchecked(CachedSession.generateKey(_host, _port, _user));
+        if (_sessionCachingEnabled) {
+            return cachedSession.getUnchecked(CachedSession.generateKey(_host, _port, _user));
+        } else {
+            return createFreshSession();
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -270,8 +281,7 @@ public class JschRunner extends ShellExecutor {
             jsch.setKnownHosts(_knownHosts);
         }
 
-        // final Session session = jsch.getSession(_user, _host, _port);
-        final CachedSession session = new CachedSession(jsch);
+        final CachedSession session = new CachedSession(jsch, _sessionCachingEnabled);
         session.setUserName(_user);
         session.setHost(_host);
         session.setPort(_port);
