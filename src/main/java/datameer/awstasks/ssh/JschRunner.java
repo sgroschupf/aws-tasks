@@ -66,35 +66,35 @@ public class JschRunner extends ShellExecutor {
     private int _timeout = 0;
     private boolean _debug;
     private boolean _enableConnectionRetries;
+    private int _createdSessions;
 
-    private final RemovalListener<String, CachedSession> SESSION_REMOVAL_LISTENER = new RemovalListener<String, CachedSession>() {
-        @Override
-        public void onRemoval(RemovalNotification<String, CachedSession> notification) {
-            LOG.info("Removing Session with Key:" + notification.getKey());
-            notification.getValue().forcedDisconnect();
-        }
-    };
-
-    private LoadingCache<String, CachedSession> cachedSession;
-
+    private LoadingCache<String, CachedSession> _sessionCache;
     private boolean _sessionCachingEnabled;
+
+    public JschRunner(String user, String host) {
+        this(user, host, false);
+    }
 
     public JschRunner(String user, String host, boolean sessionCachingEnabled) {
         _user = user;
         _host = host;
         _sessionCachingEnabled = sessionCachingEnabled;
-        if (null == cachedSession && _sessionCachingEnabled) {
-            cachedSession = CacheBuilder.newBuilder().maximumSize(20).expireAfterAccess(30, TimeUnit.MINUTES).removalListener(SESSION_REMOVAL_LISTENER).build(new CacheLoader<String, CachedSession>() {
+        if (_sessionCachingEnabled) {
+            RemovalListener<String, CachedSession> removalListener = new RemovalListener<String, CachedSession>() {
+                @Override
+                public void onRemoval(RemovalNotification<String, CachedSession> notification) {
+                    LOG.info("Removing Session with Key:" + notification.getKey());
+                    notification.getValue().forcedDisconnect();
+                }
+            };
+            _sessionCache = CacheBuilder.newBuilder().maximumSize(20).expireAfterAccess(30, TimeUnit.MINUTES).removalListener(removalListener).build(new CacheLoader<String, CachedSession>() {
+                @Override
                 public CachedSession load(String key) throws JSchException {
-                    LOG.info("Key is:" + key);
-                    return (CachedSession) createFreshSession();
+                    LOG.info("Opening cached session:" + key);
+                    return (CachedSession) createFreshSession(true);
                 }
             });
         }
-    }
-
-    public JschRunner(String user, String host) {
-        this(user, host, false);
     }
 
     public String getHost() {
@@ -165,6 +165,10 @@ public class JschRunner extends ShellExecutor {
 
     public boolean isDebug() {
         return _debug;
+    }
+
+    public int getCreatedSessions() {
+        return _createdSessions;
     }
 
     public void setEnableConnectionRetries(boolean enableConnectionRetries) {
@@ -256,14 +260,14 @@ public class JschRunner extends ShellExecutor {
 
     public Session openSession() throws JSchException {
         if (_sessionCachingEnabled) {
-            return cachedSession.getUnchecked(CachedSession.generateKey(_host, _port, _user));
+            return _sessionCache.getUnchecked(CachedSession.generateKey(_user, _host, _port));
         } else {
-            return createFreshSession();
+            return createFreshSession(false);
         }
     }
 
     @SuppressWarnings("unchecked")
-    private Session createFreshSession() throws JSchException {
+    private Session createFreshSession(boolean cached) throws JSchException {
         JSch jsch = new JSch();
         if (isDebug()) {
             JSch.setLogger(DEBUG_LOGGER);
@@ -281,10 +285,12 @@ public class JschRunner extends ShellExecutor {
             jsch.setKnownHosts(_knownHosts);
         }
 
-        final CachedSession session = new CachedSession(jsch, _sessionCachingEnabled);
-        session.setUserName(_user);
-        session.setHost(_host);
-        session.setPort(_port);
+        final Session session;
+        if (cached) {
+            session = new CachedSession(_user, _host, _port, jsch, _sessionCache);
+        } else {
+            session = jsch.getSession(_user, _host, _port);
+        }
         session.setSocketFactory(new SocketFactoryWithConnectTimeout());
         session.setUserInfo(new UserInfoImpl(_password));
         session.setTimeout(_timeout);
@@ -306,7 +312,8 @@ public class JschRunner extends ShellExecutor {
         } else {
             session.connect();
         }
-        LOG.info("Create Cached SSH session for Host:" + _host + ":" + _port + " with user:" + _user);
+        LOG.info("Create SSH (cached=" + cached + ") session for Host:" + _host + ":" + _port + " with user:" + _user);
+        _createdSessions++;
         return session;
     }
 

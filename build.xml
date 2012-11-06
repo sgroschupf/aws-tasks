@@ -101,7 +101,7 @@
 	<!-- Build sources                                                      -->
 	<!-- ================================================================== -->
 
-	<target name="check-header" >
+	<target name="check-header" description="--> check header">
 		<exec command="sh src/build/ant/checkHeaders.sh ${basedir}" failonerror="true"/>
 	</target>
 

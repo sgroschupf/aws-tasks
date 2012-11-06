@@ -1,42 +1,79 @@
+/**
+ * Copyright 2010 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.jcraft.jsch;
+
+import java.util.concurrent.ExecutionException;
+
+import datameer.com.google.common.cache.LoadingCache;
 
 public class CachedSession extends Session {
 
-    private boolean _cacheEnabled = true;
+    private LoadingCache<String, CachedSession> _sessionCache;
+    private String _cacheKey;
+    private boolean _pingCache;
 
-    public CachedSession(JSch jsch) throws JSchException {
-        this(jsch, true);
-    }
-
-    public CachedSession(JSch jsch, boolean cacheEnabled) throws JSchException {
+    public CachedSession(String user, String host, int port, JSch jsch, LoadingCache<String, CachedSession> sessionCache) throws JSchException {
         super(jsch);
-        _cacheEnabled = cacheEnabled;
+        setUserName(user);
+        setHost(host);
+        setPort(port);
+        _sessionCache = sessionCache;
+        _cacheKey = generateKey(user, host, port);
     }
 
     @Override
-    public void setUserName(String username) {
-        // Exposing this method
-        super.setUserName(username);
+    public void connect(int connectTimeout) throws JSchException {
+        super.connect(connectTimeout);
+        _pingCache = true;
     }
 
     @Override
     public void disconnect() {
-        // Don't disconnect the session yet if the caching is enabled
-        if (!_cacheEnabled) {
-            super.disconnect();
-        }
-    }
-
-    @Override
-    public String toString() {
-        return generateKey(this.host, this.port, this.username);
+        // do nothing - prevent disconnect
     }
 
     public void forcedDisconnect() {
         super.disconnect();
     }
 
-    public static String generateKey(String host, int port, String username) {
+    @Override
+    public Buffer read(Buffer buf) throws Exception {
+        keepSessionAlive();
+        return super.read(buf);
+    }
+
+    @Override
+    void write(Packet packet, Channel c, int length) throws Exception {
+        keepSessionAlive();
+        super.write(packet, c, length);
+    }
+
+    private void keepSessionAlive() throws ExecutionException {
+        if (!_pingCache) {
+            return;
+        }
+        _sessionCache.get(_cacheKey);
+    }
+
+    @Override
+    public String toString() {
+        return _cacheKey;
+    }
+
+    public static String generateKey(String username, String host, int port) {
         StringBuilder sBuilder = new StringBuilder();
         sBuilder.append(host).append(port).append(username);
         return sBuilder.toString();

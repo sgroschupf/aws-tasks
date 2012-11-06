@@ -16,6 +16,7 @@
 
 package datameer.awstasks.ssh;
 
+import static org.fest.assertions.Assertions.*;
 import static org.hamcrest.Matchers.*;
 
 import static org.junit.Assert.*;
@@ -65,7 +66,11 @@ public class JschRunnerTest extends AbstractTest {
     }
 
     private JschRunner createJschRunner() {
-        JschRunner jschRunner = new JschRunner(USER, HOST);
+        return createJschRunner(false);
+    }
+
+    private JschRunner createJschRunner(boolean cached) {
+        JschRunner jschRunner = new JschRunner(USER, HOST, cached);
         jschRunner.setKeyfile(JschRunner.findStandardKeyFile(false));
         return jschRunner;
     }
@@ -90,6 +95,7 @@ public class JschRunnerTest extends AbstractTest {
             builder.append(line);
             builder.append("\n");
         }
+        reader.close();
         return builder.toString();
 
     }
@@ -126,20 +132,14 @@ public class JschRunnerTest extends AbstractTest {
     }
 
     @Test
-    public void testOpen() throws Exception {
+    public void testOpenFile() throws Exception {
         JschRunner jschRunner = createJschRunner();
         InputStream inputStream = jschRunner.openFile(new File("build.xml").getAbsolutePath());
-        int available = inputStream.available();
-        ByteArrayOutputStream byteOutStream = new ByteArrayOutputStream();
-
-        assertThat(available, greaterThan(0));
-        IoUtil.copyBytes(inputStream, byteOutStream);
-        assertEquals(available, byteOutStream.size());
-        inputStream.close();
+        doTestReadOfFile(inputStream);
     }
 
     @Test
-    public void testCreate() throws Exception {
+    public void testCreateFile() throws Exception {
         File file = _tempFolder.newFile("remoteFile");
         file.delete();
         String message = "hello world";
@@ -209,6 +209,53 @@ public class JschRunnerTest extends AbstractTest {
             System.out.println("'" + line + "'");
             assertFalse(line.endsWith("\n"));
         }
+    }
+
+    @Test
+    public void testExecuteShellCommand_WithoutCachedSession() throws Exception {
+        JschRunner jschRunner = createJschRunner(false);
+        ShellCommand<?> command = new ShellCommand<List<String>>(new String[] { "ls", "/" }, true);
+        assertThat(jschRunner.execute(command, new ExecCaptureLinesHandler())).isNotEmpty();
+        assertThat(jschRunner.getCreatedSessions()).isEqualTo(1);
+        assertThat(jschRunner.execute(command, new ExecCaptureLinesHandler())).isNotEmpty();
+        assertThat(jschRunner.getCreatedSessions()).isEqualTo(2);
+    }
+
+    @Test
+    public void testExecuteShellCommand_WithCachedSession() throws Exception {
+        JschRunner jschRunner = createJschRunner(true);
+        ShellCommand<?> command = new ShellCommand<List<String>>(new String[] { "ls", "/" }, true);
+        assertThat(jschRunner.execute(command, new ExecCaptureLinesHandler())).isNotEmpty();
+        assertThat(jschRunner.getCreatedSessions()).isEqualTo(1);
+        assertThat(jschRunner.execute(command, new ExecCaptureLinesHandler())).isNotEmpty();
+        assertThat(jschRunner.getCreatedSessions()).isEqualTo(1);
+    }
+
+    @Test
+    public void testOpenFile_WithoutCachedSession() throws Exception {
+        JschRunner jschRunner = createJschRunner(false);
+        doTestReadOfFile(jschRunner.openFile(new File("build.xml").getAbsolutePath()));
+        assertThat(jschRunner.getCreatedSessions()).isEqualTo(1);
+        doTestReadOfFile(jschRunner.openFile(new File("build.xml").getAbsolutePath()));
+        assertThat(jschRunner.getCreatedSessions()).isEqualTo(2);
+    }
+
+    @Test
+    public void testOpenFile_WithCachedSession() throws Exception {
+        JschRunner jschRunner = createJschRunner(true);
+        doTestReadOfFile(jschRunner.openFile(new File("build.xml").getAbsolutePath()));
+        assertThat(jschRunner.getCreatedSessions()).isEqualTo(1);
+        doTestReadOfFile(jschRunner.openFile(new File("build.xml").getAbsolutePath()));
+        assertThat(jschRunner.getCreatedSessions()).isEqualTo(1);
+    }
+
+    private void doTestReadOfFile(InputStream inputStream) throws IOException {
+        int available = inputStream.available();
+        ByteArrayOutputStream byteOutStream = new ByteArrayOutputStream();
+        assertThat(available, greaterThan(0));
+        IoUtil.copyBytes(inputStream, byteOutStream);
+        assertEquals(available, byteOutStream.size());
+        inputStream.close();
     }
 
     private static String[] split(String string, String regex) {
