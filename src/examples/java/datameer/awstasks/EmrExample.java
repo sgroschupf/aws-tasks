@@ -52,7 +52,7 @@ public class EmrExample {
         String remoteOutputPath = "/emr/output";
         String inputUri = "s3n://" + s3Bucket + remoteInputPath;
         String outputUri = "s3n://" + s3Bucket + remoteOutputPath;
-        emrCluster.executeJobStep("wordcount-" + System.currentTimeMillis(), new File("lib/test/hadoop-0.18.3-examples.jar"), inputUri, outputUri);
+        emrCluster.createJobStep("wordcount-" + System.currentTimeMillis(), new File("lib/test/hadoop-0.18.3-examples.jar")).setMainArgs(inputUri, outputUri).submit().join();
 
         // shut the flow down
         emrCluster.shutdown();

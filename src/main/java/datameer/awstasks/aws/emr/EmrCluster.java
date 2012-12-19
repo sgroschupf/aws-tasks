@@ -35,6 +35,7 @@ import com.amazonaws.services.elasticmapreduce.model.DescribeJobFlowsResult;
 import com.amazonaws.services.elasticmapreduce.model.HadoopJarStepConfig;
 import com.amazonaws.services.elasticmapreduce.model.JobFlowDetail;
 import com.amazonaws.services.elasticmapreduce.model.JobFlowInstancesConfig;
+import com.amazonaws.services.elasticmapreduce.model.KeyValue;
 import com.amazonaws.services.elasticmapreduce.model.PlacementType;
 import com.amazonaws.services.elasticmapreduce.model.RunJobFlowRequest;
 import com.amazonaws.services.elasticmapreduce.model.RunJobFlowResult;
@@ -280,56 +281,20 @@ public class EmrCluster {
         }
     }
 
+    public JobStepBuilder createJobStep(String name, File jobJar) {
+        return new JobStepBuilder(name, jobJar);
+    }
+
     public StepFuture executeJobStep(String name, File jobJar, String... args) {
-        return executeJobStep(name, jobJar, null, args);
+        return createJobStep(name, jobJar).setMainArgs(args).submit();
     }
 
     public StepFuture executeJobStep(String name, File jobJar, Class<?> mainClass, String... args) {
-        return executeJobStep(name, jobJar, jobJar.getName(), mainClass, args);
+        return createJobStep(name, jobJar).setMainClass(mainClass).setMainArgs(args).submit();
     }
 
     public StepFuture executeJobStep(String name, File jobJar, String s3JobJarName, Class<?> mainClass, String... args) {
-        checkConnection(true);
-        HadoopJarStepConfig jarConfig = new HadoopJarStepConfig();
-        if (jobJar != null) {
-            String s3JobJarUri = uploadingJobJar(jobJar, s3JobJarName);
-            jarConfig.setJar(s3JobJarUri);
-        }
-        if (mainClass != null) {
-            jarConfig.setMainClass(mainClass.getName());
-        }
-        jarConfig.setArgs(Arrays.asList(args));
-        StepConfig stepConfig = new StepConfig();
-        stepConfig.setName(name);
-        stepConfig.setActionOnFailure("CONTINUE");
-        stepConfig.setHadoopJarStep(jarConfig);
-        _emrWebService.addJobFlowSteps(new AddJobFlowStepsRequest().withJobFlowId(_jobFlowId).withSteps(stepConfig));
-        _emrWebService.clearDescribeJobFlowCache();
-        return new StepFuture(stepConfig.getName(), getStepIndex(getJobFlowDetail(_jobFlowId), name));
-    }
-
-    private String uploadingJobJar(File jobJar, String s3JobJarName) {
-        if (_s3Service == null) {
-            _s3Service = new AmazonS3Client(new BasicAWSCredentials(getSettings().getAccessKey(), _accessSecret));
-        }
-
-        _uploadLock.lock(jobJar.getAbsolutePath());
-        try {
-            String s3JobJarPath = new File(getSettings().getS3JobJarBasePath(), s3JobJarName).getPath();
-            String s3Bucket = getSettings().getS3Bucket();
-            if (!_s3Service.doesBucketExist(s3Bucket)) {
-                throw new IllegalStateException("s3 bucket '" + s3Bucket + "' does not exists");
-            }
-            if (!S3Util.existsFile(_s3Service, s3Bucket, s3JobJarPath)) {
-                LOG.info("uploading " + jobJar + " to " + s3JobJarPath);
-                S3Util.uploadFile(_s3Service, s3Bucket, jobJar, s3JobJarPath);
-            } else {
-                LOG.info("using cached job-jar: " + s3JobJarPath);
-            }
-            return "s3n://" + getSettings().getAccessKey() + "@" + s3Bucket + s3JobJarPath;
-        } finally {
-            _uploadLock.unlock(jobJar.getAbsolutePath());
-        }
+        return createJobStep(name, jobJar).setS3JobJarName(s3JobJarName).setMainClass(mainClass).setMainArgs(args).submit();
     }
 
     private void waitUntilClusterStateChange(final String jobFlowId, final StateCategory targetState) throws InterruptedException {
@@ -592,6 +557,74 @@ public class EmrCluster {
 
     public static enum ClusterState {
         CONNECTED, UNCONNECTED, STARTING, STOPPING;
+    }
+
+    public class JobStepBuilder {
+
+        private final StepConfig _stepConfig = new StepConfig().withHadoopJarStep(new HadoopJarStepConfig());
+        private final File _jobJar;
+        private String _s3jobJarName;
+
+        JobStepBuilder(String name, File jobJar) {
+            _stepConfig.setName(name);
+            _jobJar = jobJar;
+            _s3jobJarName = jobJar.getName();
+            _stepConfig.setActionOnFailure("CONTINUE");
+        }
+
+        public JobStepBuilder setS3JobJarName(String s3JobJarName) {
+            _s3jobJarName = s3JobJarName;
+            return this;
+        }
+
+        public JobStepBuilder setMainClass(Class<?> mainClass) {
+            _stepConfig.getHadoopJarStep().setMainClass(mainClass.getName());
+            return this;
+        }
+
+        public JobStepBuilder setMainArgs(String... args) {
+            _stepConfig.getHadoopJarStep().setArgs(Arrays.asList(args));
+            return this;
+        }
+
+        public JobStepBuilder addJvmArg(String key, String value) {
+            _stepConfig.getHadoopJarStep().getProperties().add(new KeyValue(key, value));
+            return this;
+        }
+
+        public StepFuture submit() {
+            checkConnection(true);
+            String s3JobJarUri = uploadingJobJar(_jobJar, _s3jobJarName);
+            _stepConfig.getHadoopJarStep().setJar(s3JobJarUri);
+            _emrWebService.addJobFlowSteps(new AddJobFlowStepsRequest().withJobFlowId(_jobFlowId).withSteps(_stepConfig));
+            _emrWebService.clearDescribeJobFlowCache();
+            return new StepFuture(_stepConfig.getName(), getStepIndex(getJobFlowDetail(_jobFlowId), _stepConfig.getName()));
+        }
+
+        private String uploadingJobJar(File jobJar, String s3JobJarName) {
+            if (_s3Service == null) {
+                _s3Service = new AmazonS3Client(new BasicAWSCredentials(getSettings().getAccessKey(), _accessSecret));
+            }
+
+            _uploadLock.lock(jobJar.getAbsolutePath());
+            try {
+                String s3JobJarPath = new File(getSettings().getS3JobJarBasePath(), s3JobJarName).getPath();
+                String s3Bucket = getSettings().getS3Bucket();
+                if (!_s3Service.doesBucketExist(s3Bucket)) {
+                    throw new IllegalStateException("s3 bucket '" + s3Bucket + "' does not exists");
+                }
+                if (!S3Util.existsFile(_s3Service, s3Bucket, s3JobJarPath)) {
+                    LOG.info("uploading " + jobJar + " to " + s3JobJarPath);
+                    S3Util.uploadFile(_s3Service, s3Bucket, jobJar, s3JobJarPath);
+                } else {
+                    LOG.info("using cached job-jar: " + s3JobJarPath);
+                }
+                return "s3n://" + getSettings().getAccessKey() + "@" + s3Bucket + s3JobJarPath;
+            } finally {
+                _uploadLock.unlock(jobJar.getAbsolutePath());
+            }
+        }
+
     }
 
 }
