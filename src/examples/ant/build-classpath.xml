@@ -11,7 +11,7 @@
 	
 	<path id="task.classpath">
 		<pathelement location="${root.dir}/${build.dir.main-classes}" />
-		<pathelement location="${main.res.dir}" />
+		<pathelement location="${root.dir}/${test.res.dir}" />
 		<fileset dir="${lib.dir}/compile">
 			<include name="**/*.jar" />
 		</fileset>
