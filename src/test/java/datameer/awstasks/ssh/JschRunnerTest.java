@@ -48,7 +48,7 @@ import datameer.awstasks.util.IoUtil;
 
 /**
  * 
- * In order to run this test successfully passwordless access to localhost needs to ba enabled on
+ * In order to run this test successfully passwordless access to localhost needs to be enabled on
  * your system.
  * 
  */
@@ -62,7 +62,7 @@ public class JschRunnerTest extends AbstractTest {
     public void checkBefore() throws Exception {
         JschRunner jschRunner = createJschRunner();
         jschRunner.testConnect();
-        // should be succesfull if you can connect passphraseless to localhost
+        // should be successful if you can connect passphraseless to localhost
     }
 
     private JschRunner createJschRunner() {
@@ -77,14 +77,22 @@ public class JschRunnerTest extends AbstractTest {
 
     @Test
     public void testConnectWithKeyFileContent() throws Exception {
+        JschRunner jschRunner = new JschRunner(USER, HOST, true);
         File keyFile = JschRunner.findStandardKeyFile(true);
         String keyFileContent = readKeyFile(keyFile);
-
-        JschRunner jschRunner = new JschRunner(USER, HOST);
         jschRunner.setKeyfileContent(keyFileContent);
 
         ShellCommand<?> command = new ShellCommand<List<String>>(new String[] { "ls", "/" }, true);
         jschRunner.execute(command);
+
+        // change to wrong password
+        jschRunner.setKeyfileContent(keyFileContent.replaceAll("Y", "K"));
+        try {
+            jschRunner.execute(command);
+            fail("should throw exception");
+        } catch (Exception e) {
+            // expected
+        }
     }
 
     private String readKeyFile(File keyFile) throws IOException {

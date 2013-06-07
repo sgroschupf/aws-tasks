@@ -25,13 +25,13 @@ public class CachedSession extends Session {
     private String _cacheKey;
     private boolean _pingCache;
 
-    public CachedSession(String user, String host, int port, JSch jsch, LoadingCache<String, CachedSession> sessionCache) throws JSchException {
+    public CachedSession(String user, String host, int port, String credentialHash, JSch jsch, LoadingCache<String, CachedSession> sessionCache) throws JSchException {
         super(jsch);
         setUserName(user);
         setHost(host);
         setPort(port);
         _sessionCache = sessionCache;
-        _cacheKey = generateKey(user, host, port);
+        _cacheKey = generateKey(user, host, port, credentialHash);
     }
 
     @Override
@@ -73,9 +73,7 @@ public class CachedSession extends Session {
         return _cacheKey;
     }
 
-    public static String generateKey(String username, String host, int port) {
-        StringBuilder sBuilder = new StringBuilder();
-        sBuilder.append(host).append(port).append(username);
-        return sBuilder.toString();
+    public static String generateKey(String username, String host, int port, String credentialHash) {
+        return new StringBuilder().append(host).append(port).append(username).append(credentialHash).toString();
     }
 }

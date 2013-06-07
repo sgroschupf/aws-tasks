@@ -44,11 +44,14 @@ import datameer.awstasks.exec.ShellCommand;
 import datameer.awstasks.exec.ShellExecutor;
 import datameer.awstasks.util.ExceptionUtil;
 import datameer.awstasks.util.Retry;
+import datameer.com.google.common.base.Throwables;
 import datameer.com.google.common.cache.CacheBuilder;
 import datameer.com.google.common.cache.CacheLoader;
 import datameer.com.google.common.cache.LoadingCache;
 import datameer.com.google.common.cache.RemovalListener;
 import datameer.com.google.common.cache.RemovalNotification;
+import datameer.com.google.common.hash.Hashing;
+import datameer.com.google.common.io.Files;
 
 public class JschRunner extends ShellExecutor {
 
@@ -67,9 +70,9 @@ public class JschRunner extends ShellExecutor {
     private boolean _debug;
     private boolean _enableConnectionRetries;
     private int _createdSessions;
+    private String _credentialHash;
 
     private LoadingCache<String, CachedSession> _sessionCache;
-    private boolean _sessionCachingEnabled;
 
     public JschRunner(String user, String host) {
         this(user, host, false);
@@ -78,8 +81,7 @@ public class JschRunner extends ShellExecutor {
     public JschRunner(String user, String host, boolean sessionCachingEnabled) {
         _user = user;
         _host = host;
-        _sessionCachingEnabled = sessionCachingEnabled;
-        if (_sessionCachingEnabled) {
+        if (sessionCachingEnabled) {
             RemovalListener<String, CachedSession> removalListener = new RemovalListener<String, CachedSession>() {
                 @Override
                 public void onRemoval(RemovalNotification<String, CachedSession> notification) {
@@ -106,6 +108,11 @@ public class JschRunner extends ShellExecutor {
             throwAuthenticationAlreadySetException();
         }
         _keyFile = keyfile;
+        try {
+            _credentialHash = Files.hash(keyfile, Hashing.md5()).toString();
+        } catch (Exception e) {
+            throw Throwables.propagate(e);
+        }
     }
 
     public void setKeyfileContent(String keyFileContent) {
@@ -114,6 +121,7 @@ public class JschRunner extends ShellExecutor {
         }
 
         _keyFileContent = keyFileContent;
+        _credentialHash = Hashing.md5().hashString(keyFileContent).toString();
     }
 
     public void setPassword(String password) {
@@ -121,6 +129,7 @@ public class JschRunner extends ShellExecutor {
             throwAuthenticationAlreadySetException();
         }
         _password = password;
+        _credentialHash = Hashing.md5().hashString(password).toString();
     }
 
     private void throwAuthenticationAlreadySetException() {
@@ -258,9 +267,13 @@ public class JschRunner extends ShellExecutor {
         }
     }
 
+    private boolean isSessionCacheEnabled() {
+        return _sessionCache != null;
+    }
+
     public Session openSession() throws JSchException {
-        if (_sessionCachingEnabled) {
-            return _sessionCache.getUnchecked(CachedSession.generateKey(_user, _host, _port));
+        if (isSessionCacheEnabled()) {
+            return _sessionCache.getUnchecked(CachedSession.generateKey(_user, _host, _port, _credentialHash));
         } else {
             return createFreshSession(false);
         }
@@ -287,7 +300,7 @@ public class JschRunner extends ShellExecutor {
 
         final Session session;
         if (cached) {
-            session = new CachedSession(_user, _host, _port, jsch, _sessionCache);
+            session = new CachedSession(_user, _host, _port, _credentialHash, jsch, _sessionCache);
         } else {
             session = jsch.getSession(_user, _host, _port);
         }
