@@ -102,7 +102,7 @@
 	<!-- ================================================================== -->
 
 	<target name="check-header" description="--> check header">
-		<exec command="sh src/build/ant/checkHeaders.sh ${basedir}" failonerror="true"/>
+		<exec command="sh src/build/ant/checkHeaders.sh ${basedir}/src" failonerror="true"/>
 	</target>
 
 
