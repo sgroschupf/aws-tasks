@@ -36,6 +36,7 @@ import com.amazonaws.services.elasticmapreduce.model.HadoopJarStepConfig;
 import com.amazonaws.services.elasticmapreduce.model.JobFlowDetail;
 import com.amazonaws.services.elasticmapreduce.model.JobFlowInstancesConfig;
 import com.amazonaws.services.elasticmapreduce.model.KeyValue;
+import com.amazonaws.services.elasticmapreduce.model.PlacementType;
 import com.amazonaws.services.elasticmapreduce.model.RunJobFlowRequest;
 import com.amazonaws.services.elasticmapreduce.model.RunJobFlowResult;
 import com.amazonaws.services.elasticmapreduce.model.StepConfig;
@@ -158,6 +159,7 @@ public class EmrCluster {
             jobConfig.setSlaveInstanceType(settings.getNodeInstanceType().toString());
             jobConfig.setInstanceCount(settings.getInstanceCount());
             jobConfig.setEc2KeyName(settings.getPrivateKeyName());
+            jobConfig.setPlacement(new PlacementType());
             jobConfig.setKeepJobFlowAliveWhenNoSteps(keepAlive);
             jobConfig.setEc2SubnetId(settings.getSubnetId());
 
