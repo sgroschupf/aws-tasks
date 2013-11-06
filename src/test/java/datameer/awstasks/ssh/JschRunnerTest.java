@@ -36,6 +36,9 @@ import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import com.jcraft.jsch.CachedSession;
+import com.jcraft.jsch.Session;
+
 import datameer.awstasks.AbstractTest;
 import datameer.awstasks.exec.ShellCommand;
 import datameer.awstasks.exec.command.FreeFormCommand;
@@ -266,6 +269,30 @@ public class JschRunnerTest extends AbstractTest {
         inputStream.close();
     }
 
+    @Test
+    public void testUsingCachedSessionWithIsNotAliveAnymore() throws Exception {
+        JschRunner jschRunner = createJschRunner(true);
+
+        // open cached session
+        executeTestCommand(jschRunner);
+        Session session = jschRunner.openSession();
+        assertThat(session).isInstanceOf(CachedSession.class);
+        assertThat(session.isConnected()).isTrue();
+        assertThat(jschRunner.openSession()).isEqualTo(session);
+
+        // disconnect session
+        ((CachedSession) session).forcedDisconnect();
+        assertThat(session.isConnected()).isFalse();
+
+        // next use
+        executeTestCommand(jschRunner);
+    }
+
+    private void executeTestCommand(JschRunner jschRunner) throws IOException {
+        ShellCommand<?> command = new ShellCommand<List<String>>(new String[] { "ls", "/" }, true);
+        assertThat(jschRunner.execute(command, new ExecCaptureLinesHandler())).isNotEmpty();
+    }
+
     private static String[] split(String string, String regex) {
         List<String> splitList = new ArrayList<String>();
         String[] splits = string.split(regex);
@@ -276,4 +303,5 @@ public class JschRunnerTest extends AbstractTest {
         }
         return splitList.toArray(new String[splitList.size()]);
     }
+
 }

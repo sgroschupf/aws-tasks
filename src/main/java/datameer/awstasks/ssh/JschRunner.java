@@ -273,10 +273,21 @@ public class JschRunner extends ShellExecutor {
 
     public Session openSession() throws JSchException {
         if (isSessionCacheEnabled()) {
-            return _sessionCache.getUnchecked(CachedSession.generateKey(_user, _host, _port, _credentialHash));
+            String cacheKey = CachedSession.generateKey(_user, _host, _port, _credentialHash);
+            CachedSession cachedSession = getCachedSession(cacheKey);
+            if (!cachedSession.isConnected()) {
+                // establish a new session
+                _sessionCache.invalidate(cacheKey);
+                cachedSession = getCachedSession(cacheKey);
+            }
+            return cachedSession;
         } else {
             return createFreshSession(false);
         }
+    }
+
+    private CachedSession getCachedSession(String cacheKey) {
+        return _sessionCache.getUnchecked(cacheKey);
     }
 
     @SuppressWarnings("unchecked")
