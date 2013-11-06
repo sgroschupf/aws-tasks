@@ -216,6 +216,30 @@
 		</javadoc>
 	</target>
 
+	<!-- ================================================================== -->
+	<!-- Generate a distribution                                            -->
+	<!-- ================================================================== -->
+
+	<target name="upgradeAwsSdk" description="--> upgrades the aws-sdk libs">
+		<property name="sdkDownload" value="${build.dir}/aws-java-sdk.zip"/>
+		<get src="http://sdk-for-java.amazonwebservices.com/latest/aws-java-sdk.zip" 
+		    dest="${sdkDownload}"/>
+		<unzip src="${sdkDownload}"
+		       dest="${build.dir}">
+		</unzip>
+		<delete>
+		    <fileset dir="lib/compile/aws-sdk" includes="aws-java-sdk-*.jar"/>
+		 </delete>
+		<copy todir="lib/compile/aws-sdk" flatten="true">
+		    <fileset dir="${build.dir}">
+		    	<include name="aws-java-sdk-*/lib/aws-java-sdk-*.jar"/>
+		    	<exclude name="aws-java-sdk-*/lib/aws-java-sdk-*javadoc.jar"/>
+		    	<exclude name="aws-java-sdk-*/lib/aws-java-sdk-flow*.jar"/>
+	    	</fileset>
+	    </copy>
+		
+		<echo message="Updating of the core jars done! Please compare ${build.dir}/aws-java-sdk-*/third-party and lib/compile/aws-sdk for changed third-party dependencies!"/>
+	</target>
 
 
 	<!-- ================================================================== -->
