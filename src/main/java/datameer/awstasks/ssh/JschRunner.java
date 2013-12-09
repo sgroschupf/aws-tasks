@@ -25,6 +25,7 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
@@ -71,6 +72,7 @@ public class JschRunner extends ShellExecutor {
     private boolean _enableConnectionRetries;
     private int _createdSessions;
     private String _credentialHash;
+    private Properties _config;
 
     private LoadingCache<String, CachedSession> _sessionCache;
 
@@ -130,6 +132,10 @@ public class JschRunner extends ShellExecutor {
         }
         _password = password;
         _credentialHash = Hashing.md5().hashString(password).toString();
+    }
+
+    public void setConfig(Properties config) {
+        _config = config;
     }
 
     private void throwAuthenticationAlreadySetException() {
@@ -319,6 +325,7 @@ public class JschRunner extends ShellExecutor {
         session.setUserInfo(new UserInfoImpl(_password));
         session.setTimeout(_timeout);
         session.setDaemonThread(true);
+        session.setConfig(_config);
         LOG.debug("Connecting to " + _host + ":" + _port);
         if (_enableConnectionRetries) {
             // experimental
