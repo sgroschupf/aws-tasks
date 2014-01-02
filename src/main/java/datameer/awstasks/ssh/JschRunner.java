@@ -72,7 +72,7 @@ public class JschRunner extends ShellExecutor {
     private boolean _enableConnectionRetries;
     private int _createdSessions;
     private String _credentialHash;
-    private Properties _config;
+    private Properties _config = new Properties();
 
     private LoadingCache<String, CachedSession> _sessionCache;
 
