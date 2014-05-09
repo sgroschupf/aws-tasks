@@ -23,6 +23,7 @@ import java.net.InetSocketAddress;
 import java.net.NoRouteToHostException;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -123,7 +124,7 @@ public class JschRunner extends ShellExecutor {
         }
 
         _keyFileContent = keyFileContent;
-        _credentialHash = Hashing.md5().hashString(keyFileContent).toString();
+        _credentialHash = Hashing.md5().hashString(keyFileContent, Charset.defaultCharset()).toString();
     }
 
     public void setPassword(String password) {
@@ -131,7 +132,7 @@ public class JschRunner extends ShellExecutor {
             throwAuthenticationAlreadySetException();
         }
         _password = password;
-        _credentialHash = Hashing.md5().hashString(password).toString();
+        _credentialHash = Hashing.md5().hashString(password, Charset.defaultCharset()).toString();
     }
 
     public void setConfig(Properties config) {
