@@ -305,6 +305,7 @@ public class JschRunner extends ShellExecutor {
             testChannel.setCommand("true");
             return true;
         } catch (Exception e) {
+            LOG.info("Session is connected but cannot be used and needs to be recreated.");
             return false;
         }
     }
