@@ -32,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.log4j.Logger;
 
 import com.jcraft.jsch.CachedSession;
+import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.Identity;
 import com.jcraft.jsch.IdentityKeyString;
 import com.jcraft.jsch.JSch;
@@ -283,7 +284,7 @@ public class JschRunner extends ShellExecutor {
         if (isSessionCacheEnabled()) {
             String cacheKey = CachedSession.generateKey(_user, _host, _port, _credentialHash);
             CachedSession cachedSession = getCachedSession(cacheKey);
-            if (!cachedSession.isConnected()) {
+            if (!isConnected(cachedSession)) {
                 // establish a new session
                 _sessionCache.invalidate(cacheKey);
                 cachedSession = getCachedSession(cacheKey);
@@ -291,6 +292,20 @@ public class JschRunner extends ShellExecutor {
             return cachedSession;
         } else {
             return createFreshSession(false);
+        }
+    }
+
+    private static boolean isConnected(CachedSession cachedSession) {
+        if (!cachedSession.isConnected()) {
+            return false;
+        }
+        try {
+            ChannelExec testChannel = (ChannelExec) cachedSession.openChannel("exec");
+            testChannel.connect();
+            testChannel.setCommand("true");
+            return true;
+        } catch (Exception e) {
+            return false;
         }
     }
 
