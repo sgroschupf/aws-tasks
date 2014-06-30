@@ -66,6 +66,7 @@ public class JschRunner extends ShellExecutor {
     private String _keyFileContent;
     private String _password;
     private String _knownHosts = System.getProperty("user.home") + "/.ssh/known_hosts";
+    private int _expireTime = Integer.parseInt(System.getProperty("expire.time", "30"));
     private boolean _trust;
     protected int _connectTimeout = (int) TimeUnit.SECONDS.toMillis(80);
     private int _timeout = 0;
@@ -92,7 +93,7 @@ public class JschRunner extends ShellExecutor {
                     notification.getValue().forcedDisconnect();
                 }
             };
-            _sessionCache = CacheBuilder.newBuilder().maximumSize(20).expireAfterAccess(30, TimeUnit.MINUTES).removalListener(removalListener).build(new CacheLoader<String, CachedSession>() {
+            _sessionCache = CacheBuilder.newBuilder().maximumSize(20).expireAfterAccess(_expireTime, TimeUnit.MINUTES).removalListener(removalListener).build(new CacheLoader<String, CachedSession>() {
                 @Override
                 public CachedSession load(String key) throws JSchException {
                     LOG.info("Opening cached session:" + key);
