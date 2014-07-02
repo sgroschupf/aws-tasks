@@ -35,6 +35,7 @@ import java.util.List;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 
 import com.jcraft.jsch.CachedSession;
 import com.jcraft.jsch.Session;
@@ -285,6 +286,30 @@ public class JschRunnerTest extends AbstractTest {
         assertThat(session.isConnected()).isFalse();
 
         // next use
+        executeTestCommand(jschRunner);
+    }
+
+    @Test
+    public void testUsingCachedSession_ConnectedCheckIsNotRelyingOnIsConnectedFlag() throws Exception {
+        JschRunner jschRunner = createJschRunner(true);
+
+        // open cached session
+        executeTestCommand(jschRunner);
+        Session session = jschRunner.openSession();
+        assertThat(session).isInstanceOf(CachedSession.class);
+        assertThat(session.isConnected()).isTrue();
+        assertThat(jschRunner.openSession()).isEqualTo(session);
+
+        // disconnect session
+        ((CachedSession) session).forcedDisconnect();
+        session = Mockito.spy(session);
+        assertThat(session.isConnected()).isFalse();
+        Mockito.doReturn(true).when(session).isConnected();
+        assertThat(session.isConnected()).isTrue();
+        assertThat(JschRunner.isConnected(session)).isFalse();
+
+        // next use
+        assertThat(jschRunner.openSession()).isNotEqualTo(session);
         executeTestCommand(jschRunner);
     }
 

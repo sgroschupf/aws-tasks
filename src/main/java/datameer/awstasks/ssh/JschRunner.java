@@ -310,7 +310,7 @@ public class JschRunner extends ShellExecutor {
         }
     }
 
-    private static boolean isConnected(CachedSession cachedSession) {
+    static boolean isConnected(Session cachedSession) {
         if (!cachedSession.isConnected()) {
             return false;
         }
