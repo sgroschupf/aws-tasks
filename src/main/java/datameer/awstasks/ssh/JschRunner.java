@@ -47,6 +47,7 @@ import datameer.awstasks.exec.ShellCommand;
 import datameer.awstasks.exec.ShellExecutor;
 import datameer.awstasks.util.ExceptionUtil;
 import datameer.awstasks.util.Retry;
+import datameer.com.google.common.base.Preconditions;
 import datameer.com.google.common.base.Throwables;
 import datameer.com.google.common.cache.CacheBuilder;
 import datameer.com.google.common.cache.CacheLoader;
@@ -60,6 +61,9 @@ public class JschRunner extends ShellExecutor {
 
     protected static final Logger LOG = Logger.getLogger(JschRunner.class);
 
+    private static final int DEFAULT_EXPIRE_TIME = 30;
+    private static final boolean DEFAULT_SESSION_CACHING_ENABLED = false;
+
     private final String _user;
     private final String _host;
     private int _port = 22;
@@ -67,7 +71,7 @@ public class JschRunner extends ShellExecutor {
     private String _keyFileContent;
     private String _password;
     private String _knownHosts = System.getProperty("user.home") + "/.ssh/known_hosts";
-    private int _expireTime = Integer.parseInt(System.getProperty("expire.time", "30"));
+    private final int _expireTime;
     private boolean _trust;
     protected int _connectTimeout = (int) TimeUnit.SECONDS.toMillis(80);
     private int _timeout = 0;
@@ -80,12 +84,23 @@ public class JschRunner extends ShellExecutor {
     private LoadingCache<String, CachedSession> _sessionCache;
 
     public JschRunner(String user, String host) {
-        this(user, host, false);
+        this(user, host, DEFAULT_SESSION_CACHING_ENABLED, DEFAULT_EXPIRE_TIME);
     }
 
     public JschRunner(String user, String host, boolean sessionCachingEnabled) {
+        this(user, host, sessionCachingEnabled, DEFAULT_EXPIRE_TIME);
+    }
+
+    public JschRunner(String user, String host, int expireTimeInMinutes) {
+        this(user, host, DEFAULT_SESSION_CACHING_ENABLED, expireTimeInMinutes);
+    }
+
+    public JschRunner(String user, String host, boolean sessionCachingEnabled, int expireTimeInMinutes) {
+        Preconditions.checkArgument(expireTimeInMinutes > 0, "expire time must be positive");
+
         _user = user;
         _host = host;
+        _expireTime = expireTimeInMinutes;
         if (sessionCachingEnabled) {
             RemovalListener<String, CachedSession> removalListener = new RemovalListener<String, CachedSession>() {
                 @Override
