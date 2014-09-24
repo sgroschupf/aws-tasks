@@ -37,6 +37,7 @@ import com.jcraft.jsch.Identity;
 import com.jcraft.jsch.IdentityKeyString;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Proxy;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.SocketFactory;
 import com.jcraft.jsch.UIKeyboardInteractive;
@@ -80,6 +81,8 @@ public class JschRunner extends ShellExecutor {
     private int _createdSessions;
     private String _credentialHash;
     private Properties _config = new Properties();
+
+    private Proxy _proxy = null;
 
     private LoadingCache<String, CachedSession> _sessionCache;
 
@@ -210,6 +213,14 @@ public class JschRunner extends ShellExecutor {
 
     public boolean isEnableConnectionRetries() {
         return _enableConnectionRetries;
+    }
+
+    public Proxy getProxy() {
+        return _proxy;
+    }
+
+    public void setProxy(Proxy proxy) {
+        _proxy = proxy;
     }
 
     public void run(JschCommand command) throws IOException {
@@ -360,6 +371,9 @@ public class JschRunner extends ShellExecutor {
         session.setTimeout(_timeout);
         session.setDaemonThread(true);
         session.setConfig(_config);
+        if (_proxy != null) {
+            session.setProxy(_proxy);
+        }
         LOG.debug("Connecting to " + _host + ":" + _port);
         if (_enableConnectionRetries) {
             // experimental
