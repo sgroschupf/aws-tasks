@@ -37,6 +37,7 @@ import com.jcraft.jsch.Identity;
 import com.jcraft.jsch.IdentityKeyString;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Proxy;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.SocketFactory;
 import com.jcraft.jsch.UIKeyboardInteractive;
@@ -81,6 +82,8 @@ public class JschRunner extends ShellExecutor {
     private String _credentialHash;
     private Properties _config = new Properties();
 
+    private Proxy _proxy = null;
+
     private LoadingCache<String, CachedSession> _sessionCache;
 
     public JschRunner(String user, String host) {
@@ -91,15 +94,24 @@ public class JschRunner extends ShellExecutor {
         this(user, host, sessionCachingEnabled, DEFAULT_EXPIRE_TIME);
     }
 
+    public JschRunner(String user, String host, boolean sessionCachingEnabled, Proxy proxy) {
+        this(user, host, sessionCachingEnabled, DEFAULT_EXPIRE_TIME, proxy);
+    }
+
     public JschRunner(String user, String host, int expireTimeInMinutes) {
         this(user, host, DEFAULT_SESSION_CACHING_ENABLED, expireTimeInMinutes);
     }
 
     public JschRunner(String user, String host, boolean sessionCachingEnabled, int expireTimeInMinutes) {
+        this(user, host, sessionCachingEnabled, expireTimeInMinutes, null);
+    }
+
+    public JschRunner(String user, String host, boolean sessionCachingEnabled, int expireTimeInMinutes, Proxy proxy) {
         Preconditions.checkArgument(expireTimeInMinutes > 0, "expire time must be positive");
 
         _user = user;
         _host = host;
+        _proxy = proxy;
         _expireTime = expireTimeInMinutes;
         if (sessionCachingEnabled) {
             RemovalListener<String, CachedSession> removalListener = new RemovalListener<String, CachedSession>() {
@@ -360,6 +372,9 @@ public class JschRunner extends ShellExecutor {
         session.setTimeout(_timeout);
         session.setDaemonThread(true);
         session.setConfig(_config);
+        if (_proxy != null) {
+            session.setProxy(_proxy);
+        }
         LOG.debug("Connecting to " + _host + ":" + _port);
         if (_enableConnectionRetries) {
             // experimental
