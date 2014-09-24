@@ -94,24 +94,15 @@ public class JschRunner extends ShellExecutor {
         this(user, host, sessionCachingEnabled, DEFAULT_EXPIRE_TIME);
     }
 
-    public JschRunner(String user, String host, boolean sessionCachingEnabled, Proxy proxy) {
-        this(user, host, sessionCachingEnabled, DEFAULT_EXPIRE_TIME, proxy);
-    }
-
     public JschRunner(String user, String host, int expireTimeInMinutes) {
         this(user, host, DEFAULT_SESSION_CACHING_ENABLED, expireTimeInMinutes);
     }
 
     public JschRunner(String user, String host, boolean sessionCachingEnabled, int expireTimeInMinutes) {
-        this(user, host, sessionCachingEnabled, expireTimeInMinutes, null);
-    }
-
-    public JschRunner(String user, String host, boolean sessionCachingEnabled, int expireTimeInMinutes, Proxy proxy) {
         Preconditions.checkArgument(expireTimeInMinutes > 0, "expire time must be positive");
 
         _user = user;
         _host = host;
-        _proxy = proxy;
         _expireTime = expireTimeInMinutes;
         if (sessionCachingEnabled) {
             RemovalListener<String, CachedSession> removalListener = new RemovalListener<String, CachedSession>() {
@@ -222,6 +213,14 @@ public class JschRunner extends ShellExecutor {
 
     public boolean isEnableConnectionRetries() {
         return _enableConnectionRetries;
+    }
+
+    public Proxy getProxy() {
+        return _proxy;
+    }
+
+    public void setProxy(Proxy proxy) {
+        _proxy = proxy;
     }
 
     public void run(JschCommand command) throws IOException {
