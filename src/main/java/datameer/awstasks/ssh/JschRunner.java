@@ -55,6 +55,8 @@ import datameer.com.google.common.io.Files;
 
 public class JschRunner extends ShellExecutor {
 
+    private static final String CHANGE_ON_ALREADY_RUNNING_SESSION_ERROR_MESSAGE = "This instance of jsch is already connected please disconnect first.";
+
     protected static final Logger LOG = Logger.getLogger(JschRunner.class);
 
     private static final boolean DEFAULT_SESSION_CACHING_ENABLED = false;
@@ -96,7 +98,7 @@ public class JschRunner extends ShellExecutor {
     }
 
     public void setKeyfile(File keyfile) {
-        Preconditions.checkState(!isConnected(_cachedSession), "This instance of jsch is already connected please disconnect first.");
+        Preconditions.checkState(!isConnected(_cachedSession), CHANGE_ON_ALREADY_RUNNING_SESSION_ERROR_MESSAGE);
         if (_password != null || _keyFileContent != null) {
             throwAuthenticationAlreadySetException();
         }
@@ -109,7 +111,7 @@ public class JschRunner extends ShellExecutor {
     }
 
     public void setKeyfileContent(String keyFileContent) {
-        Preconditions.checkState(!isConnected(_cachedSession), "This instance of jsch is already connected please disconnect first.");
+        Preconditions.checkState(!isConnected(_cachedSession), CHANGE_ON_ALREADY_RUNNING_SESSION_ERROR_MESSAGE);
         if (_password != null || _keyFile != null) {
             throwAuthenticationAlreadySetException();
         }
@@ -119,7 +121,7 @@ public class JschRunner extends ShellExecutor {
     }
 
     public void setPassword(String password) {
-        Preconditions.checkState(!isConnected(_cachedSession), "This instance of jsch is already connected please disconnect first.");
+        Preconditions.checkState(!isConnected(_cachedSession), CHANGE_ON_ALREADY_RUNNING_SESSION_ERROR_MESSAGE);
         if (_keyFile != null || _keyFileContent != null) {
             throwAuthenticationAlreadySetException();
         }
@@ -128,7 +130,7 @@ public class JschRunner extends ShellExecutor {
     }
 
     public void setConfig(Properties config) {
-        Preconditions.checkState(!isConnected(_cachedSession), "This instance of jsch is already connected please disconnect first.");
+        Preconditions.checkState(!isConnected(_cachedSession), CHANGE_ON_ALREADY_RUNNING_SESSION_ERROR_MESSAGE);
         _config = config;
     }
 
@@ -137,17 +139,17 @@ public class JschRunner extends ShellExecutor {
     }
 
     public void setKnownHosts(String knownHosts) {
-        Preconditions.checkState(!isConnected(_cachedSession), "This instance of jsch is already connected please disconnect first.");
+        Preconditions.checkState(!isConnected(_cachedSession), CHANGE_ON_ALREADY_RUNNING_SESSION_ERROR_MESSAGE);
         _knownHosts = knownHosts;
     }
 
     public void setTrust(boolean trust) {
-        Preconditions.checkState(!isConnected(_cachedSession), "This instance of jsch is already connected please disconnect first.");
+        Preconditions.checkState(!isConnected(_cachedSession), CHANGE_ON_ALREADY_RUNNING_SESSION_ERROR_MESSAGE);
         _trust = trust;
     }
 
     public void setPort(int port) {
-        Preconditions.checkState(!isConnected(_cachedSession), "This instance of jsch is already connected please disconnect first.");
+        Preconditions.checkState(!isConnected(_cachedSession), CHANGE_ON_ALREADY_RUNNING_SESSION_ERROR_MESSAGE);
         _port = port;
     }
 
@@ -184,7 +186,7 @@ public class JschRunner extends ShellExecutor {
     }
 
     public void setEnableConnectionRetries(boolean enableConnectionRetries) {
-        Preconditions.checkState(!isConnected(_cachedSession), "This instance of jsch is already connected please disconnect first.");
+        Preconditions.checkState(!isConnected(_cachedSession), CHANGE_ON_ALREADY_RUNNING_SESSION_ERROR_MESSAGE);
         _enableConnectionRetries = enableConnectionRetries;
     }
 
@@ -197,7 +199,7 @@ public class JschRunner extends ShellExecutor {
     }
 
     public void setProxy(Proxy proxy) {
-        Preconditions.checkState(!isConnected(_cachedSession), "This instance of jsch is already connected please disconnect first.");
+        Preconditions.checkState(!isConnected(_cachedSession), CHANGE_ON_ALREADY_RUNNING_SESSION_ERROR_MESSAGE);
         _proxy = proxy;
     }
 
