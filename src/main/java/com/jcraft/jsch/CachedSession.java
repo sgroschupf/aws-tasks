@@ -15,29 +15,16 @@
  */
 package com.jcraft.jsch;
 
-import java.util.concurrent.ExecutionException;
-
-import datameer.com.google.common.cache.LoadingCache;
-
 public class CachedSession extends Session {
 
-    private LoadingCache<String, CachedSession> _sessionCache;
     private String _cacheKey;
-    private boolean _pingCache;
 
-    public CachedSession(String user, String host, int port, String credentialHash, JSch jsch, LoadingCache<String, CachedSession> sessionCache) throws JSchException {
+    public CachedSession(String user, String host, int port, String credentialHash, JSch jsch) throws JSchException {
         super(jsch);
         setUserName(user);
         setHost(host);
         setPort(port);
-        _sessionCache = sessionCache;
         _cacheKey = generateKey(user, host, port, credentialHash);
-    }
-
-    @Override
-    public void connect(int connectTimeout) throws JSchException {
-        super.connect(connectTimeout);
-        _pingCache = true;
     }
 
     @Override
@@ -47,25 +34,6 @@ public class CachedSession extends Session {
 
     public void forcedDisconnect() {
         super.disconnect();
-    }
-
-    @Override
-    public Buffer read(Buffer buf) throws Exception {
-        keepSessionAlive();
-        return super.read(buf);
-    }
-
-    @Override
-    void write(Packet packet, Channel c, int length) throws Exception {
-        keepSessionAlive();
-        super.write(packet, c, length);
-    }
-
-    private void keepSessionAlive() throws ExecutionException {
-        if (!_pingCache) {
-            return;
-        }
-        _sessionCache.get(_cacheKey);
     }
 
     @Override
