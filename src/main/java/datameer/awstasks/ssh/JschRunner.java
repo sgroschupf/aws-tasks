@@ -480,6 +480,10 @@ public class JschRunner extends ShellExecutor {
         return null;
     }
 
+    /**
+     * Disconnect a cached session. This should always be done if the JschRunner instance is no
+     * longer used and was created to cache the created session.
+     */
     public void disconnect() {
         if (null != _cachedSession) {
             _cachedSession.forcedDisconnect();
