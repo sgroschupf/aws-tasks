@@ -166,6 +166,7 @@ public class JschRunner extends ShellExecutor {
     }
 
     public void setTimeout(int timeout) {
+        Preconditions.checkState(!isConnected(_cachedSession), CHANGE_ON_ALREADY_RUNNING_SESSION_ERROR_MESSAGE);
         _timeout = timeout;
     }
 
@@ -489,6 +490,7 @@ public class JschRunner extends ShellExecutor {
     public void disconnect() {
         if (null != _cachedSession) {
             _cachedSession.forcedDisconnect();
+            _cachedSession = null;
         }
     }
 
