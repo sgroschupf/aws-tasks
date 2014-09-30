@@ -76,11 +76,8 @@ public class JschRunner extends ShellExecutor {
     private int _createdSessions;
     private String _credentialHash;
     private Properties _config = new Properties();
-
     private Proxy _proxy = null;
-
     private CachedSession _cachedSession = null;
-
     private boolean _sessionCachingEnabled;
 
     public JschRunner(String user, String host) {
@@ -270,7 +267,7 @@ public class JschRunner extends ShellExecutor {
                 testConnect();
                 succeed = true;
             } catch (IOException e) {
-                LOG.warn("failed to connect with " + _user + "@" + _host + ":" + _port + " :" + e.getMessage());
+                LOG.warn("Failed to connect with " + targetUrl() + " :" + e.getMessage());
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e1) {
@@ -279,25 +276,27 @@ public class JschRunner extends ShellExecutor {
             }
         } while (!succeed && (System.currentTimeMillis() - startTime) < maxWaitTime);
         if (!succeed) {
-            throw new IOException("failed to establish ssh connection to " + _host);
+            throw new IOException("Failed to establish ssh connection to " + targetUrl());
         }
     }
 
-    private boolean isSessionCacheEnabled() {
+    public boolean isSessionCacheEnabled() {
         return _sessionCachingEnabled;
     }
 
     public Session openSession() throws JSchException {
         if (isSessionCacheEnabled()) {
-            String cacheKey = CachedSession.generateKey(_user, _host, _port, _credentialHash);
             if (null == _cachedSession || !isConnected(_cachedSession)) {
-                LOG.info("Opening new cached session:" + cacheKey);
                 _cachedSession = (CachedSession) createFreshSession(true);
             }
             return _cachedSession;
         } else {
             return createFreshSession(false);
         }
+    }
+
+    private String targetUrl() {
+        return CachedSession.sshUrl(_user, _credentialHash, _host, _port);
     }
 
     static boolean isConnected(Session cachedSession) {
@@ -311,7 +310,7 @@ public class JschRunner extends ShellExecutor {
             testChannel.disconnect();
             return true;
         } catch (Exception e) {
-            LOG.info("Session is connected but cannot be used and needs to be recreated.");
+            LOG.info(String.format("Dropping cached but unusable session " + cachedSession));
             return false;
         }
     }
@@ -352,7 +351,7 @@ public class JschRunner extends ShellExecutor {
             session.setProxy(_proxy);
         }
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Connecting to " + _host + ":" + _port);
+            LOG.debug("Creating session (cached=" + cached + ") to " + targetUrl());
         }
         if (_enableConnectionRetries) {
             // experimental
@@ -370,7 +369,7 @@ public class JschRunner extends ShellExecutor {
         } else {
             session.connect();
         }
-        LOG.info("Create SSH (cached=" + cached + ") session for Host:" + _host + ":" + _port + " with user:" + _user);
+        LOG.info("Created session (cached=" + cached + ") for " + targetUrl());
         _createdSessions++;
         return session;
     }
@@ -478,7 +477,7 @@ public class JschRunner extends ShellExecutor {
             }
         }
         if (failIfNotFound) {
-            throw new IllegalStateException("no private keyfile found in standard locations: " + standardPathes);
+            throw new IllegalStateException("No private keyfile found in standard locations: " + standardPathes);
         }
         return null;
     }

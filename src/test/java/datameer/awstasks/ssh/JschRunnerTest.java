@@ -90,6 +90,7 @@ public class JschRunnerTest extends AbstractTest {
         jschRunner.execute(command);
 
         // change to wrong password
+        jschRunner = new JschRunner(USER, HOST, true);
         jschRunner.setKeyfileContent(keyFileContent.replaceAll("Y", "K"));
         try {
             jschRunner.execute(command);

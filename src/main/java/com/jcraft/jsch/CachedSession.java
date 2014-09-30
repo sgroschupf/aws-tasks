@@ -15,16 +15,18 @@
  */
 package com.jcraft.jsch;
 
+import datameer.com.google.common.base.Objects;
+
 public class CachedSession extends Session {
 
-    private String _cacheKey;
+    private String _credentialHash;
 
     public CachedSession(String user, String host, int port, String credentialHash, JSch jsch) throws JSchException {
         super(jsch);
         setUserName(user);
         setHost(host);
         setPort(port);
-        _cacheKey = generateKey(user, host, port, credentialHash);
+        _credentialHash = credentialHash;
     }
 
     @Override
@@ -38,10 +40,10 @@ public class CachedSession extends Session {
 
     @Override
     public String toString() {
-        return _cacheKey;
+        return Objects.toStringHelper(this).addValue(sshUrl(username, _credentialHash, getHost(), getPort())).toString();
     }
 
-    public static String generateKey(String username, String host, int port, String credentialHash) {
-        return new StringBuilder().append(host).append("_").append(port).append("_").append(username).append("_").append(credentialHash).toString();
+    public static String sshUrl(String username, String credentialHash, String host, int port) {
+        return String.format("%s:%s@%s:%s", username, credentialHash, host, port);
     }
 }
