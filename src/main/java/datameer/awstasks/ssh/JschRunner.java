@@ -50,19 +50,15 @@ import datameer.awstasks.util.ExceptionUtil;
 import datameer.awstasks.util.Retry;
 import datameer.com.google.common.base.Preconditions;
 import datameer.com.google.common.base.Throwables;
-import datameer.com.google.common.cache.CacheBuilder;
-import datameer.com.google.common.cache.CacheLoader;
-import datameer.com.google.common.cache.LoadingCache;
-import datameer.com.google.common.cache.RemovalListener;
-import datameer.com.google.common.cache.RemovalNotification;
 import datameer.com.google.common.hash.Hashing;
 import datameer.com.google.common.io.Files;
 
 public class JschRunner extends ShellExecutor {
 
+    private static final String CHANGE_ON_ALREADY_RUNNING_SESSION_ERROR_MESSAGE = "This instance of jsch is already connected please disconnect first.";
+
     protected static final Logger LOG = Logger.getLogger(JschRunner.class);
 
-    private static final int DEFAULT_EXPIRE_TIME = 30;
     private static final boolean DEFAULT_SESSION_CACHING_ENABLED = false;
 
     private final String _user;
@@ -72,7 +68,6 @@ public class JschRunner extends ShellExecutor {
     private String _keyFileContent;
     private String _password;
     private String _knownHosts = System.getProperty("user.home") + "/.ssh/known_hosts";
-    private final int _expireTime;
     private boolean _trust;
     protected int _connectTimeout = (int) TimeUnit.SECONDS.toMillis(80);
     private int _timeout = 0;
@@ -81,45 +76,18 @@ public class JschRunner extends ShellExecutor {
     private int _createdSessions;
     private String _credentialHash;
     private Properties _config = new Properties();
-
     private Proxy _proxy = null;
-
-    private LoadingCache<String, CachedSession> _sessionCache;
+    private CachedSession _cachedSession = null;
+    private boolean _sessionCachingEnabled;
 
     public JschRunner(String user, String host) {
-        this(user, host, DEFAULT_SESSION_CACHING_ENABLED, DEFAULT_EXPIRE_TIME);
+        this(user, host, DEFAULT_SESSION_CACHING_ENABLED);
     }
 
     public JschRunner(String user, String host, boolean sessionCachingEnabled) {
-        this(user, host, sessionCachingEnabled, DEFAULT_EXPIRE_TIME);
-    }
-
-    public JschRunner(String user, String host, int expireTimeInMinutes) {
-        this(user, host, DEFAULT_SESSION_CACHING_ENABLED, expireTimeInMinutes);
-    }
-
-    public JschRunner(String user, String host, boolean sessionCachingEnabled, int expireTimeInMinutes) {
-        Preconditions.checkArgument(expireTimeInMinutes > 0, "expire time must be positive");
-
+        _sessionCachingEnabled = sessionCachingEnabled;
         _user = user;
         _host = host;
-        _expireTime = expireTimeInMinutes;
-        if (sessionCachingEnabled) {
-            RemovalListener<String, CachedSession> removalListener = new RemovalListener<String, CachedSession>() {
-                @Override
-                public void onRemoval(RemovalNotification<String, CachedSession> notification) {
-                    LOG.info("Removing Session with Key:" + notification.getKey());
-                    notification.getValue().forcedDisconnect();
-                }
-            };
-            _sessionCache = CacheBuilder.newBuilder().maximumSize(20).expireAfterAccess(_expireTime, TimeUnit.MINUTES).removalListener(removalListener).build(new CacheLoader<String, CachedSession>() {
-                @Override
-                public CachedSession load(String key) throws JSchException {
-                    LOG.info("Opening cached session:" + key);
-                    return (CachedSession) createFreshSession(true);
-                }
-            });
-        }
     }
 
     public String getHost() {
@@ -127,6 +95,7 @@ public class JschRunner extends ShellExecutor {
     }
 
     public void setKeyfile(File keyfile) {
+        Preconditions.checkState(!isConnected(_cachedSession), CHANGE_ON_ALREADY_RUNNING_SESSION_ERROR_MESSAGE);
         if (_password != null || _keyFileContent != null) {
             throwAuthenticationAlreadySetException();
         }
@@ -139,6 +108,7 @@ public class JschRunner extends ShellExecutor {
     }
 
     public void setKeyfileContent(String keyFileContent) {
+        Preconditions.checkState(!isConnected(_cachedSession), CHANGE_ON_ALREADY_RUNNING_SESSION_ERROR_MESSAGE);
         if (_password != null || _keyFile != null) {
             throwAuthenticationAlreadySetException();
         }
@@ -148,6 +118,7 @@ public class JschRunner extends ShellExecutor {
     }
 
     public void setPassword(String password) {
+        Preconditions.checkState(!isConnected(_cachedSession), CHANGE_ON_ALREADY_RUNNING_SESSION_ERROR_MESSAGE);
         if (_keyFile != null || _keyFileContent != null) {
             throwAuthenticationAlreadySetException();
         }
@@ -156,22 +127,26 @@ public class JschRunner extends ShellExecutor {
     }
 
     public void setConfig(Properties config) {
+        Preconditions.checkState(!isConnected(_cachedSession), CHANGE_ON_ALREADY_RUNNING_SESSION_ERROR_MESSAGE);
         _config = config;
     }
 
-    private void throwAuthenticationAlreadySetException() {
+    private static void throwAuthenticationAlreadySetException() {
         throw new IllegalStateException("set either password OR keyfile OR keyfile-content");
     }
 
     public void setKnownHosts(String knownHosts) {
+        Preconditions.checkState(!isConnected(_cachedSession), CHANGE_ON_ALREADY_RUNNING_SESSION_ERROR_MESSAGE);
         _knownHosts = knownHosts;
     }
 
     public void setTrust(boolean trust) {
+        Preconditions.checkState(!isConnected(_cachedSession), CHANGE_ON_ALREADY_RUNNING_SESSION_ERROR_MESSAGE);
         _trust = trust;
     }
 
     public void setPort(int port) {
+        Preconditions.checkState(!isConnected(_cachedSession), CHANGE_ON_ALREADY_RUNNING_SESSION_ERROR_MESSAGE);
         _port = port;
     }
 
@@ -188,6 +163,7 @@ public class JschRunner extends ShellExecutor {
     }
 
     public void setTimeout(int timeout) {
+        Preconditions.checkState(!isConnected(_cachedSession), CHANGE_ON_ALREADY_RUNNING_SESSION_ERROR_MESSAGE);
         _timeout = timeout;
     }
 
@@ -208,6 +184,7 @@ public class JschRunner extends ShellExecutor {
     }
 
     public void setEnableConnectionRetries(boolean enableConnectionRetries) {
+        Preconditions.checkState(!isConnected(_cachedSession), CHANGE_ON_ALREADY_RUNNING_SESSION_ERROR_MESSAGE);
         _enableConnectionRetries = enableConnectionRetries;
     }
 
@@ -220,6 +197,7 @@ public class JschRunner extends ShellExecutor {
     }
 
     public void setProxy(Proxy proxy) {
+        Preconditions.checkState(!isConnected(_cachedSession), CHANGE_ON_ALREADY_RUNNING_SESSION_ERROR_MESSAGE);
         _proxy = proxy;
     }
 
@@ -289,7 +267,7 @@ public class JschRunner extends ShellExecutor {
                 testConnect();
                 succeed = true;
             } catch (IOException e) {
-                LOG.warn("failed to connect with " + _user + "@" + _host + ":" + _port + " :" + e.getMessage());
+                LOG.warn("Failed to connect with " + targetUrl() + " :" + e.getMessage());
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e1) {
@@ -298,31 +276,31 @@ public class JschRunner extends ShellExecutor {
             }
         } while (!succeed && (System.currentTimeMillis() - startTime) < maxWaitTime);
         if (!succeed) {
-            throw new IOException("failed to establish ssh connection to " + _host);
+            throw new IOException("Failed to establish ssh connection to " + targetUrl());
         }
     }
 
-    private boolean isSessionCacheEnabled() {
-        return _sessionCache != null;
+    public boolean isSessionCacheEnabled() {
+        return _sessionCachingEnabled;
     }
 
     public Session openSession() throws JSchException {
         if (isSessionCacheEnabled()) {
-            String cacheKey = CachedSession.generateKey(_user, _host, _port, _credentialHash);
-            CachedSession cachedSession = getCachedSession(cacheKey);
-            if (!isConnected(cachedSession)) {
-                // establish a new session
-                _sessionCache.invalidate(cacheKey);
-                cachedSession = getCachedSession(cacheKey);
+            if (null == _cachedSession || !isConnected(_cachedSession)) {
+                _cachedSession = (CachedSession) createFreshSession(true);
             }
-            return cachedSession;
+            return _cachedSession;
         } else {
             return createFreshSession(false);
         }
     }
 
+    private String targetUrl() {
+        return CachedSession.sshUrl(_user, _credentialHash, _host, _port);
+    }
+
     static boolean isConnected(Session cachedSession) {
-        if (!cachedSession.isConnected()) {
+        if (null == cachedSession || !cachedSession.isConnected()) {
             return false;
         }
         try {
@@ -332,13 +310,9 @@ public class JschRunner extends ShellExecutor {
             testChannel.disconnect();
             return true;
         } catch (Exception e) {
-            LOG.info("Session is connected but cannot be used and needs to be recreated.");
+            LOG.info(String.format("Dropping cached but unusable session " + cachedSession));
             return false;
         }
-    }
-
-    private CachedSession getCachedSession(String cacheKey) {
-        return _sessionCache.getUnchecked(cacheKey);
     }
 
     @SuppressWarnings("unchecked")
@@ -356,13 +330,15 @@ public class JschRunner extends ShellExecutor {
         }
 
         if (!_trust && _knownHosts != null) {
-            LOG.debug("Using known hosts: " + _knownHosts);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Using known hosts: " + _knownHosts);
+            }
             jsch.setKnownHosts(_knownHosts);
         }
 
         final Session session;
         if (cached) {
-            session = new CachedSession(_user, _host, _port, _credentialHash, jsch, _sessionCache);
+            session = new CachedSession(_user, _host, _port, _credentialHash, jsch);
         } else {
             session = jsch.getSession(_user, _host, _port);
         }
@@ -374,7 +350,9 @@ public class JschRunner extends ShellExecutor {
         if (_proxy != null) {
             session.setProxy(_proxy);
         }
-        LOG.debug("Connecting to " + _host + ":" + _port);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Creating session (cached=" + cached + ") to " + targetUrl());
+        }
         if (_enableConnectionRetries) {
             // experimental
             Retry retry = Retry.onExceptions(NoRouteToHostException.class).withMaxRetries(3).withWaitTime(2500);
@@ -391,7 +369,7 @@ public class JschRunner extends ShellExecutor {
         } else {
             session.connect();
         }
-        LOG.info("Create SSH (cached=" + cached + ") session for Host:" + _host + ":" + _port + " with user:" + _user);
+        LOG.info("Created session (cached=" + cached + ") for " + targetUrl());
         _createdSessions++;
         return session;
     }
@@ -499,9 +477,20 @@ public class JschRunner extends ShellExecutor {
             }
         }
         if (failIfNotFound) {
-            throw new IllegalStateException("no private keyfile found in standard locations: " + standardPathes);
+            throw new IllegalStateException("No private keyfile found in standard locations: " + standardPathes);
         }
         return null;
+    }
+
+    /**
+     * Disconnect a cached session. This should always be done if the JschRunner instance is no
+     * longer used and was created to cache the created session.
+     */
+    public void disconnect() {
+        if (null != _cachedSession) {
+            _cachedSession.forcedDisconnect();
+            _cachedSession = null;
+        }
     }
 
 }

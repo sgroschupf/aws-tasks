@@ -90,6 +90,7 @@ public class JschRunnerTest extends AbstractTest {
         jschRunner.execute(command);
 
         // change to wrong password
+        jschRunner = new JschRunner(USER, HOST, true);
         jschRunner.setKeyfileContent(keyFileContent.replaceAll("Y", "K"));
         try {
             jschRunner.execute(command);
@@ -281,7 +282,8 @@ public class JschRunnerTest extends AbstractTest {
         assertThat(session.isConnected()).isTrue();
         assertThat(jschRunner.openSession()).isEqualTo(session);
 
-        // disconnect session
+        ((CachedSession) session).disconnect();
+        assertThat(session.isConnected()).isTrue();
         ((CachedSession) session).forcedDisconnect();
         assertThat(session.isConnected()).isFalse();
 
@@ -327,6 +329,123 @@ public class JschRunnerTest extends AbstractTest {
             }
         }
         return splitList.toArray(new String[splitList.size()]);
+    }
+
+    @Test
+    public void testCheckNotAllowedToChangeAConnectedAndCachedSshSession() throws Exception {
+        JschRunner jschRunner = createJschRunner(true);
+        jschRunner.openSession();
+        try {
+            jschRunner.setConfig(null);
+            fail();
+        } catch (Exception e) {
+            assertThat(e.getMessage()).isEqualTo("This instance of jsch is already connected please disconnect first.");
+        }
+        try {
+            jschRunner.setKeyfile(null);
+            fail();
+        } catch (Exception e) {
+            assertThat(e.getMessage()).isEqualTo("This instance of jsch is already connected please disconnect first.");
+        }
+        try {
+            jschRunner.setKeyfileContent(null);
+            fail();
+        } catch (Exception e) {
+            assertThat(e.getMessage()).isEqualTo("This instance of jsch is already connected please disconnect first.");
+        }
+        try {
+            jschRunner.setKnownHosts(null);
+            fail();
+        } catch (Exception e) {
+            assertThat(e.getMessage()).isEqualTo("This instance of jsch is already connected please disconnect first.");
+        }
+        try {
+            jschRunner.setPassword(null);
+            fail();
+        } catch (Exception e) {
+            assertThat(e.getMessage()).isEqualTo("This instance of jsch is already connected please disconnect first.");
+        }
+        try {
+            jschRunner.setPort(2);
+            fail();
+        } catch (Exception e) {
+            assertThat(e.getMessage()).isEqualTo("This instance of jsch is already connected please disconnect first.");
+        }
+        try {
+            jschRunner.setProxy(null);
+            fail();
+        } catch (Exception e) {
+            assertThat(e.getMessage()).isEqualTo("This instance of jsch is already connected please disconnect first.");
+        }
+        try {
+            jschRunner.setTrust(true);
+            fail();
+        } catch (Exception e) {
+            assertThat(e.getMessage()).isEqualTo("This instance of jsch is already connected please disconnect first.");
+        }
+        try {
+            jschRunner.setTimeout(1);
+            fail();
+        } catch (Exception e) {
+            assertThat(e.getMessage()).isEqualTo("This instance of jsch is already connected please disconnect first.");
+        }
+        jschRunner.disconnect();
+    }
+
+    @Test
+    public void testCheckAllowedToChangeAConnectedAndNotCachedSshSession() throws Exception {
+        JschRunner jschRunner = createJschRunner();
+        Session session = jschRunner.openSession();
+        try {
+            jschRunner.setConfig(null);
+        } catch (IllegalStateException e) {
+            fail();
+        }
+        try {
+            jschRunner.setKnownHosts(null);
+        } catch (IllegalStateException e) {
+            fail();
+        }
+        try {
+            jschRunner.setPort(2);
+        } catch (Exception e) {
+            fail();
+        }
+        try {
+            jschRunner.setProxy(null);
+        } catch (Exception e) {
+            fail();
+        }
+        try {
+            jschRunner.setTrust(true);
+        } catch (Exception e) {
+            fail();
+        }
+        try {
+            jschRunner.setTimeout(1);
+        } catch (Exception e) {
+            fail();
+        }
+        session.disconnect();
+    }
+
+    @Test
+    public void testDisconnectOnNonChachedSession_itShouldNotDisconnectSessionBecauseItIsNotKownToRunner() throws Exception {
+        JschRunner jschRunner = createJschRunner();
+        Session session = jschRunner.openSession();
+        assertThat(session.isConnected()).isTrue();
+        jschRunner.disconnect();
+        assertThat(session.isConnected()).isTrue();
+        session.disconnect();
+    }
+
+    @Test
+    public void testDisconnectOnChachedSession_itShouldDisconnectSessionBecauseItIsNotKownToRunner() throws Exception {
+        JschRunner jschRunner = createJschRunner(true);
+        Session session = jschRunner.openSession();
+        assertThat(session.isConnected()).isTrue();
+        jschRunner.disconnect();
+        assertThat(session.isConnected()).isFalse();
     }
 
 }

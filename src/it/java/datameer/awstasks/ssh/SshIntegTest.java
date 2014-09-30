@@ -15,11 +15,17 @@
  */
 package datameer.awstasks.ssh;
 
+import static org.fest.assertions.Assertions.*;
+
 import static org.junit.Assert.*;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.List;
+import java.util.Random;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -27,6 +33,8 @@ import org.junit.Test;
 
 import datameer.awstasks.aws.ec2.AbstractEc2IntegrationInteractionTest;
 import datameer.awstasks.util.IoUtil;
+import datameer.com.google.common.collect.Lists;
+import datameer.com.google.common.collect.Sets;
 
 public class SshIntegTest extends AbstractEc2IntegrationInteractionTest {
 
@@ -92,8 +100,69 @@ public class SshIntegTest extends AbstractEc2IntegrationInteractionTest {
         assertEquals(countFiles(uploadedFolder), countFiles(new File(downloadFolder, uploadedFolder.getName())));
     }
 
+    /**
+     * Use one instance of {@link JschRunner} with session caching enabled concurrently.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testMultithreadedUseOfCachedSession() throws Exception {
+        final JschRunner runner = createJschRunner(true);
+        assertThat(runner.isSessionCacheEnabled()).isTrue();
+
+        File uploadedFile = new File("build.xml");
+        final String fileToDownload = "/tmp/uploadFileForMultithreadedAccess";
+        runner.run(new ScpUploadCommand(uploadedFile, fileToDownload));
+
+        final List<Exception> exceptions = Lists.newCopyOnWriteArrayList();
+        final List<String> results = Lists.newCopyOnWriteArrayList();
+        final int repetitionsPerThread = 10;
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    for (int i = 0; i < repetitionsPerThread; i++) {
+                        // sleep randomly to vary the concurrent timings
+                        Thread.sleep(new Random().nextInt(250));
+
+                        // execute a command
+                        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                        runner.run(new SshExecCommand("cat /etc/hosts", outputStream));
+                        results.add(new String(outputStream.toByteArray()));
+
+                        // download a file
+                        File downloadedFile = _tempFolder.newFile(UUID.randomUUID().toString());
+                        runner.run(new ScpDownloadCommand(fileToDownload, downloadedFile, false));
+                        downloadedFile.delete();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    exceptions.add(e);
+                }
+            }
+        };
+
+        // can't increase thread count to high because of
+        // http://stackoverflow.com/questions/6947651/is-there-a-limit-to-how-many-channels-can-be-open-per-session-in-jsch
+        Thread[] threads = new Thread[5];
+        for (int i = 0; i < threads.length; i++) {
+            threads[i] = new Thread(runnable);
+            threads[i].start();
+        }
+        for (Thread thread : threads) {
+            thread.join();
+        }
+        assertThat(exceptions).isEmpty();
+        assertThat(results).hasSize(threads.length * repetitionsPerThread);
+        assertThat(Sets.newHashSet(results)).hasSize(1);
+    }
+
     private JschRunner createJschRunner() throws IOException {
-        JschRunner jschRunner = new JschRunner(TEST_USERNAME, _instanceGroup.getInstances(false).get(0).getPublicDnsName());
+        return createJschRunner(false);
+    }
+
+    private JschRunner createJschRunner(boolean cacheSession) throws IOException {
+        JschRunner jschRunner = new JschRunner(TEST_USERNAME, _instanceGroup.getInstances(false).get(0).getPublicDnsName(), cacheSession);
         jschRunner.setKeyfile(new File(_ec2Conf.getPrivateKeyFile()));
         jschRunner.setTrust(true);
 

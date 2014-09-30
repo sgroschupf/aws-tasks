@@ -22,7 +22,6 @@ import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.model.DescribeVolumesRequest;
 import com.amazonaws.services.ec2.model.DescribeVolumesResult;
 import com.amazonaws.services.ec2.model.Filter;
-import com.amazonaws.services.ec2.model.Placement;
 import com.amazonaws.services.ec2.model.RunInstancesRequest;
 import com.amazonaws.services.ec2.model.Volume;
 
@@ -33,9 +32,9 @@ public abstract class AbstractEc2IntegrationTest extends AbstractAwsIntegrationT
 
     public static final String TEST_SECURITY_GROUP = "aws-tasks.test";
     public static final String TEST_EBS = "aws-test-ebs";
-    public static final String TEST_AMI = "ami-5059be39";
-    public static final String TEST_AMI_WITH_EBS = "ami-01a56668";
-    public static final String TEST_USERNAME = "ubuntu";
+    public static final String TEST_AMI = "ami-205fba49";
+    public static final String TEST_AMI_WITH_EBS = "ami-84db39ed";
+    public static final String TEST_USERNAME = "root";
 
     protected static RunInstancesRequest createLaunchConfiguration(int instanceCount) {
         return createLaunchConfiguration(TEST_AMI, instanceCount);
@@ -48,7 +47,6 @@ public abstract class AbstractEc2IntegrationTest extends AbstractAwsIntegrationT
     protected static RunInstancesRequest createLaunchConfiguration(String imageId, int instanceCount) {
         RunInstancesRequest runRequest = new RunInstancesRequest(imageId, instanceCount, instanceCount);
         runRequest.setKeyName(_ec2Conf.getPrivateKeyName());
-        runRequest.setPlacement(new Placement("us-east-1b"));
         runRequest.setSecurityGroups(Arrays.asList(TEST_SECURITY_GROUP, "default"));
         return runRequest;
     }
