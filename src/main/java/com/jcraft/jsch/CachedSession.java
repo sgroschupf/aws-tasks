@@ -42,6 +42,6 @@ public class CachedSession extends Session {
     }
 
     public static String generateKey(String username, String host, int port, String credentialHash) {
-        return new StringBuilder().append(host).append(port).append(username).append(credentialHash).toString();
+        return new StringBuilder().append(host).append("_").append(port).append("_").append(username).append("_").append(credentialHash).toString();
     }
 }
