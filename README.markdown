@@ -1,4 +1,4 @@
-ABOUT - version 0.6.dev
+ABOUT - version 0.7.dev
 =====
 + ant tasks for [amazon web services](http://aws.amazon.com/)
 + for details see [aws-tasks webpage](https://github.com/sgroschupf/aws-tasks)
