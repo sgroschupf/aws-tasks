@@ -22,10 +22,7 @@ public class CachedSession extends Session {
     private String _credentialHash;
 
     public CachedSession(String user, String host, int port, String credentialHash, JSch jsch) throws JSchException {
-        super(jsch);
-        setUserName(user);
-        setHost(host);
-        setPort(port);
+        super(jsch, user, host, port);
         _credentialHash = credentialHash;
     }
 
