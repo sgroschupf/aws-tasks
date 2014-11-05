@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jcraft.jsch;
+package awstasks.com.jcraft.jsch;
 
 public class IdentityKeyString {
 

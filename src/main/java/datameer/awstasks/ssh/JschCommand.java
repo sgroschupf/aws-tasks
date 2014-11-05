@@ -20,7 +20,7 @@ import java.text.NumberFormat;
 
 import org.apache.log4j.Logger;
 
-import com.jcraft.jsch.Session;
+import awstasks.com.jcraft.jsch.Session;
 
 public abstract class JschCommand {
 

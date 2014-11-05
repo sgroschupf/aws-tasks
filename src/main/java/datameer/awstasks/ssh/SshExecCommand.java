@@ -22,9 +22,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 
-import com.jcraft.jsch.Channel;
-import com.jcraft.jsch.Session;
-
+import awstasks.com.jcraft.jsch.Channel;
+import awstasks.com.jcraft.jsch.Session;
 import datameer.awstasks.util.SshUtil;
 
 public class SshExecCommand extends JschCommand {

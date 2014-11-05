@@ -21,9 +21,8 @@ import java.io.OutputStream;
 
 import org.apache.log4j.Logger;
 
-import com.jcraft.jsch.Channel;
-import com.jcraft.jsch.Session;
-
+import awstasks.com.jcraft.jsch.Channel;
+import awstasks.com.jcraft.jsch.Session;
 import datameer.awstasks.util.SshUtil;
 
 public class ScpFileInputStream extends InputStream {

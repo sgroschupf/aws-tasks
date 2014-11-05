@@ -37,9 +37,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 
-import com.jcraft.jsch.CachedSession;
-import com.jcraft.jsch.Session;
-
+import awstasks.com.jcraft.jsch.CachedSession;
+import awstasks.com.jcraft.jsch.CipherNone;
+import awstasks.com.jcraft.jsch.JSch;
+import awstasks.com.jcraft.jsch.Session;
+import awstasks.com.jcraft.jsch.jce.DH;
+import awstasks.com.jcraft.jsch.jce.TripleDESCBC;
 import datameer.awstasks.AbstractTest;
 import datameer.awstasks.exec.ShellCommand;
 import datameer.awstasks.exec.command.FreeFormCommand;
@@ -446,6 +449,19 @@ public class JschRunnerTest extends AbstractTest {
         assertThat(session.isConnected()).isTrue();
         jschRunner.disconnect();
         assertThat(session.isConnected()).isFalse();
+    }
+
+    /**
+     * We jar jared jsch which configures security algorithms with class names. Make sure we have
+     * the jar-jared version.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testCorrectSecurityProviderConfiguration() throws Exception {
+        assertThat(JSch.getConfig("dh")).isNotNull().isEqualTo(DH.class.getName());
+        assertThat(JSch.getConfig("3des-cbc")).isNotNull().isEqualTo(TripleDESCBC.class.getName());
+        assertThat(JSch.getConfig("none")).isNotNull().isEqualTo(CipherNone.class.getName());
     }
 
 }

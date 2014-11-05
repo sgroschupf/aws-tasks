@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jcraft.jsch;
+package awstasks.com.jcraft.jsch;
 
 import static org.fest.assertions.Assertions.*;
 
 import static org.mockito.Mockito.*;
 
 import org.junit.Test;
+
+import awstasks.com.jcraft.jsch.CachedSession;
 
 public class CachedSessionTest {
 

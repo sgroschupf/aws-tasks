@@ -31,18 +31,17 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
-import com.jcraft.jsch.CachedSession;
-import com.jcraft.jsch.ChannelExec;
-import com.jcraft.jsch.Identity;
-import com.jcraft.jsch.IdentityKeyString;
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Proxy;
-import com.jcraft.jsch.Session;
-import com.jcraft.jsch.SocketFactory;
-import com.jcraft.jsch.UIKeyboardInteractive;
-import com.jcraft.jsch.UserInfo;
-
+import awstasks.com.jcraft.jsch.CachedSession;
+import awstasks.com.jcraft.jsch.ChannelExec;
+import awstasks.com.jcraft.jsch.Identity;
+import awstasks.com.jcraft.jsch.IdentityKeyString;
+import awstasks.com.jcraft.jsch.JSch;
+import awstasks.com.jcraft.jsch.JSchException;
+import awstasks.com.jcraft.jsch.Proxy;
+import awstasks.com.jcraft.jsch.Session;
+import awstasks.com.jcraft.jsch.SocketFactory;
+import awstasks.com.jcraft.jsch.UIKeyboardInteractive;
+import awstasks.com.jcraft.jsch.UserInfo;
 import datameer.awstasks.exec.ExecOutputHandler;
 import datameer.awstasks.exec.ShellCommand;
 import datameer.awstasks.exec.ShellExecutor;
@@ -446,7 +445,7 @@ public class JschRunner extends ShellExecutor {
         }
     }
 
-    protected static com.jcraft.jsch.Logger DEBUG_LOGGER = new com.jcraft.jsch.Logger() {
+    protected static awstasks.com.jcraft.jsch.Logger DEBUG_LOGGER = new awstasks.com.jcraft.jsch.Logger() {
 
         @Override
         public void log(int level, String message) {

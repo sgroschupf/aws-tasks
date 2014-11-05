@@ -19,10 +19,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import com.jcraft.jsch.Channel;
-import com.jcraft.jsch.ChannelExec;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Session;
+import awstasks.com.jcraft.jsch.Channel;
+import awstasks.com.jcraft.jsch.ChannelExec;
+import awstasks.com.jcraft.jsch.JSchException;
+import awstasks.com.jcraft.jsch.Session;
 
 public class SshUtil {
 

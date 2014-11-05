@@ -23,9 +23,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 
-import com.jcraft.jsch.Channel;
-import com.jcraft.jsch.Session;
-
+import awstasks.com.jcraft.jsch.Channel;
+import awstasks.com.jcraft.jsch.Session;
 import datameer.awstasks.util.IoUtil;
 import datameer.awstasks.util.SshUtil;
 
