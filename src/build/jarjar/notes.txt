@@ -1,0 +1,7 @@
+Executing JarJar:
+
+java -jar lib/build/jarjar-1.2.jar process src/build/jarjar/jsch.jjl jsch-<version>.jar lib/compile/awstasks-jsch-<version>.jar
+
+Creating the source jar:
+
+mkdir tmp && cd tmp && jar xf jsch-<version>-sources.jar && rm -rf META-INF/ && mkdir awstasks && mv com awstasks/ && find . -name \*.java | xargs sed -i '' -e 's/com\.jsch/awstasks\.com\.jsch/g' && jar cf awstasks-jsch-<version>-sources.jar awstasks
