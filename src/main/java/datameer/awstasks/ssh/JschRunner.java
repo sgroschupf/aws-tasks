@@ -328,7 +328,7 @@ public class JschRunner extends ShellExecutor {
             jsch.addIdentity(identity, null);
         }
 
-        if (!_trust && _knownHosts != null) {
+        if (!_trust && _knownHosts != null && new File(_knownHosts).exists()) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Using known hosts: " + _knownHosts);
             }
