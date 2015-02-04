@@ -18,12 +18,12 @@ package datameer.awstasks.aws.ec2;
 import java.util.Arrays;
 import java.util.List;
 
-import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.model.DescribeVolumesRequest;
-import com.amazonaws.services.ec2.model.DescribeVolumesResult;
-import com.amazonaws.services.ec2.model.Filter;
-import com.amazonaws.services.ec2.model.RunInstancesRequest;
-import com.amazonaws.services.ec2.model.Volume;
+import awstasks.com.amazonaws.services.ec2.AmazonEC2;
+import awstasks.com.amazonaws.services.ec2.model.DescribeVolumesRequest;
+import awstasks.com.amazonaws.services.ec2.model.DescribeVolumesResult;
+import awstasks.com.amazonaws.services.ec2.model.Filter;
+import awstasks.com.amazonaws.services.ec2.model.RunInstancesRequest;
+import awstasks.com.amazonaws.services.ec2.model.Volume;
 
 import datameer.awstasks.aws.AbstractAwsIntegrationTest;
 import datameer.com.google.common.base.Preconditions;

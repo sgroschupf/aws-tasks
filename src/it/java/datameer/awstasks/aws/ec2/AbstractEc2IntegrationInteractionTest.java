@@ -21,9 +21,9 @@ import java.util.concurrent.TimeUnit;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
-import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.InstanceStateName;
+import awstasks.com.amazonaws.services.ec2.AmazonEC2;
+import awstasks.com.amazonaws.services.ec2.model.Instance;
+import awstasks.com.amazonaws.services.ec2.model.InstanceStateName;
 
 import datameer.awstasks.util.Ec2Util;
 

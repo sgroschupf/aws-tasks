@@ -19,8 +19,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.model.RunInstancesRequest;
+import awstasks.com.amazonaws.services.ec2.AmazonEC2;
+import awstasks.com.amazonaws.services.ec2.model.RunInstancesRequest;
 
 import datameer.awstasks.aws.ec2.InstanceGroup;
 import datameer.awstasks.aws.ec2.ssh.SshClient;

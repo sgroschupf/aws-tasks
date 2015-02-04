@@ -31,9 +31,9 @@ import org.apache.log4j.Logger;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.Bucket;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
+import awstasks.com.amazonaws.services.s3.AmazonS3;
+import awstasks.com.amazonaws.services.s3.model.Bucket;
+import awstasks.com.amazonaws.services.s3.model.S3ObjectSummary;
 
 import datameer.awstasks.aws.AbstractAwsIntegrationTest;
 import datameer.awstasks.aws.emr.EmrCluster.ClusterState;

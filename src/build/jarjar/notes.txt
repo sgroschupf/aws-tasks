@@ -5,3 +5,10 @@ java -jar lib/build/jarjar-1.2.jar process src/build/jarjar/jsch.jjl jsch-<versi
 Creating the source jar:
 
 mkdir tmp && cd tmp && jar xf jsch-<version>-sources.jar && rm -rf META-INF/ && mkdir awstasks && mv com awstasks/ && find . -name \*.java | xargs sed -i '' -e 's/com\.jsch/awstasks\.com\.jsch/g' && jar cf awstasks-jsch-<version>-sources.jar awstasks
+
+
+Notes for aws-java-sdk jarjaring:
+
+ file in awstasks/com/amazonws/services/ec2/request.handlers
+
+has to be updated as well to reflect the awstask package prefix.

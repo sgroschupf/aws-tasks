@@ -23,17 +23,17 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
-import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.InstanceStateName;
-import com.amazonaws.services.ec2.model.IpPermission;
-import com.amazonaws.services.ec2.model.Reservation;
-import com.amazonaws.services.ec2.model.RunInstancesRequest;
-import com.amazonaws.services.ec2.model.StartInstancesRequest;
-import com.amazonaws.services.ec2.model.StopInstancesRequest;
-import com.amazonaws.services.ec2.model.StopInstancesResult;
-import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
-import com.amazonaws.services.ec2.model.TerminateInstancesResult;
+import awstasks.com.amazonaws.services.ec2.AmazonEC2;
+import awstasks.com.amazonaws.services.ec2.model.Instance;
+import awstasks.com.amazonaws.services.ec2.model.InstanceStateName;
+import awstasks.com.amazonaws.services.ec2.model.IpPermission;
+import awstasks.com.amazonaws.services.ec2.model.Reservation;
+import awstasks.com.amazonaws.services.ec2.model.RunInstancesRequest;
+import awstasks.com.amazonaws.services.ec2.model.StartInstancesRequest;
+import awstasks.com.amazonaws.services.ec2.model.StopInstancesRequest;
+import awstasks.com.amazonaws.services.ec2.model.StopInstancesResult;
+import awstasks.com.amazonaws.services.ec2.model.TerminateInstancesRequest;
+import awstasks.com.amazonaws.services.ec2.model.TerminateInstancesResult;
 
 import datameer.awstasks.aws.ec2.ssh.SshClient;
 import datameer.awstasks.aws.ec2.ssh.SshClientImpl;
@@ -48,7 +48,7 @@ public class InstanceGroupImpl implements InstanceGroup {
 
     private final AmazonEC2 _ec2;
     private final boolean _includeMultipleReservations;
-    private List<com.amazonaws.services.ec2.model.Instance> _instances;
+    private List<awstasks.com.amazonaws.services.ec2.model.Instance> _instances;
 
     public InstanceGroupImpl(AmazonEC2 ec2) {
         this(ec2, false);

@@ -18,8 +18,8 @@ package datameer.awstasks.aws.emr;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import com.amazonaws.services.ec2.model.InstanceType;
-import com.amazonaws.services.elasticmapreduce.model.BootstrapActionConfig;
+import awstasks.com.amazonaws.services.ec2.model.InstanceType;
+import awstasks.com.amazonaws.services.elasticmapreduce.model.BootstrapActionConfig;
 
 public class EmrSettings {
 

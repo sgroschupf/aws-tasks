@@ -23,8 +23,8 @@ import java.util.List;
 
 import org.junit.Test;
 
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.InstanceStateName;
+import awstasks.com.amazonaws.services.ec2.model.Instance;
+import awstasks.com.amazonaws.services.ec2.model.InstanceStateName;
 
 import datameer.awstasks.aws.ec2.AbstractEc2IntegrationInteractionTest;
 import datameer.awstasks.aws.ec2.InstanceGroup;

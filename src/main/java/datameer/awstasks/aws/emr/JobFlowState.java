@@ -17,7 +17,7 @@ package datameer.awstasks.aws.emr;
 
 import java.util.EnumSet;
 
-import com.amazonaws.services.elasticmapreduce.model.JobFlowExecutionStatusDetail;
+import awstasks.com.amazonaws.services.elasticmapreduce.model.JobFlowExecutionStatusDetail;
 
 /**
  * @see JobFlowExecutionStatusDetail#getState()

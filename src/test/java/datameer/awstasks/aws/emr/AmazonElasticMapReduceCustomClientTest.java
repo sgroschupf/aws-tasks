@@ -25,11 +25,11 @@ import java.util.concurrent.Callable;
 
 import org.junit.Test;
 
-import com.amazonaws.AmazonClientException;
-import com.amazonaws.AmazonServiceException;
-import com.amazonaws.services.elasticmapreduce.model.DescribeJobFlowsRequest;
-import com.amazonaws.services.elasticmapreduce.model.DescribeJobFlowsResult;
-import com.amazonaws.services.sns.model.AuthorizationErrorException;
+import awstasks.com.amazonaws.AmazonClientException;
+import awstasks.com.amazonaws.AmazonServiceException;
+import awstasks.com.amazonaws.services.elasticmapreduce.model.DescribeJobFlowsRequest;
+import awstasks.com.amazonaws.services.elasticmapreduce.model.DescribeJobFlowsResult;
+import awstasks.com.amazonaws.services.sns.model.AuthorizationErrorException;
 
 import datameer.awstasks.aws.emr.AmazonElasticMapReduceCustomClient.JobFlowDescriptionCache;
 

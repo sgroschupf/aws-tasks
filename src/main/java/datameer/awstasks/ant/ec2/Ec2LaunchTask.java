@@ -23,16 +23,16 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.tools.ant.BuildException;
 
-import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.model.AuthorizeSecurityGroupIngressRequest;
-import com.amazonaws.services.ec2.model.CreateSecurityGroupRequest;
-import com.amazonaws.services.ec2.model.CreateTagsRequest;
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.InstanceStateName;
-import com.amazonaws.services.ec2.model.IpPermission;
-import com.amazonaws.services.ec2.model.Placement;
-import com.amazonaws.services.ec2.model.RunInstancesRequest;
-import com.amazonaws.services.ec2.model.Tag;
+import awstasks.com.amazonaws.services.ec2.AmazonEC2;
+import awstasks.com.amazonaws.services.ec2.model.AuthorizeSecurityGroupIngressRequest;
+import awstasks.com.amazonaws.services.ec2.model.CreateSecurityGroupRequest;
+import awstasks.com.amazonaws.services.ec2.model.CreateTagsRequest;
+import awstasks.com.amazonaws.services.ec2.model.Instance;
+import awstasks.com.amazonaws.services.ec2.model.InstanceStateName;
+import awstasks.com.amazonaws.services.ec2.model.IpPermission;
+import awstasks.com.amazonaws.services.ec2.model.Placement;
+import awstasks.com.amazonaws.services.ec2.model.RunInstancesRequest;
+import awstasks.com.amazonaws.services.ec2.model.Tag;
 
 import datameer.awstasks.aws.ec2.GroupPermission;
 import datameer.awstasks.aws.ec2.InstanceGroup;

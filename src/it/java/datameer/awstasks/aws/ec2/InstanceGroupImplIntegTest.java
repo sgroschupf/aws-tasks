@@ -24,12 +24,12 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
-import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.model.AttachVolumeRequest;
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.InstanceStateName;
-import com.amazonaws.services.ec2.model.Reservation;
-import com.amazonaws.services.ec2.model.Volume;
+import awstasks.com.amazonaws.services.ec2.AmazonEC2;
+import awstasks.com.amazonaws.services.ec2.model.AttachVolumeRequest;
+import awstasks.com.amazonaws.services.ec2.model.Instance;
+import awstasks.com.amazonaws.services.ec2.model.InstanceStateName;
+import awstasks.com.amazonaws.services.ec2.model.Reservation;
+import awstasks.com.amazonaws.services.ec2.model.Volume;
 
 import datameer.awstasks.util.Ec2Util;
 

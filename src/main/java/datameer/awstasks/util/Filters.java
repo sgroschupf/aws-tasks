@@ -15,8 +15,8 @@
  */
 package datameer.awstasks.util;
 
-import com.amazonaws.services.ec2.model.Filter;
-import com.amazonaws.services.ec2.model.InstanceStateName;
+import awstasks.com.amazonaws.services.ec2.model.Filter;
+import awstasks.com.amazonaws.services.ec2.model.InstanceStateName;
 
 public class Filters {
 

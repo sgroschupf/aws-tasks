@@ -18,12 +18,12 @@ package datameer.awstasks.ant.ec2;
 import java.util.List;
 import java.util.Set;
 
-import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
-import com.amazonaws.services.ec2.model.Filter;
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.Reservation;
-import com.amazonaws.services.ec2.model.Tag;
+import awstasks.com.amazonaws.services.ec2.AmazonEC2;
+import awstasks.com.amazonaws.services.ec2.model.DescribeInstancesRequest;
+import awstasks.com.amazonaws.services.ec2.model.Filter;
+import awstasks.com.amazonaws.services.ec2.model.Instance;
+import awstasks.com.amazonaws.services.ec2.model.Reservation;
+import awstasks.com.amazonaws.services.ec2.model.Tag;
 
 import datameer.com.google.common.base.Objects;
 import datameer.com.google.common.collect.ImmutableList;

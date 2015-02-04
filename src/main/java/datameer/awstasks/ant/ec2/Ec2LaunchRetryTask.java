@@ -17,7 +17,7 @@ package datameer.awstasks.ant.ec2;
 
 import org.apache.tools.ant.BuildException;
 
-import com.amazonaws.services.ec2.AmazonEC2;
+import awstasks.com.amazonaws.services.ec2.AmazonEC2;
 
 public class Ec2LaunchRetryTask extends Ec2LaunchTask {
 
