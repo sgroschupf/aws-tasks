@@ -25,7 +25,7 @@ import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.TaskContainer;
 
-import com.amazonaws.services.ec2.AmazonEC2;
+import awstasks.com.amazonaws.services.ec2.AmazonEC2;
 
 import datameer.awstasks.ant.ec2.model.ScpDownload;
 import datameer.awstasks.ant.ec2.model.ScpUpload;

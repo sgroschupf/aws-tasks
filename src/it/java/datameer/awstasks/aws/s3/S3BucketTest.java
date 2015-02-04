@@ -24,8 +24,8 @@ import java.util.List;
 
 import org.junit.Test;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
+import awstasks.com.amazonaws.services.s3.AmazonS3;
+import awstasks.com.amazonaws.services.s3.model.S3ObjectSummary;
 
 import datameer.awstasks.aws.AbstractAwsIntegrationTest;
 import datameer.awstasks.util.Retry;

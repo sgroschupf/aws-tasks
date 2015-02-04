@@ -22,16 +22,16 @@ import java.util.concurrent.Callable;
 
 import org.apache.log4j.Logger;
 
-import com.amazonaws.AmazonClientException;
-import com.amazonaws.AmazonServiceException;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduceClient;
-import com.amazonaws.services.elasticmapreduce.model.AddJobFlowStepsRequest;
-import com.amazonaws.services.elasticmapreduce.model.DescribeJobFlowsRequest;
-import com.amazonaws.services.elasticmapreduce.model.DescribeJobFlowsResult;
-import com.amazonaws.services.elasticmapreduce.model.RunJobFlowRequest;
-import com.amazonaws.services.elasticmapreduce.model.RunJobFlowResult;
-import com.amazonaws.services.elasticmapreduce.model.TerminateJobFlowsRequest;
+import awstasks.com.amazonaws.AmazonClientException;
+import awstasks.com.amazonaws.AmazonServiceException;
+import awstasks.com.amazonaws.auth.BasicAWSCredentials;
+import awstasks.com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduceClient;
+import awstasks.com.amazonaws.services.elasticmapreduce.model.AddJobFlowStepsRequest;
+import awstasks.com.amazonaws.services.elasticmapreduce.model.DescribeJobFlowsRequest;
+import awstasks.com.amazonaws.services.elasticmapreduce.model.DescribeJobFlowsResult;
+import awstasks.com.amazonaws.services.elasticmapreduce.model.RunJobFlowRequest;
+import awstasks.com.amazonaws.services.elasticmapreduce.model.RunJobFlowResult;
+import awstasks.com.amazonaws.services.elasticmapreduce.model.TerminateJobFlowsRequest;
 
 import datameer.awstasks.aws.emr.EmrCluster.InterruptedRuntimeException;
 import datameer.awstasks.util.ExceptionUtil;

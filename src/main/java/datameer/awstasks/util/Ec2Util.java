@@ -26,18 +26,18 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
-import com.amazonaws.AmazonServiceException;
-import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
-import com.amazonaws.services.ec2.model.DescribeSecurityGroupsRequest;
-import com.amazonaws.services.ec2.model.DescribeSecurityGroupsResult;
-import com.amazonaws.services.ec2.model.Filter;
-import com.amazonaws.services.ec2.model.GroupIdentifier;
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.InstanceStateName;
-import com.amazonaws.services.ec2.model.IpPermission;
-import com.amazonaws.services.ec2.model.Reservation;
-import com.amazonaws.services.ec2.model.SecurityGroup;
+import awstasks.com.amazonaws.AmazonServiceException;
+import awstasks.com.amazonaws.services.ec2.AmazonEC2;
+import awstasks.com.amazonaws.services.ec2.model.DescribeInstancesRequest;
+import awstasks.com.amazonaws.services.ec2.model.DescribeSecurityGroupsRequest;
+import awstasks.com.amazonaws.services.ec2.model.DescribeSecurityGroupsResult;
+import awstasks.com.amazonaws.services.ec2.model.Filter;
+import awstasks.com.amazonaws.services.ec2.model.GroupIdentifier;
+import awstasks.com.amazonaws.services.ec2.model.Instance;
+import awstasks.com.amazonaws.services.ec2.model.InstanceStateName;
+import awstasks.com.amazonaws.services.ec2.model.IpPermission;
+import awstasks.com.amazonaws.services.ec2.model.Reservation;
+import awstasks.com.amazonaws.services.ec2.model.SecurityGroup;
 import datameer.com.google.common.base.Preconditions;
 import datameer.com.google.common.collect.Lists;
 

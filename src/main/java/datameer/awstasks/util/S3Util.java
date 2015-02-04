@@ -17,8 +17,8 @@ package datameer.awstasks.util;
 
 import java.io.File;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.AmazonS3Exception;
+import awstasks.com.amazonaws.services.s3.AmazonS3;
+import awstasks.com.amazonaws.services.s3.model.AmazonS3Exception;
 
 public class S3Util {
 

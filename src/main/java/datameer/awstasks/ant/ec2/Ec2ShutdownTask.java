@@ -15,7 +15,7 @@
  */
 package datameer.awstasks.ant.ec2;
 
-import com.amazonaws.services.ec2.AmazonEC2;
+import awstasks.com.amazonaws.services.ec2.AmazonEC2;
 
 import datameer.awstasks.aws.ec2.InstanceGroup;
 

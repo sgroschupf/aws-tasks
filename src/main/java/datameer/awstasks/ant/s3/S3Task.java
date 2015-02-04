@@ -20,8 +20,8 @@ import java.util.List;
 
 import org.apache.tools.ant.BuildException;
 
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.s3.AmazonS3Client;
+import awstasks.com.amazonaws.auth.BasicAWSCredentials;
+import awstasks.com.amazonaws.services.s3.AmazonS3Client;
 
 import datameer.awstasks.ant.AbstractAwsTask;
 import datameer.awstasks.ant.s3.model.CreateBucketCommand;

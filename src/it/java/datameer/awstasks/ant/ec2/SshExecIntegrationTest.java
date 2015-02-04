@@ -23,7 +23,7 @@ import java.util.List;
 import org.apache.tools.ant.Project;
 import org.junit.Test;
 
-import com.amazonaws.services.ec2.model.Instance;
+import awstasks.com.amazonaws.services.ec2.model.Instance;
 
 import datameer.awstasks.ant.ec2.model.SshExec;
 import datameer.awstasks.aws.ec2.AbstractEc2IntegrationInteractionTest;

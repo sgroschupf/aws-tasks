@@ -17,8 +17,8 @@ package datameer.awstasks;
 
 import java.util.List;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.Bucket;
+import awstasks.com.amazonaws.services.s3.AmazonS3;
+import awstasks.com.amazonaws.services.s3.model.Bucket;
 
 import datameer.awstasks.util.Ec2Configuration;
 

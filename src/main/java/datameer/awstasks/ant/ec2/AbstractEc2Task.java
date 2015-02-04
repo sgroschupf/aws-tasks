@@ -18,9 +18,9 @@ package datameer.awstasks.ant.ec2;
 import org.apache.log4j.NDC;
 import org.apache.tools.ant.BuildException;
 
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.AmazonEC2Client;
+import awstasks.com.amazonaws.auth.BasicAWSCredentials;
+import awstasks.com.amazonaws.services.ec2.AmazonEC2;
+import awstasks.com.amazonaws.services.ec2.AmazonEC2Client;
 
 import datameer.awstasks.ant.AbstractAwsTask;
 

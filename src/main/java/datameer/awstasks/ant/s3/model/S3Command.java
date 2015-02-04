@@ -17,7 +17,7 @@ package datameer.awstasks.ant.s3.model;
 
 import org.apache.tools.ant.Project;
 
-import com.amazonaws.services.s3.AmazonS3;
+import awstasks.com.amazonaws.services.s3.AmazonS3;
 
 public abstract class S3Command {
 

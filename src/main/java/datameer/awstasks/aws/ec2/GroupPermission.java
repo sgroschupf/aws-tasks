@@ -15,7 +15,7 @@
  */
 package datameer.awstasks.aws.ec2;
 
-import com.amazonaws.services.ec2.model.IpPermission;
+import awstasks.com.amazonaws.services.ec2.model.IpPermission;
 
 public class GroupPermission {
 

@@ -21,8 +21,8 @@ import java.util.List;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.taskdefs.Echo;
 
-import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.model.Instance;
+import awstasks.com.amazonaws.services.ec2.AmazonEC2;
+import awstasks.com.amazonaws.services.ec2.model.Instance;
 
 import datameer.awstasks.aws.ec2.InstanceGroup;
 

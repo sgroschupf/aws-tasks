@@ -19,8 +19,8 @@ import java.util.List;
 
 import org.apache.tools.ant.Project;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.Bucket;
+import awstasks.com.amazonaws.services.s3.AmazonS3;
+import awstasks.com.amazonaws.services.s3.model.Bucket;
 
 public class ListBucketsCommand extends S3Command {
 

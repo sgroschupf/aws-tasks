@@ -15,8 +15,8 @@
  */
 package datameer.awstasks.ant.emr.model;
 
-import com.amazonaws.services.elasticmapreduce.model.BootstrapActionConfig;
-import com.amazonaws.services.elasticmapreduce.model.ScriptBootstrapActionConfig;
+import awstasks.com.amazonaws.services.elasticmapreduce.model.BootstrapActionConfig;
+import awstasks.com.amazonaws.services.elasticmapreduce.model.ScriptBootstrapActionConfig;
 
 public class BootstrapConfig {
 

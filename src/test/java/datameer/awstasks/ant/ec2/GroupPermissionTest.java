@@ -22,9 +22,8 @@ import java.util.Collection;
 
 import org.junit.Test;
 
-import com.amazonaws.services.ec2.model.IpPermission;
-import com.amazonaws.services.ec2.model.UserIdGroupPair;
-
+import awstasks.com.amazonaws.services.ec2.model.IpPermission;
+import awstasks.com.amazonaws.services.ec2.model.UserIdGroupPair;
 import datameer.awstasks.aws.ec2.GroupPermission;
 
 public class GroupPermissionTest {
