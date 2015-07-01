@@ -15,7 +15,12 @@
  */
 package datameer.awstasks.aws.ec2;
 
+import java.util.List;
+
 import awstasks.com.amazonaws.services.ec2.model.IpPermission;
+import awstasks.com.amazonaws.services.ec2.model.UserIdGroupPair;
+import datameer.com.google.common.annotations.VisibleForTesting;
+import datameer.com.google.common.primitives.Longs;
 
 public class GroupPermission {
 
@@ -68,7 +73,24 @@ public class GroupPermission {
     }
 
     public IpPermission toIpPermission() {
-        return new IpPermission().withIpProtocol(getProtocol()).withFromPort(getFromPort()).withToPort(getToPort()).withIpRanges(getSourceIp());
+        IpPermission ipPermission = new IpPermission().withIpProtocol(getProtocol()).withFromPort(getFromPort()).withToPort(getToPort());
+        String sourceIp = getSourceIp();
+        if (isIpDefinition(sourceIp)) {
+            ipPermission.withIpRanges(sourceIp);
+        } else {
+            ipPermission.withUserIdGroupPairs(new UserIdGroupPair().withGroupName(sourceIp));
+        }
+        return ipPermission;
+    }
+
+    /**
+     * 
+     * @param sourceIp
+     * @return true if the given string is an ip or ip-CIDR like 127.0.0.1 or 0.0.0.0/0
+     */
+    @VisibleForTesting
+    static boolean isIpDefinition(String string) {
+        return Longs.tryParse(string.replaceAll("\\.|/", "")) != null;
     }
 
     @Override
@@ -89,10 +111,19 @@ public class GroupPermission {
         if (!ipPermission.getIpRanges().isEmpty()) {
             sourceAllowed = ipPermission.getIpRanges().contains(_sourceIp);
         } else if (!ipPermission.getUserIdGroupPairs().isEmpty()) {
-            sourceAllowed = false;
+            sourceAllowed = sourceContained(ipPermission.getUserIdGroupPairs(), _sourceIp);
         }
 
-        return ipPermission.getFromPort() <= getFromPort() && ipPermission.getToPort() >= getToPort() && getProtocol().equalsIgnoreCase(ipPermission.getIpProtocol()) && sourceAllowed;
+        return sourceAllowed && ipPermission.getFromPort() <= getFromPort() && ipPermission.getToPort() >= getToPort() && getProtocol().equalsIgnoreCase(ipPermission.getIpProtocol());
 
+    }
+
+    private boolean sourceContained(List<UserIdGroupPair> userIdGroupPairs, String sourceIp) {
+        for (UserIdGroupPair userIdGroupPair : userIdGroupPairs) {
+            if (sourceIp.equals(userIdGroupPair.getGroupName()) || sourceIp.equals(userIdGroupPair.getGroupId())) {
+                return true;
+            }
+        }
+        return false;
     }
 }
