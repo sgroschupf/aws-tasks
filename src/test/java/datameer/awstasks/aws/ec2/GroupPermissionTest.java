@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package datameer.awstasks.ant.ec2;
+package datameer.awstasks.aws.ec2;
+
+import static org.fest.assertions.Assertions.*;
 
 import static org.junit.Assert.*;
 
@@ -24,7 +26,6 @@ import org.junit.Test;
 
 import awstasks.com.amazonaws.services.ec2.model.IpPermission;
 import awstasks.com.amazonaws.services.ec2.model.UserIdGroupPair;
-import datameer.awstasks.aws.ec2.GroupPermission;
 
 public class GroupPermissionTest {
 
@@ -57,5 +58,12 @@ public class GroupPermissionTest {
         ips.add(new UserIdGroupPair().withGroupId("0.0.0.0/0").withGroupName("0.0.0.0/0").withUserId("0.0.0.0/0"));
         ipPermission.setUserIdGroupPairs(ips);
         assertFalse(groupPermission.matches(ipPermission));
+    }
+
+    @Test
+    public void testIsIpDefinition() throws Exception {
+        assertThat(GroupPermission.isIpDefinition("127.0.0.1")).isTrue();
+        assertThat(GroupPermission.isIpDefinition("0.0.0.0/0")).isTrue();
+        assertThat(GroupPermission.isIpDefinition("security-group")).isFalse();
     }
 }
