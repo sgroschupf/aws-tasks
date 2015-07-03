@@ -20,6 +20,7 @@ import static org.fest.assertions.Assertions.*;
 import static org.junit.Assert.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 
 import org.junit.Test;
@@ -57,7 +58,18 @@ public class GroupPermissionTest {
         Collection<UserIdGroupPair> ips = new ArrayList<UserIdGroupPair>();
         ips.add(new UserIdGroupPair().withGroupId("0.0.0.0/0").withGroupName("0.0.0.0/0").withUserId("0.0.0.0/0"));
         ipPermission.setUserIdGroupPairs(ips);
-        assertFalse(groupPermission.matches(ipPermission));
+        assertThat(groupPermission.matches(ipPermission)).isTrue();
+    }
+
+    @Test
+    public void testMatches_SecurityGroup() throws Exception {
+        GroupPermission groupPermission = new GroupPermission("tcp", 1433, 1433, "securityGroup");
+
+        IpPermission ipPermission = new IpPermission().withIpProtocol("tcp").withFromPort(1433).withToPort(1433);
+        ipPermission.setUserIdGroupPairs(Arrays.asList(new UserIdGroupPair().withGroupName("securityGroup")));
+        assertThat(groupPermission.matches(ipPermission)).isTrue();
+
+        assertThat(new GroupPermission("tcp", 1433, 1433, "securityGroup2").matches(ipPermission)).isFalse();
     }
 
     @Test
@@ -66,4 +78,5 @@ public class GroupPermissionTest {
         assertThat(GroupPermission.isIpDefinition("0.0.0.0/0")).isTrue();
         assertThat(GroupPermission.isIpDefinition("security-group")).isFalse();
     }
+
 }

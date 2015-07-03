@@ -15,6 +15,8 @@
  */
 package datameer.awstasks.aws.ec2;
 
+import java.util.List;
+
 import awstasks.com.amazonaws.services.ec2.model.IpPermission;
 import awstasks.com.amazonaws.services.ec2.model.UserIdGroupPair;
 import datameer.com.google.common.annotations.VisibleForTesting;
@@ -109,10 +111,19 @@ public class GroupPermission {
         if (!ipPermission.getIpRanges().isEmpty()) {
             sourceAllowed = ipPermission.getIpRanges().contains(_sourceIp);
         } else if (!ipPermission.getUserIdGroupPairs().isEmpty()) {
-            sourceAllowed = false;
+            sourceAllowed = sourceContained(ipPermission.getUserIdGroupPairs(), _sourceIp);
         }
 
-        return ipPermission.getFromPort() <= getFromPort() && ipPermission.getToPort() >= getToPort() && getProtocol().equalsIgnoreCase(ipPermission.getIpProtocol()) && sourceAllowed;
+        return sourceAllowed && ipPermission.getFromPort() <= getFromPort() && ipPermission.getToPort() >= getToPort() && getProtocol().equalsIgnoreCase(ipPermission.getIpProtocol());
 
+    }
+
+    private boolean sourceContained(List<UserIdGroupPair> userIdGroupPairs, String sourceIp) {
+        for (UserIdGroupPair userIdGroupPair : userIdGroupPairs) {
+            if (sourceIp.equals(userIdGroupPair.getGroupName()) || sourceIp.equals(userIdGroupPair.getGroupId())) {
+                return true;
+            }
+        }
+        return false;
     }
 }
