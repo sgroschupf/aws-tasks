@@ -19,14 +19,16 @@ import org.apache.log4j.NDC;
 import org.apache.tools.ant.BuildException;
 
 import awstasks.com.amazonaws.auth.BasicAWSCredentials;
+import awstasks.com.amazonaws.regions.Region;
+import awstasks.com.amazonaws.regions.Regions;
 import awstasks.com.amazonaws.services.ec2.AmazonEC2;
 import awstasks.com.amazonaws.services.ec2.AmazonEC2Client;
-
 import datameer.awstasks.ant.AbstractAwsTask;
 
 public abstract class AbstractEc2Task extends AbstractAwsTask {
 
     protected String _groupName;
+    protected String _region;
 
     public void setGroupName(String name) {
         _groupName = name;
@@ -36,8 +38,20 @@ public abstract class AbstractEc2Task extends AbstractAwsTask {
         return _groupName;
     }
 
+    public String getRegion() {
+        return _region;
+    }
+
+    public void setRegion(String region) {
+        _region = region;
+    }
+
     private AmazonEC2 createEc2() {
-        return new AmazonEC2Client(new BasicAWSCredentials(_accessKey, _accessSecret));
+        AmazonEC2Client ec2Client = new AmazonEC2Client(new BasicAWSCredentials(_accessKey, _accessSecret));
+        if (_region != null && !_region.trim().isEmpty()) {
+            ec2Client.setRegion(Region.getRegion(Regions.valueOf(_region.toUpperCase())));
+        }
+        return ec2Client;
     }
 
     @Override

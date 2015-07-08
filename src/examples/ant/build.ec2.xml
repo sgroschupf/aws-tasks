@@ -21,7 +21,7 @@
 	<!-- START EC2 TASK	                       			                     -->
 	<!-- ================================================================== -->
 	<target name="start-ec2" description="--> start ec2 instance groups">
-		<ec2-launch groupName="aws-tasks.test" groupDescription="test group fow aws-tasks"
+		<ec2-launch groupName="aws-tasks.test" region="US_EAST_1" groupDescription="test group fow aws-tasks"
 			ami="ami-5059be39"
 			instanceCount="2"
 			accessKey="${ec2.accessKey}"
@@ -40,6 +40,7 @@
 	<!-- ================================================================== -->
 	<target name="setup-ec2" description="--> setup fresh ec2 instance groups">
 		<ec2-ssh groupName="aws-tasks.test"
+			region="US_EAST_1"
 			accessKey="${ec2.accessKey}"
 			accessSecret="${ec2.accessSecret}"
 			username="ubuntu"
@@ -102,6 +103,7 @@
 	<!-- ================================================================== -->
 	<target name="stop-ec2" description="--> stop ec2 instance groups">
 		<ec2-shutdown groupName="aws-tasks.test"
+			region="US_EAST_1"
 			accessKey="${ec2.accessKey}"
 			accessSecret="${ec2.accessSecret}"
 			stopOnly="false">
