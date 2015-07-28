@@ -27,11 +27,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import awstasks.com.amazonaws.auth.BasicAWSCredentials;
+import awstasks.com.amazonaws.regions.Region;
+import awstasks.com.amazonaws.regions.Regions;
 import awstasks.com.amazonaws.services.ec2.AmazonEC2;
 import awstasks.com.amazonaws.services.ec2.AmazonEC2Client;
 import awstasks.com.amazonaws.services.ec2.model.RunInstancesRequest;
 import awstasks.com.amazonaws.services.s3.AmazonS3;
 import awstasks.com.amazonaws.services.s3.AmazonS3Client;
+
 
 import datameer.awstasks.aws.ec2.InstanceGroup;
 import datameer.awstasks.aws.ec2.InstanceGroupImpl;
@@ -49,12 +52,14 @@ public class Ec2Configuration {
     private static final String ACCESS_KEY_SECRET = "ec2.accessSecret";
     private static final String PRIVATE_KEY_NAME = "ec2.privateKeyName";
     private static final String PRIVATE_KEY_FILE = "ec2.privateKeyFile";
+    private static final String REGION = "ec2.region";
 
     private Properties _properties;
     protected String _accessKeyId;
     protected String _accessKeySecret;
     protected String _privateKeyName;
     protected String _privateKeyFile;
+    protected String _region;
 
     /**
      * Reads a ec2.properties from classpath. The path is {@link #EC2_PROPERTIES_FILE}.
@@ -84,6 +89,7 @@ public class Ec2Configuration {
         _accessKeySecret = _properties.getProperty(ACCESS_KEY_SECRET);
         _privateKeyName = _properties.getProperty(PRIVATE_KEY_NAME);
         _privateKeyFile = _properties.getProperty(PRIVATE_KEY_FILE);
+        _region = _properties.getProperty(REGION);
     }
 
     @SuppressWarnings("unchecked")
@@ -144,6 +150,10 @@ public class Ec2Configuration {
         return _privateKeyFile;
     }
 
+    public String getRegion() {
+        return _region;
+    }
+
     public String getProperty(String name) {
         String property = _properties.getProperty(name);
         if (property == null) {
@@ -160,7 +170,11 @@ public class Ec2Configuration {
     }
 
     public AmazonEC2 createEc2() {
-        return new AmazonEC2Client(new BasicAWSCredentials(_accessKeyId, _accessKeySecret));
+        AmazonEC2Client ec2Client = new AmazonEC2Client(new BasicAWSCredentials(_accessKeyId, _accessKeySecret));
+        if (_region != null && !_region.trim().isEmpty()) {
+            ec2Client.setRegion(Region.getRegion(Regions.valueOf(_region.toUpperCase())));
+        }
+        return ec2Client;
     }
 
     public AmazonS3 createS3Service() {

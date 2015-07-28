@@ -51,6 +51,7 @@ public abstract class AbstractEc2Task extends AbstractAwsTask {
         if (_region != null && !_region.trim().isEmpty()) {
             ec2Client.setRegion(Region.getRegion(Regions.valueOf(_region.toUpperCase())));
         }
+        LOG.info("connect to region " + _region);
         return ec2Client;
     }
 
