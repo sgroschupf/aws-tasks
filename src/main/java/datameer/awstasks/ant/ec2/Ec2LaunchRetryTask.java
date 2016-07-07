@@ -46,6 +46,7 @@ public class Ec2LaunchRetryTask extends Ec2LaunchTask {
                     stopTask.setAccessKey(_accessKey);
                     stopTask.setAccessSecret(_accessSecret);
                     stopTask.setGroupName(_groupName);
+                    stopTask.setRegion(_region);
                     stopTask.execute();
                 } catch (Exception stopException) {
                     throw startException;
